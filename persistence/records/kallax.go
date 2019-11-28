@@ -7,6 +7,7 @@ package records
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/zbyte/go-kallax"
 	"github.com/zbyte/go-kallax/types"
@@ -547,6 +548,468 @@ func (rs *AccountResultSet) Close() error {
 	return rs.ResultSet.Close()
 }
 
+// NewAppAccountRequestToken returns a new instance of AppAccountRequestToken.
+func NewAppAccountRequestToken() (record *AppAccountRequestToken) {
+	return new(AppAccountRequestToken)
+}
+
+// GetID returns the primary key of the model.
+func (r *AppAccountRequestToken) GetID() kallax.Identifier {
+	return (*kallax.UUID)(&r.ID)
+}
+
+// ColumnAddress returns the pointer to the value of the given column.
+func (r *AppAccountRequestToken) ColumnAddress(col string) (interface{}, error) {
+	switch col {
+	case "id":
+		return (*kallax.UUID)(&r.ID), nil
+	case "connect_token":
+		return &r.ConnectToken, nil
+	case "role_identifier":
+		return &r.RoleIdentifier, nil
+	case "expiry":
+		return &r.Expiry, nil
+	case "organisation_id":
+		return &r.OrganisationID, nil
+	case "device_label":
+		return &r.DeviceLabel, nil
+
+	default:
+		return nil, fmt.Errorf("kallax: invalid column in AppAccountRequestToken: %s", col)
+	}
+}
+
+// Value returns the value of the given column.
+func (r *AppAccountRequestToken) Value(col string) (interface{}, error) {
+	switch col {
+	case "id":
+		return r.ID, nil
+	case "connect_token":
+		return r.ConnectToken, nil
+	case "role_identifier":
+		return r.RoleIdentifier, nil
+	case "expiry":
+		return r.Expiry, nil
+	case "organisation_id":
+		return r.OrganisationID, nil
+	case "device_label":
+		return r.DeviceLabel, nil
+
+	default:
+		return nil, fmt.Errorf("kallax: invalid column in AppAccountRequestToken: %s", col)
+	}
+}
+
+// NewRelationshipRecord returns a new record for the relatiobship in the given
+// field.
+func (r *AppAccountRequestToken) NewRelationshipRecord(field string) (kallax.Record, error) {
+	return nil, fmt.Errorf("kallax: model AppAccountRequestToken has no relationships")
+}
+
+// SetRelationship sets the given relationship in the given field.
+func (r *AppAccountRequestToken) SetRelationship(field string, rel interface{}) error {
+	return fmt.Errorf("kallax: model AppAccountRequestToken has no relationships")
+}
+
+// AppAccountRequestTokenStore is the entity to access the records of the type AppAccountRequestToken
+// in the database.
+type AppAccountRequestTokenStore struct {
+	*kallax.Store
+}
+
+// NewAppAccountRequestTokenStore creates a new instance of AppAccountRequestTokenStore
+// using a SQL database.
+func NewAppAccountRequestTokenStore(db *sql.DB) *AppAccountRequestTokenStore {
+	return &AppAccountRequestTokenStore{kallax.NewStore(db)}
+}
+
+// GenericStore returns the generic store of this store.
+func (s *AppAccountRequestTokenStore) GenericStore() *kallax.Store {
+	return s.Store
+}
+
+// SetGenericStore changes the generic store of this store.
+func (s *AppAccountRequestTokenStore) SetGenericStore(store *kallax.Store) {
+	s.Store = store
+}
+
+// Debug returns a new store that will print all SQL statements to stdout using
+// the log.Printf function.
+func (s *AppAccountRequestTokenStore) Debug() *AppAccountRequestTokenStore {
+	return &AppAccountRequestTokenStore{s.Store.Debug()}
+}
+
+// DebugWith returns a new store that will print all SQL statements using the
+// given logger function.
+func (s *AppAccountRequestTokenStore) DebugWith(logger kallax.LoggerFunc) *AppAccountRequestTokenStore {
+	return &AppAccountRequestTokenStore{s.Store.DebugWith(logger)}
+}
+
+// DisableCacher turns off prepared statements, which can be useful in some scenarios.
+func (s *AppAccountRequestTokenStore) DisableCacher() *AppAccountRequestTokenStore {
+	return &AppAccountRequestTokenStore{s.Store.DisableCacher()}
+}
+
+// Insert inserts a AppAccountRequestToken in the database. A non-persisted object is
+// required for this operation.
+func (s *AppAccountRequestTokenStore) Insert(record *AppAccountRequestToken) error {
+	record.SetSaving(true)
+	defer record.SetSaving(false)
+
+	record.Expiry = record.Expiry.Truncate(time.Microsecond)
+
+	return s.Store.Insert(Schema.AppAccountRequestToken.BaseSchema, record)
+}
+
+// Update updates the given record on the database. If the columns are given,
+// only these columns will be updated. Otherwise all of them will be.
+// Be very careful with this, as you will have a potentially different object
+// in memory but not on the database.
+// Only writable records can be updated. Writable objects are those that have
+// been just inserted or retrieved using a query with no custom select fields.
+func (s *AppAccountRequestTokenStore) Update(record *AppAccountRequestToken, cols ...kallax.SchemaField) (updated int64, err error) {
+	record.Expiry = record.Expiry.Truncate(time.Microsecond)
+
+	record.SetSaving(true)
+	defer record.SetSaving(false)
+
+	return s.Store.Update(Schema.AppAccountRequestToken.BaseSchema, record, cols...)
+}
+
+// Save inserts the object if the record is not persisted, otherwise it updates
+// it. Same rules of Update and Insert apply depending on the case.
+func (s *AppAccountRequestTokenStore) Save(record *AppAccountRequestToken) (updated bool, err error) {
+	if !record.IsPersisted() {
+		return false, s.Insert(record)
+	}
+
+	rowsUpdated, err := s.Update(record)
+	if err != nil {
+		return false, err
+	}
+
+	return rowsUpdated > 0, nil
+}
+
+// Delete removes the given record from the database.
+func (s *AppAccountRequestTokenStore) Delete(record *AppAccountRequestToken) error {
+	return s.Store.Delete(Schema.AppAccountRequestToken.BaseSchema, record)
+}
+
+// Find returns the set of results for the given query.
+func (s *AppAccountRequestTokenStore) Find(q *AppAccountRequestTokenQuery) (*AppAccountRequestTokenResultSet, error) {
+	rs, err := s.Store.Find(q)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewAppAccountRequestTokenResultSet(rs), nil
+}
+
+// MustFind returns the set of results for the given query, but panics if there
+// is any error.
+func (s *AppAccountRequestTokenStore) MustFind(q *AppAccountRequestTokenQuery) *AppAccountRequestTokenResultSet {
+	return NewAppAccountRequestTokenResultSet(s.Store.MustFind(q))
+}
+
+// Count returns the number of rows that would be retrieved with the given
+// query.
+func (s *AppAccountRequestTokenStore) Count(q *AppAccountRequestTokenQuery) (int64, error) {
+	return s.Store.Count(q)
+}
+
+// MustCount returns the number of rows that would be retrieved with the given
+// query, but panics if there is an error.
+func (s *AppAccountRequestTokenStore) MustCount(q *AppAccountRequestTokenQuery) int64 {
+	return s.Store.MustCount(q)
+}
+
+// FindOne returns the first row returned by the given query.
+// `ErrNotFound` is returned if there are no results.
+func (s *AppAccountRequestTokenStore) FindOne(q *AppAccountRequestTokenQuery) (*AppAccountRequestToken, error) {
+	q.Limit(1)
+	q.Offset(0)
+	rs, err := s.Find(q)
+	if err != nil {
+		return nil, err
+	}
+
+	if !rs.Next() {
+		return nil, kallax.ErrNotFound
+	}
+
+	record, err := rs.Get()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := rs.Close(); err != nil {
+		return nil, err
+	}
+
+	return record, nil
+}
+
+// FindAll returns a list of all the rows returned by the given query.
+func (s *AppAccountRequestTokenStore) FindAll(q *AppAccountRequestTokenQuery) ([]*AppAccountRequestToken, error) {
+	rs, err := s.Find(q)
+	if err != nil {
+		return nil, err
+	}
+
+	return rs.All()
+}
+
+// MustFindOne returns the first row retrieved by the given query. It panics
+// if there is an error or if there are no rows.
+func (s *AppAccountRequestTokenStore) MustFindOne(q *AppAccountRequestTokenQuery) *AppAccountRequestToken {
+	record, err := s.FindOne(q)
+	if err != nil {
+		panic(err)
+	}
+	return record
+}
+
+// Reload refreshes the AppAccountRequestToken with the data in the database and
+// makes it writable.
+func (s *AppAccountRequestTokenStore) Reload(record *AppAccountRequestToken) error {
+	return s.Store.Reload(Schema.AppAccountRequestToken.BaseSchema, record)
+}
+
+// Transaction executes the given callback in a transaction and rollbacks if
+// an error is returned.
+// The transaction is only open in the store passed as a parameter to the
+// callback.
+func (s *AppAccountRequestTokenStore) Transaction(callback func(*AppAccountRequestTokenStore) error) error {
+	if callback == nil {
+		return kallax.ErrInvalidTxCallback
+	}
+
+	return s.Store.Transaction(func(store *kallax.Store) error {
+		return callback(&AppAccountRequestTokenStore{store})
+	})
+}
+
+// AppAccountRequestTokenQuery is the object used to create queries for the AppAccountRequestToken
+// entity.
+type AppAccountRequestTokenQuery struct {
+	*kallax.BaseQuery
+}
+
+// NewAppAccountRequestTokenQuery returns a new instance of AppAccountRequestTokenQuery.
+func NewAppAccountRequestTokenQuery() *AppAccountRequestTokenQuery {
+	return &AppAccountRequestTokenQuery{
+		BaseQuery: kallax.NewBaseQuery(Schema.AppAccountRequestToken.BaseSchema),
+	}
+}
+
+// Select adds columns to select in the query.
+func (q *AppAccountRequestTokenQuery) Select(columns ...kallax.SchemaField) *AppAccountRequestTokenQuery {
+	if len(columns) == 0 {
+		return q
+	}
+	q.BaseQuery.Select(columns...)
+	return q
+}
+
+// SelectNot excludes columns from being selected in the query.
+func (q *AppAccountRequestTokenQuery) SelectNot(columns ...kallax.SchemaField) *AppAccountRequestTokenQuery {
+	q.BaseQuery.SelectNot(columns...)
+	return q
+}
+
+// Copy returns a new identical copy of the query. Remember queries are mutable
+// so make a copy any time you need to reuse them.
+func (q *AppAccountRequestTokenQuery) Copy() *AppAccountRequestTokenQuery {
+	return &AppAccountRequestTokenQuery{
+		BaseQuery: q.BaseQuery.Copy(),
+	}
+}
+
+// Order adds order clauses to the query for the given columns.
+func (q *AppAccountRequestTokenQuery) Order(cols ...kallax.ColumnOrder) *AppAccountRequestTokenQuery {
+	q.BaseQuery.Order(cols...)
+	return q
+}
+
+// BatchSize sets the number of items to fetch per batch when there are 1:N
+// relationships selected in the query.
+func (q *AppAccountRequestTokenQuery) BatchSize(size uint64) *AppAccountRequestTokenQuery {
+	q.BaseQuery.BatchSize(size)
+	return q
+}
+
+// Limit sets the max number of items to retrieve.
+func (q *AppAccountRequestTokenQuery) Limit(n uint64) *AppAccountRequestTokenQuery {
+	q.BaseQuery.Limit(n)
+	return q
+}
+
+// Offset sets the number of items to skip from the result set of items.
+func (q *AppAccountRequestTokenQuery) Offset(n uint64) *AppAccountRequestTokenQuery {
+	q.BaseQuery.Offset(n)
+	return q
+}
+
+// Where adds a condition to the query. All conditions added are concatenated
+// using a logical AND.
+func (q *AppAccountRequestTokenQuery) Where(cond kallax.Condition) *AppAccountRequestTokenQuery {
+	q.BaseQuery.Where(cond)
+	return q
+}
+
+// FindByID adds a new filter to the query that will require that
+// the ID property is equal to one of the passed values; if no passed values,
+// it will do nothing.
+func (q *AppAccountRequestTokenQuery) FindByID(v ...kallax.UUID) *AppAccountRequestTokenQuery {
+	if len(v) == 0 {
+		return q
+	}
+	values := make([]interface{}, len(v))
+	for i, val := range v {
+		values[i] = val
+	}
+	return q.Where(kallax.In(Schema.AppAccountRequestToken.ID, values...))
+}
+
+// FindByConnectToken adds a new filter to the query that will require that
+// the ConnectToken property is equal to the passed value.
+func (q *AppAccountRequestTokenQuery) FindByConnectToken(v string) *AppAccountRequestTokenQuery {
+	return q.Where(kallax.Eq(Schema.AppAccountRequestToken.ConnectToken, v))
+}
+
+// FindByRoleIdentifier adds a new filter to the query that will require that
+// the RoleIdentifier property is equal to the passed value.
+func (q *AppAccountRequestTokenQuery) FindByRoleIdentifier(v string) *AppAccountRequestTokenQuery {
+	return q.Where(kallax.Eq(Schema.AppAccountRequestToken.RoleIdentifier, v))
+}
+
+// FindByExpiry adds a new filter to the query that will require that
+// the Expiry property is equal to the passed value.
+func (q *AppAccountRequestTokenQuery) FindByExpiry(cond kallax.ScalarCond, v time.Time) *AppAccountRequestTokenQuery {
+	return q.Where(cond(Schema.AppAccountRequestToken.Expiry, v))
+}
+
+// FindByOrganisationID adds a new filter to the query that will require that
+// the OrganisationID property is equal to the passed value.
+func (q *AppAccountRequestTokenQuery) FindByOrganisationID(v kallax.UUID) *AppAccountRequestTokenQuery {
+	return q.Where(kallax.Eq(Schema.AppAccountRequestToken.OrganisationID, v))
+}
+
+// FindByDeviceLabel adds a new filter to the query that will require that
+// the DeviceLabel property is equal to the passed value.
+func (q *AppAccountRequestTokenQuery) FindByDeviceLabel(v string) *AppAccountRequestTokenQuery {
+	return q.Where(kallax.Eq(Schema.AppAccountRequestToken.DeviceLabel, v))
+}
+
+// AppAccountRequestTokenResultSet is the set of results returned by a query to the
+// database.
+type AppAccountRequestTokenResultSet struct {
+	ResultSet kallax.ResultSet
+	last      *AppAccountRequestToken
+	lastErr   error
+}
+
+// NewAppAccountRequestTokenResultSet creates a new result set for rows of the type
+// AppAccountRequestToken.
+func NewAppAccountRequestTokenResultSet(rs kallax.ResultSet) *AppAccountRequestTokenResultSet {
+	return &AppAccountRequestTokenResultSet{ResultSet: rs}
+}
+
+// Next fetches the next item in the result set and returns true if there is
+// a next item.
+// The result set is closed automatically when there are no more items.
+func (rs *AppAccountRequestTokenResultSet) Next() bool {
+	if !rs.ResultSet.Next() {
+		rs.lastErr = rs.ResultSet.Close()
+		rs.last = nil
+		return false
+	}
+
+	var record kallax.Record
+	record, rs.lastErr = rs.ResultSet.Get(Schema.AppAccountRequestToken.BaseSchema)
+	if rs.lastErr != nil {
+		rs.last = nil
+	} else {
+		var ok bool
+		rs.last, ok = record.(*AppAccountRequestToken)
+		if !ok {
+			rs.lastErr = fmt.Errorf("kallax: unable to convert record to *AppAccountRequestToken")
+			rs.last = nil
+		}
+	}
+
+	return true
+}
+
+// Get retrieves the last fetched item from the result set and the last error.
+func (rs *AppAccountRequestTokenResultSet) Get() (*AppAccountRequestToken, error) {
+	return rs.last, rs.lastErr
+}
+
+// ForEach iterates over the complete result set passing every record found to
+// the given callback. It is possible to stop the iteration by returning
+// `kallax.ErrStop` in the callback.
+// Result set is always closed at the end.
+func (rs *AppAccountRequestTokenResultSet) ForEach(fn func(*AppAccountRequestToken) error) error {
+	for rs.Next() {
+		record, err := rs.Get()
+		if err != nil {
+			return err
+		}
+
+		if err := fn(record); err != nil {
+			if err == kallax.ErrStop {
+				return rs.Close()
+			}
+
+			return err
+		}
+	}
+	return nil
+}
+
+// All returns all records on the result set and closes the result set.
+func (rs *AppAccountRequestTokenResultSet) All() ([]*AppAccountRequestToken, error) {
+	var result []*AppAccountRequestToken
+	for rs.Next() {
+		record, err := rs.Get()
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, record)
+	}
+	return result, nil
+}
+
+// One returns the first record on the result set and closes the result set.
+func (rs *AppAccountRequestTokenResultSet) One() (*AppAccountRequestToken, error) {
+	if !rs.Next() {
+		return nil, kallax.ErrNotFound
+	}
+
+	record, err := rs.Get()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := rs.Close(); err != nil {
+		return nil, err
+	}
+
+	return record, nil
+}
+
+// Err returns the last error occurred.
+func (rs *AppAccountRequestTokenResultSet) Err() error {
+	return rs.lastErr
+}
+
+// Close closes the result set.
+func (rs *AppAccountRequestTokenResultSet) Close() error {
+	return rs.ResultSet.Close()
+}
+
 // NewOrganisation returns a new instance of Organisation.
 func NewOrganisation() (record *Organisation) {
 	return new(Organisation)
@@ -966,8 +1429,9 @@ func (rs *OrganisationResultSet) Close() error {
 }
 
 type schema struct {
-	Account      *schemaAccount
-	Organisation *schemaOrganisation
+	Account                *schemaAccount
+	AppAccountRequestToken *schemaAppAccountRequestToken
+	Organisation           *schemaOrganisation
 }
 
 type schemaAccount struct {
@@ -982,6 +1446,16 @@ type schemaAccount struct {
 	PasswordHash   kallax.SchemaField
 	DeviceToken    kallax.SchemaField
 	DeviceOs       kallax.SchemaField
+	OrganisationID kallax.SchemaField
+	DeviceLabel    kallax.SchemaField
+}
+
+type schemaAppAccountRequestToken struct {
+	*kallax.BaseSchema
+	ID             kallax.SchemaField
+	ConnectToken   kallax.SchemaField
+	RoleIdentifier kallax.SchemaField
+	Expiry         kallax.SchemaField
 	OrganisationID kallax.SchemaField
 	DeviceLabel    kallax.SchemaField
 }
@@ -1026,6 +1500,30 @@ var Schema = &schema{
 		PasswordHash:   kallax.NewSchemaField("password_hash"),
 		DeviceToken:    kallax.NewSchemaField("device_token"),
 		DeviceOs:       kallax.NewSchemaField("device_os"),
+		OrganisationID: kallax.NewSchemaField("organisation_id"),
+		DeviceLabel:    kallax.NewSchemaField("device_label"),
+	},
+	AppAccountRequestToken: &schemaAppAccountRequestToken{
+		BaseSchema: kallax.NewBaseSchema(
+			"app_account_request_tokens",
+			"__appaccountrequesttoken",
+			kallax.NewSchemaField("id"),
+			kallax.ForeignKeys{},
+			func() kallax.Record {
+				return new(AppAccountRequestToken)
+			},
+			false,
+			kallax.NewSchemaField("id"),
+			kallax.NewSchemaField("connect_token"),
+			kallax.NewSchemaField("role_identifier"),
+			kallax.NewSchemaField("expiry"),
+			kallax.NewSchemaField("organisation_id"),
+			kallax.NewSchemaField("device_label"),
+		),
+		ID:             kallax.NewSchemaField("id"),
+		ConnectToken:   kallax.NewSchemaField("connect_token"),
+		RoleIdentifier: kallax.NewSchemaField("role_identifier"),
+		Expiry:         kallax.NewSchemaField("expiry"),
 		OrganisationID: kallax.NewSchemaField("organisation_id"),
 		DeviceLabel:    kallax.NewSchemaField("device_label"),
 	},

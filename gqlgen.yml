@@ -1,0 +1,25 @@
+schema: schema.graphql
+exec:
+  filename: api/generated.go
+  package: api
+model:
+  filename: api/models_gen.go
+  package: api
+resolver:
+  filename: api/root/resolver.go
+  package: root
+  type: Resolver
+
+models:
+  Role:
+    model: myvendor/myproject/backend/api.Role
+  UUID:
+    model: myvendor/myproject/backend/api.UUIDScalar
+  DateTime:
+    model: myvendor/myproject/backend/api.DateTimeScalar
+  # Use sub resolver
+  AppAccount:
+    model: myvendor/myproject/backend/api.AppAccount
+  # Use sub resolver
+  UserAccount:
+    model: myvendor/myproject/backend/api.UserAccount

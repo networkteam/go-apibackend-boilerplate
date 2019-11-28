@@ -1,8 +1,6 @@
 package records
 
 import (
-	"database/sql"
-
 	"github.com/pkg/errors"
 	"github.com/zbyte/go-kallax"
 
@@ -105,13 +103,4 @@ func (a *Account) GetOrganisationID() string {
 
 func (a *Account) GetRoleIdentifier() string {
 	return a.RoleIdentifier
-}
-
-func AccountCleanupDeviceTokens(db *sql.DB, deviceToken, deviceOs string) error {
-	query := "UPDATE accounts SET device_token = NULL, device_os = NULL WHERE device_token = $1 AND device_os = $2"
-	_, err := db.Exec(query, deviceToken, deviceOs)
-	if err != nil {
-		return errors.Wrap(err, "updating accounts to remove device token failed")
-	}
-	return nil
 }
