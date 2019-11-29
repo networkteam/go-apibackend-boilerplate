@@ -7,14 +7,19 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-type Hub struct {
-	mu               sync.RWMutex
-	organisationSubs map[uuid.UUID]map[*OrganisationSubscription]*OrganisationSubscription
+type Hub interface {
+	SubscribeForOrganisation(organisationID uuid.UUID) Unsubscriber
+	Publish(msg Message)
 }
 
-func NewHub() *Hub {
-	return &Hub{
-		organisationSubs: make(map[uuid.UUID]map[*OrganisationSubscription]*OrganisationSubscription),
+type hub struct {
+	mu               sync.RWMutex
+	organisationSubs map[uuid.UUID]map[*organisationSubscription]*organisationSubscription
+}
+
+func NewHub() Hub {
+	return &hub{
+		organisationSubs: make(map[uuid.UUID]map[*organisationSubscription]*organisationSubscription),
 	}
 }
 
@@ -26,14 +31,18 @@ type OrganisationScoped interface {
 	OrganisationID() uuid.UUID
 }
 
-type OrganisationSubscription struct {
+type Unsubscriber interface {
+	Unsubscribe()
+}
+
+type organisationSubscription struct {
 	C              chan Message
-	h              *Hub
+	h              *hub
 	organisationID uuid.UUID
 }
 
 
-func (sub *OrganisationSubscription) Unsubscribe() {
+func (sub *organisationSubscription) Unsubscribe() {
 	sub.h.mu.Lock()
 	defer sub.h.mu.Unlock()
 
@@ -46,8 +55,8 @@ func (sub *OrganisationSubscription) Unsubscribe() {
 }
 
 
-func (h *Hub) SubscribeForOrganisation(organisationID uuid.UUID) *OrganisationSubscription {
-	sub := &OrganisationSubscription{
+func (h *hub) SubscribeForOrganisation(organisationID uuid.UUID) Unsubscriber {
+	sub := &organisationSubscription{
 		C:              make(chan Message),
 		h:              h,
 		organisationID: organisationID,
@@ -57,14 +66,14 @@ func (h *Hub) SubscribeForOrganisation(organisationID uuid.UUID) *OrganisationSu
 	defer h.mu.Unlock()
 
 	if _, ok := h.organisationSubs[organisationID]; !ok {
-		h.organisationSubs[organisationID] = make(map[*OrganisationSubscription]*OrganisationSubscription)
+		h.organisationSubs[organisationID] = make(map[*organisationSubscription]*organisationSubscription)
 	}
 	h.organisationSubs[organisationID][sub] = sub
 
 	return sub
 }
 
-func (h *Hub) Publish(msg Message) {
+func (h *hub) Publish(msg Message) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 

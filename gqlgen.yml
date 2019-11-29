@@ -12,14 +12,14 @@ resolver:
 
 models:
   Role:
-    model: myvendor/myproject/backend/api.Role
+    model: myvendor.mytld/myproject/backend/api.Role
   UUID:
-    model: myvendor/myproject/backend/api.UUIDScalar
+    model: myvendor.mytld/myproject/backend/api.UUIDScalar
   DateTime:
-    model: myvendor/myproject/backend/api.DateTimeScalar
+    model: myvendor.mytld/myproject/backend/api.DateTimeScalar
   # Use sub resolver
   AppAccount:
-    model: myvendor/myproject/backend/api.AppAccount
+    model: myvendor.mytld/myproject/backend/api.AppAccount
   # Use sub resolver
   UserAccount:
-    model: myvendor/myproject/backend/api.UserAccount
+    model: myvendor.mytld/myproject/backend/api.UserAccount

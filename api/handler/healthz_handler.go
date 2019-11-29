@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/apex/log"
-	"github.com/pkg/errors"
+	"github.com/friendsofgo/errors"
 )
 
 func NewHealthzHandler(db *sql.DB) http.HandlerFunc {

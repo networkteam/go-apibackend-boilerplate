@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"myvendor/myproject/backend/security/helper"
+	"myvendor.mytld/myproject/backend/security/helper"
 )
 
 func TestGenerateRandomString(t *testing.T) {

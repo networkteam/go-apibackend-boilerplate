@@ -18,7 +18,7 @@ import (
 
 const (
 	dbPort = 5432
-	dbName = "kdh-datadonor-test"
+	dbName = "myproject-test"
 )
 
 func CreateTestDatabase(t *testing.T) (*sql.DB, func()) {
@@ -49,7 +49,7 @@ func CreateTestDatabase(t *testing.T) (*sql.DB, func()) {
 	}
 
 	_, filename, _, _ := runtime.Caller(0)
-	migrationSource := filepath.Dir(filename + "/../../../migrations/")
+	migrationSource := filepath.Dir(filename + "/../../../persistence/migrations/")
 	err = ExecMigrations(db, migrationSource+"/*.up.sql")
 	if err != nil {
 		t.Fatalf("Failed to execute migrations: %v", err)

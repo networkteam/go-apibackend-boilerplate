@@ -8,11 +8,11 @@ import (
 	"github.com/apex/log"
 	"github.com/apex/log/handlers/cli"
 	_ "github.com/lib/pq"
-	"github.com/pkg/errors"
+	"github.com/friendsofgo/errors"
 	"github.com/spf13/cobra"
 
-	"myvendor/myproject/backend/domain"
-	"myvendor/myproject/backend/security/authentication"
+	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/security/authentication"
 )
 
 var rootFlags struct {

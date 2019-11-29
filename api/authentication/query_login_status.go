@@ -5,7 +5,7 @@ import (
 
 	"github.com/apex/log"
 
-	"myvendor/myproject/backend/security/authentication"
+	"myvendor.mytld/myproject/backend/security/authentication"
 )
 
 func (r *QueryResolver) LoginStatus(ctx context.Context) (bool, error) {

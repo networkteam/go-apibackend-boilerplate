@@ -4,12 +4,12 @@ import (
 	"context"
 
 	"github.com/apex/log"
-	"github.com/pkg/errors"
+	"github.com/friendsofgo/errors"
 	"github.com/zbyte/go-kallax"
 
-	"myvendor/myproject/backend/api"
-	"myvendor/myproject/backend/persistence/records"
-	"myvendor/myproject/backend/security/authentication"
+	"myvendor.mytld/myproject/backend/api"
+	"myvendor.mytld/myproject/backend/persistence/records"
+	"myvendor.mytld/myproject/backend/security/authentication"
 )
 
 func (r *MutationResolver) Logout(ctx context.Context) (*api.Error, error) {
@@ -42,6 +42,10 @@ func (r *MutationResolver) Logout(ctx context.Context) (*api.Error, error) {
 	req := api.GetHTTPRequest(ctx)
 
 	authentication.DeleteAuthTokenCookie(w, req)
+
+	log.
+		WithField("accountID", accountId).
+		Info("Logged out account")
 
 	return nil, nil
 }

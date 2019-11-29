@@ -1,4 +1,4 @@
-module myvendor/myproject/backend
+module myvendor.mytld/myproject/backend
 
 require (
 	github.com/99designs/gqlgen v0.10.1
@@ -9,6 +9,7 @@ require (
 	github.com/docker/docker v1.13.1 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
+	github.com/friendsofgo/errors v0.8.1
 	github.com/getsentry/sentry-go v0.3.0
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
 	github.com/gofrs/uuid v3.2.0+incompatible
@@ -20,17 +21,16 @@ require (
 	github.com/mattn/go-sqlite3 v1.10.0 // indirect
 	github.com/networkteam/go-sqllogger v0.2.0
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
-	github.com/pkg/errors v0.8.1
 	github.com/robfig/cron v1.2.0
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/sethvargo/go-password v0.1.2
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
+	github.com/urfave/cli v1.22.1
 	github.com/vektah/gqlparser v1.1.2
 	github.com/zbyte/go-kallax v1.3.9
 	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
 	gopkg.in/square/go-jose.v2 v2.4.0
-	gopkg.in/src-d/go-kallax.v1 v1.3.5
 )
 
 go 1.13

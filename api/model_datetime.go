@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/pkg/errors"
+	"github.com/friendsofgo/errors"
 )
 
 func MarshalDateTimeScalar(value time.Time) graphql.Marshaler {

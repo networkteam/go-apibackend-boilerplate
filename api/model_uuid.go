@@ -6,7 +6,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gofrs/uuid"
-	"github.com/pkg/errors"
+	"github.com/friendsofgo/errors"
 )
 
 func MarshalUUIDScalar(value uuid.UUID) graphql.Marshaler {

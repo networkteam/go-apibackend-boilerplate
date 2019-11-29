@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/pkg/errors"
+	"github.com/friendsofgo/errors"
 )
 
 func ExecMigrations(db *sql.DB, sqlGlob string) error {

@@ -7,11 +7,14 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 
-	"myvendor/myproject/backend/api"
-	"myvendor/myproject/backend/security/authentication"
+	"myvendor.mytld/myproject/backend/api"
+	"myvendor.mytld/myproject/backend/security/authentication"
 )
 
-const bypassAuthenticationDirectiveName = "bypassAuthentication"
+const (
+	bypassAuthenticationDirectiveName = "bypassAuthentication"
+	schemaQuery = "__schema"
+)
 
 func RequireAuthenticationFieldMiddleware(ctx context.Context, next graphql.Resolver) (res interface{}, err error) {
 	authCtx := authentication.GetAuthContext(ctx)
@@ -20,11 +23,16 @@ func RequireAuthenticationFieldMiddleware(ctx context.Context, next graphql.Reso
 
 	// Check directives
 	if resolverCtx.Field.Definition != nil {
-		for _, directive := range resolverCtx.Field.Definition.Directives {
-			if directive != nil && directive.Name == bypassAuthenticationDirectiveName {
-				authCtx.IgnoreAuthenticationState = true
-				ctx = authentication.WithAuthContext(ctx, authCtx)
-				break
+		if resolverCtx.Field.Definition.Name == schemaQuery {
+			authCtx.IgnoreAuthenticationState = true
+			ctx = authentication.WithAuthContext(ctx, authCtx)
+		} else {
+			for _, directive := range resolverCtx.Field.Definition.Directives {
+				if directive != nil && directive.Name == bypassAuthenticationDirectiveName {
+					authCtx.IgnoreAuthenticationState = true
+					ctx = authentication.WithAuthContext(ctx, authCtx)
+					break
+				}
 			}
 		}
 	}

@@ -1,6 +1,6 @@
 package records
 
-import "github.com/pkg/errors"
+import "github.com/friendsofgo/errors"
 
 func (s *AccountStore) AccountCleanupDeviceTokens(deviceToken, deviceOs string) error {
 	query := "UPDATE accounts SET device_token = NULL, device_os = NULL WHERE device_token = $1 AND device_os = $2"

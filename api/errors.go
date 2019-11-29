@@ -1,6 +1,6 @@
 package api
 
-import "myvendor/myproject/backend/domain"
+import "myvendor.mytld/myproject/backend/domain"
 
 var ErrAuthTokenInvalid = TypedError{"authTokenInvalid", "auth token invalid"}
 var ErrAuthTokenExpired = TypedError{"authTokenExpired", "auth token expired"}

@@ -7,7 +7,7 @@ import (
 
 	"github.com/gofrs/uuid"
 
-	"myvendor/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain"
 )
 
 type ctxKey string

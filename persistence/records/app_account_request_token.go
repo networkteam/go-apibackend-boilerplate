@@ -13,6 +13,6 @@ type AppAccountRequestToken struct {
 	ConnectToken   string
 	RoleIdentifier string
 	Expiry         time.Time
-	OrganisationID kallax.UUID
+	Organisation   *Organisation `fk:",inverse"`
 	DeviceLabel    string
 }

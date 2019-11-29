@@ -3,22 +3,22 @@ package helper
 import (
 	"database/sql"
 
+	"github.com/friendsofgo/errors"
 	"github.com/gofrs/uuid"
-	"github.com/pkg/errors"
 	"github.com/zbyte/go-kallax"
 
-	"myvendor/myproject/backend/api"
-	"myvendor/myproject/backend/persistence/records"
+	"myvendor.mytld/myproject/backend/api"
+	"myvendor.mytld/myproject/backend/persistence/records"
 )
 
-func MapToOrganisation(o *records.Organisation) (api.Organisation, error) {
-	return api.Organisation{
+func MapToOrganisation(o *records.Organisation) (*api.Organisation, error) {
+	return &api.Organisation{
 		ID:   uuid.UUID(o.ID),
 		Name: o.Name,
 	}, nil
 }
 
-func MapResultSetToOrganisations(res *records.OrganisationResultSet) (orgs []api.Organisation, err error) {
+func MapResultSetToOrganisations(res *records.OrganisationResultSet) (orgs []*api.Organisation, err error) {
 	err = res.ForEach(func(organisation *records.Organisation) error {
 		org, err := MapToOrganisation(organisation)
 		if err != nil {
@@ -36,21 +36,25 @@ func MapResultSetToOrganisations(res *records.OrganisationResultSet) (orgs []api
 }
 
 func GetOrganisationForAccount(account *records.Account, db *sql.DB) (*api.Organisation, error) {
+	if account.Organisation != nil && !account.Organisation.ID.IsEmpty() {
+		return MapToOrganisation(account.Organisation)
+	}
+
 	organisationStore := records.NewOrganisationStore(db)
 	var organisation *api.Organisation
-	if account.OrganisationID != nil {
-		organisationID := *account.OrganisationID
-		organisationDb, err := organisationStore.FindOne(records.NewOrganisationQuery().FindByID(organisationID))
+	if organisationID := account.GetOrganisationID(); organisationID != uuid.Nil {
+		q := records.NewOrganisationQuery().
+			FindByID(kallax.UUID(organisationID))
+		organisationDb, err := organisationStore.FindOne(q)
 		if err != nil && err != kallax.ErrNotFound {
 			return nil, errors.Wrap(err, "could not query organisation")
 		}
 
 		if organisationDb != nil {
-			mappedOrganisation, err := MapToOrganisation(organisationDb)
+			organisation, err = MapToOrganisation(organisationDb)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to map organisation")
 			}
-			organisation = &mappedOrganisation
 		}
 	}
 

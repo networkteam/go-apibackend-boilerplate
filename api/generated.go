@@ -893,7 +893,7 @@ func (ec *executionContext) field_Mutation_loginAppUser_args(ctx context.Context
 	args := map[string]interface{}{}
 	var arg0 AppUserLoginCredentials
 	if tmp, ok := rawArgs["credentials"]; ok {
-		arg0, err = ec.unmarshalNAppUserLoginCredentials2myvendorᚋmyprojectᚋbackendᚋapiᚐAppUserLoginCredentials(ctx, tmp)
+		arg0, err = ec.unmarshalNAppUserLoginCredentials2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐAppUserLoginCredentials(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -907,7 +907,7 @@ func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawAr
 	args := map[string]interface{}{}
 	var arg0 LoginCredentials
 	if tmp, ok := rawArgs["credentials"]; ok {
-		arg0, err = ec.unmarshalNLoginCredentials2myvendorᚋmyprojectᚋbackendᚋapiᚐLoginCredentials(ctx, tmp)
+		arg0, err = ec.unmarshalNLoginCredentials2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐLoginCredentials(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1037,7 +1037,7 @@ func (ec *executionContext) _AppAccount_organisation(ctx context.Context, field 
 	res := resTmp.(*Organisation)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganisation2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐOrganisation(ctx, field.Selections, res)
+	return ec.marshalNOrganisation2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐOrganisation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _AppAccount_deviceLabel(ctx context.Context, field graphql.CollectedField, obj *AppAccount) (ret graphql.Marshaler) {
@@ -1111,7 +1111,7 @@ func (ec *executionContext) _AppAccount_role(ctx context.Context, field graphql.
 	res := resTmp.(Role)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNRole2myvendorᚋmyprojectᚋbackendᚋapiᚐRole(ctx, field.Selections, res)
+	return ec.marshalNRole2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐRole(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _AppAccountRequestToken_id(ctx context.Context, field graphql.CollectedField, obj *AppAccountRequestToken) (ret graphql.Marshaler) {
@@ -1296,7 +1296,7 @@ func (ec *executionContext) _AppUserLoginResult_account(ctx context.Context, fie
 	res := resTmp.(*UserAccount)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUserAccount2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐUserAccount(ctx, field.Selections, res)
+	return ec.marshalNUserAccount2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐUserAccount(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _AppUserLoginResult_organisation(ctx context.Context, field graphql.CollectedField, obj *AppUserLoginResult) (ret graphql.Marshaler) {
@@ -1333,7 +1333,7 @@ func (ec *executionContext) _AppUserLoginResult_organisation(ctx context.Context
 	res := resTmp.(*Organisation)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganisation2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐOrganisation(ctx, field.Selections, res)
+	return ec.marshalNOrganisation2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐOrganisation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _AppUserLoginResult_authToken(ctx context.Context, field graphql.CollectedField, obj *AppUserLoginResult) (ret graphql.Marshaler) {
@@ -1404,7 +1404,7 @@ func (ec *executionContext) _AppUserLoginResult_error(ctx context.Context, field
 	res := resTmp.(*Error)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOError2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐError(ctx, field.Selections, res)
+	return ec.marshalOError2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _CreateAppAccountResult_id(ctx context.Context, field graphql.CollectedField, obj *CreateAppAccountResult) (ret graphql.Marshaler) {
@@ -1512,7 +1512,7 @@ func (ec *executionContext) _CreateAppAccountResult_error(ctx context.Context, f
 	res := resTmp.(*FieldsError)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOFieldsError2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐFieldsError(ctx, field.Selections, res)
+	return ec.marshalOFieldsError2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐFieldsError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _CreateResult_id(ctx context.Context, field graphql.CollectedField, obj *CreateResult) (ret graphql.Marshaler) {
@@ -1583,7 +1583,7 @@ func (ec *executionContext) _CreateResult_error(ctx context.Context, field graph
 	res := resTmp.(*FieldsError)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOFieldsError2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐFieldsError(ctx, field.Selections, res)
+	return ec.marshalOFieldsError2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐFieldsError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Error_code(ctx context.Context, field graphql.CollectedField, obj *Error) (ret graphql.Marshaler) {
@@ -1805,7 +1805,7 @@ func (ec *executionContext) _FieldsError_errors(ctx context.Context, field graph
 	res := resTmp.([]*FieldError)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNFieldError2ᚕᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐFieldError(ctx, field.Selections, res)
+	return ec.marshalNFieldError2ᚕᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐFieldError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _LoginResult_account(ctx context.Context, field graphql.CollectedField, obj *LoginResult) (ret graphql.Marshaler) {
@@ -1842,7 +1842,7 @@ func (ec *executionContext) _LoginResult_account(ctx context.Context, field grap
 	res := resTmp.(*UserAccount)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUserAccount2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐUserAccount(ctx, field.Selections, res)
+	return ec.marshalNUserAccount2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐUserAccount(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _LoginResult_organisation(ctx context.Context, field graphql.CollectedField, obj *LoginResult) (ret graphql.Marshaler) {
@@ -1876,7 +1876,7 @@ func (ec *executionContext) _LoginResult_organisation(ctx context.Context, field
 	res := resTmp.(*Organisation)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOOrganisation2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐOrganisation(ctx, field.Selections, res)
+	return ec.marshalOOrganisation2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐOrganisation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _LoginResult_csrfToken(ctx context.Context, field graphql.CollectedField, obj *LoginResult) (ret graphql.Marshaler) {
@@ -1947,7 +1947,7 @@ func (ec *executionContext) _LoginResult_error(ctx context.Context, field graphq
 	res := resTmp.(*Error)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOError2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐError(ctx, field.Selections, res)
+	return ec.marshalOError2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1996,7 +1996,7 @@ func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.C
 		if data, ok := tmp.(*LoginResult); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *myvendor/myproject/backend/api.LoginResult`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *myvendor.mytld/myproject/backend/api.LoginResult`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2011,7 +2011,7 @@ func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.C
 	res := resTmp.(*LoginResult)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNLoginResult2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐLoginResult(ctx, field.Selections, res)
+	return ec.marshalNLoginResult2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐLoginResult(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_logout(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2045,7 +2045,7 @@ func (ec *executionContext) _Mutation_logout(ctx context.Context, field graphql.
 	res := resTmp.(*Error)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOError2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐError(ctx, field.Selections, res)
+	return ec.marshalOError2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_loginAppUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2094,7 +2094,7 @@ func (ec *executionContext) _Mutation_loginAppUser(ctx context.Context, field gr
 		if data, ok := tmp.(*AppUserLoginResult); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *myvendor/myproject/backend/api.AppUserLoginResult`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *myvendor.mytld/myproject/backend/api.AppUserLoginResult`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2109,7 +2109,7 @@ func (ec *executionContext) _Mutation_loginAppUser(ctx context.Context, field gr
 	res := resTmp.(*AppUserLoginResult)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNAppUserLoginResult2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐAppUserLoginResult(ctx, field.Selections, res)
+	return ec.marshalNAppUserLoginResult2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐAppUserLoginResult(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Organisation_id(ctx context.Context, field graphql.CollectedField, obj *Organisation) (ret graphql.Marshaler) {
@@ -2352,7 +2352,7 @@ func (ec *executionContext) _RedeemAppAccountResult_account(ctx context.Context,
 	res := resTmp.(*AppAccount)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNAppAccount2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐAppAccount(ctx, field.Selections, res)
+	return ec.marshalNAppAccount2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐAppAccount(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _RedeemAppAccountResult_organisation(ctx context.Context, field graphql.CollectedField, obj *RedeemAppAccountResult) (ret graphql.Marshaler) {
@@ -2389,7 +2389,7 @@ func (ec *executionContext) _RedeemAppAccountResult_organisation(ctx context.Con
 	res := resTmp.(*Organisation)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganisation2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐOrganisation(ctx, field.Selections, res)
+	return ec.marshalNOrganisation2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐOrganisation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _RedeemAppAccountResult_authToken(ctx context.Context, field graphql.CollectedField, obj *RedeemAppAccountResult) (ret graphql.Marshaler) {
@@ -2460,7 +2460,7 @@ func (ec *executionContext) _RedeemAppAccountResult_error(ctx context.Context, f
 	res := resTmp.(*Error)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOError2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐError(ctx, field.Selections, res)
+	return ec.marshalOError2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Result_error(ctx context.Context, field graphql.CollectedField, obj *Result) (ret graphql.Marshaler) {
@@ -2494,7 +2494,7 @@ func (ec *executionContext) _Result_error(ctx context.Context, field graphql.Col
 	res := resTmp.(*FieldsError)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOFieldsError2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐFieldsError(ctx, field.Selections, res)
+	return ec.marshalOFieldsError2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐFieldsError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _UserAccount_id(ctx context.Context, field graphql.CollectedField, obj *UserAccount) (ret graphql.Marshaler) {
@@ -2602,7 +2602,7 @@ func (ec *executionContext) _UserAccount_organisation(ctx context.Context, field
 	res := resTmp.(*Organisation)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOOrganisation2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐOrganisation(ctx, field.Selections, res)
+	return ec.marshalOOrganisation2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐOrganisation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _UserAccount_firstName(ctx context.Context, field graphql.CollectedField, obj *UserAccount) (ret graphql.Marshaler) {
@@ -2713,7 +2713,7 @@ func (ec *executionContext) _UserAccount_role(ctx context.Context, field graphql
 	res := resTmp.(Role)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNRole2myvendorᚋmyprojectᚋbackendᚋapiᚐRole(ctx, field.Selections, res)
+	return ec.marshalNRole2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐRole(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -3923,7 +3923,7 @@ func (ec *executionContext) unmarshalInputCreateAppAccountInput(ctx context.Cont
 			}
 		case "role":
 			var err error
-			it.Role, err = ec.unmarshalNRole2myvendorᚋmyprojectᚋbackendᚋapiᚐRole(ctx, v)
+			it.Role, err = ec.unmarshalNRole2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐRole(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -3989,7 +3989,7 @@ func (ec *executionContext) unmarshalInputCreateUserAccountInput(ctx context.Con
 			}
 		case "role":
 			var err error
-			it.Role, err = ec.unmarshalNRole2myvendorᚋmyprojectᚋbackendᚋapiᚐRole(ctx, v)
+			it.Role, err = ec.unmarshalNRole2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐRole(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -4235,7 +4235,7 @@ func (ec *executionContext) unmarshalInputUpdateUserAccountInput(ctx context.Con
 			}
 		case "role":
 			var err error
-			it.Role, err = ec.unmarshalNRole2myvendorᚋmyprojectᚋbackendᚋapiᚐRole(ctx, v)
+			it.Role, err = ec.unmarshalNRole2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐRole(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5060,11 +5060,11 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNAppAccount2myvendorᚋmyprojectᚋbackendᚋapiᚐAppAccount(ctx context.Context, sel ast.SelectionSet, v AppAccount) graphql.Marshaler {
+func (ec *executionContext) marshalNAppAccount2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐAppAccount(ctx context.Context, sel ast.SelectionSet, v AppAccount) graphql.Marshaler {
 	return ec._AppAccount(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNAppAccount2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐAppAccount(ctx context.Context, sel ast.SelectionSet, v *AppAccount) graphql.Marshaler {
+func (ec *executionContext) marshalNAppAccount2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐAppAccount(ctx context.Context, sel ast.SelectionSet, v *AppAccount) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -5074,15 +5074,15 @@ func (ec *executionContext) marshalNAppAccount2ᚖmyvendorᚋmyprojectᚋbackend
 	return ec._AppAccount(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNAppUserLoginCredentials2myvendorᚋmyprojectᚋbackendᚋapiᚐAppUserLoginCredentials(ctx context.Context, v interface{}) (AppUserLoginCredentials, error) {
+func (ec *executionContext) unmarshalNAppUserLoginCredentials2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐAppUserLoginCredentials(ctx context.Context, v interface{}) (AppUserLoginCredentials, error) {
 	return ec.unmarshalInputAppUserLoginCredentials(ctx, v)
 }
 
-func (ec *executionContext) marshalNAppUserLoginResult2myvendorᚋmyprojectᚋbackendᚋapiᚐAppUserLoginResult(ctx context.Context, sel ast.SelectionSet, v AppUserLoginResult) graphql.Marshaler {
+func (ec *executionContext) marshalNAppUserLoginResult2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐAppUserLoginResult(ctx context.Context, sel ast.SelectionSet, v AppUserLoginResult) graphql.Marshaler {
 	return ec._AppUserLoginResult(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNAppUserLoginResult2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐAppUserLoginResult(ctx context.Context, sel ast.SelectionSet, v *AppUserLoginResult) graphql.Marshaler {
+func (ec *executionContext) marshalNAppUserLoginResult2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐAppUserLoginResult(ctx context.Context, sel ast.SelectionSet, v *AppUserLoginResult) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -5106,11 +5106,11 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNFieldError2myvendorᚋmyprojectᚋbackendᚋapiᚐFieldError(ctx context.Context, sel ast.SelectionSet, v FieldError) graphql.Marshaler {
+func (ec *executionContext) marshalNFieldError2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐFieldError(ctx context.Context, sel ast.SelectionSet, v FieldError) graphql.Marshaler {
 	return ec._FieldError(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNFieldError2ᚕᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐFieldError(ctx context.Context, sel ast.SelectionSet, v []*FieldError) graphql.Marshaler {
+func (ec *executionContext) marshalNFieldError2ᚕᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐFieldError(ctx context.Context, sel ast.SelectionSet, v []*FieldError) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -5134,7 +5134,7 @@ func (ec *executionContext) marshalNFieldError2ᚕᚖmyvendorᚋmyprojectᚋback
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNFieldError2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐFieldError(ctx, sel, v[i])
+			ret[i] = ec.marshalNFieldError2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐFieldError(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -5147,7 +5147,7 @@ func (ec *executionContext) marshalNFieldError2ᚕᚖmyvendorᚋmyprojectᚋback
 	return ret
 }
 
-func (ec *executionContext) marshalNFieldError2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐFieldError(ctx context.Context, sel ast.SelectionSet, v *FieldError) graphql.Marshaler {
+func (ec *executionContext) marshalNFieldError2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐFieldError(ctx context.Context, sel ast.SelectionSet, v *FieldError) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -5157,15 +5157,15 @@ func (ec *executionContext) marshalNFieldError2ᚖmyvendorᚋmyprojectᚋbackend
 	return ec._FieldError(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNLoginCredentials2myvendorᚋmyprojectᚋbackendᚋapiᚐLoginCredentials(ctx context.Context, v interface{}) (LoginCredentials, error) {
+func (ec *executionContext) unmarshalNLoginCredentials2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐLoginCredentials(ctx context.Context, v interface{}) (LoginCredentials, error) {
 	return ec.unmarshalInputLoginCredentials(ctx, v)
 }
 
-func (ec *executionContext) marshalNLoginResult2myvendorᚋmyprojectᚋbackendᚋapiᚐLoginResult(ctx context.Context, sel ast.SelectionSet, v LoginResult) graphql.Marshaler {
+func (ec *executionContext) marshalNLoginResult2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐLoginResult(ctx context.Context, sel ast.SelectionSet, v LoginResult) graphql.Marshaler {
 	return ec._LoginResult(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNLoginResult2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐLoginResult(ctx context.Context, sel ast.SelectionSet, v *LoginResult) graphql.Marshaler {
+func (ec *executionContext) marshalNLoginResult2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐLoginResult(ctx context.Context, sel ast.SelectionSet, v *LoginResult) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -5175,11 +5175,11 @@ func (ec *executionContext) marshalNLoginResult2ᚖmyvendorᚋmyprojectᚋbacken
 	return ec._LoginResult(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNOrganisation2myvendorᚋmyprojectᚋbackendᚋapiᚐOrganisation(ctx context.Context, sel ast.SelectionSet, v Organisation) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganisation2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐOrganisation(ctx context.Context, sel ast.SelectionSet, v Organisation) graphql.Marshaler {
 	return ec._Organisation(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNOrganisation2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐOrganisation(ctx context.Context, sel ast.SelectionSet, v *Organisation) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganisation2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐOrganisation(ctx context.Context, sel ast.SelectionSet, v *Organisation) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -5189,12 +5189,12 @@ func (ec *executionContext) marshalNOrganisation2ᚖmyvendorᚋmyprojectᚋbacke
 	return ec._Organisation(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNRole2myvendorᚋmyprojectᚋbackendᚋapiᚐRole(ctx context.Context, v interface{}) (Role, error) {
+func (ec *executionContext) unmarshalNRole2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐRole(ctx context.Context, v interface{}) (Role, error) {
 	var res Role
 	return res, res.UnmarshalGQL(v)
 }
 
-func (ec *executionContext) marshalNRole2myvendorᚋmyprojectᚋbackendᚋapiᚐRole(ctx context.Context, sel ast.SelectionSet, v Role) graphql.Marshaler {
+func (ec *executionContext) marshalNRole2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐRole(ctx context.Context, sel ast.SelectionSet, v Role) graphql.Marshaler {
 	return v
 }
 
@@ -5255,11 +5255,11 @@ func (ec *executionContext) marshalNUUID2githubᚗcomᚋgofrsᚋuuidᚐUUID(ctx 
 	return res
 }
 
-func (ec *executionContext) marshalNUserAccount2myvendorᚋmyprojectᚋbackendᚋapiᚐUserAccount(ctx context.Context, sel ast.SelectionSet, v UserAccount) graphql.Marshaler {
+func (ec *executionContext) marshalNUserAccount2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐUserAccount(ctx context.Context, sel ast.SelectionSet, v UserAccount) graphql.Marshaler {
 	return ec._UserAccount(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUserAccount2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐUserAccount(ctx context.Context, sel ast.SelectionSet, v *UserAccount) graphql.Marshaler {
+func (ec *executionContext) marshalNUserAccount2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐUserAccount(ctx context.Context, sel ast.SelectionSet, v *UserAccount) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -5518,22 +5518,22 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return ec.marshalOBoolean2bool(ctx, sel, *v)
 }
 
-func (ec *executionContext) marshalOError2myvendorᚋmyprojectᚋbackendᚋapiᚐError(ctx context.Context, sel ast.SelectionSet, v Error) graphql.Marshaler {
+func (ec *executionContext) marshalOError2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐError(ctx context.Context, sel ast.SelectionSet, v Error) graphql.Marshaler {
 	return ec._Error(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOError2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐError(ctx context.Context, sel ast.SelectionSet, v *Error) graphql.Marshaler {
+func (ec *executionContext) marshalOError2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐError(ctx context.Context, sel ast.SelectionSet, v *Error) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Error(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOFieldsError2myvendorᚋmyprojectᚋbackendᚋapiᚐFieldsError(ctx context.Context, sel ast.SelectionSet, v FieldsError) graphql.Marshaler {
+func (ec *executionContext) marshalOFieldsError2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐFieldsError(ctx context.Context, sel ast.SelectionSet, v FieldsError) graphql.Marshaler {
 	return ec._FieldsError(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOFieldsError2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐFieldsError(ctx context.Context, sel ast.SelectionSet, v *FieldsError) graphql.Marshaler {
+func (ec *executionContext) marshalOFieldsError2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐFieldsError(ctx context.Context, sel ast.SelectionSet, v *FieldsError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -5563,11 +5563,11 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return ec.marshalOInt2int(ctx, sel, *v)
 }
 
-func (ec *executionContext) marshalOOrganisation2myvendorᚋmyprojectᚋbackendᚋapiᚐOrganisation(ctx context.Context, sel ast.SelectionSet, v Organisation) graphql.Marshaler {
+func (ec *executionContext) marshalOOrganisation2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐOrganisation(ctx context.Context, sel ast.SelectionSet, v Organisation) graphql.Marshaler {
 	return ec._Organisation(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOOrganisation2ᚖmyvendorᚋmyprojectᚋbackendᚋapiᚐOrganisation(ctx context.Context, sel ast.SelectionSet, v *Organisation) graphql.Marshaler {
+func (ec *executionContext) marshalOOrganisation2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚐOrganisation(ctx context.Context, sel ast.SelectionSet, v *Organisation) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

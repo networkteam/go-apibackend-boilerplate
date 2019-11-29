@@ -12,14 +12,15 @@ import (
 	sentry "github.com/getsentry/sentry-go"
 	sentryhttp "github.com/getsentry/sentry-go/http"
 	isatty "github.com/mattn/go-isatty"
-	"github.com/pkg/errors"
+	"github.com/friendsofgo/errors"
 	"github.com/robfig/cron"
 	"github.com/spf13/cobra"
 
-	"myvendor/myproject/backend/service"
-
-	api_handler "myvendor/myproject/backend/api/handler"
-	domain_handler "myvendor/myproject/backend/handler"
+	"myvendor.mytld/myproject/backend/api"
+	api_handler "myvendor.mytld/myproject/backend/api/handler"
+	domain_handler "myvendor.mytld/myproject/backend/handler"
+	"myvendor.mytld/myproject/backend/service/hub"
+	"myvendor.mytld/myproject/backend/service/notification"
 )
 
 var serverFlags struct {
@@ -65,12 +66,17 @@ var serverCmd = &cobra.Command{
 
 		timeSource := newCurrentTimeSource()
 
-		pushNotificationService := service.NewPushNotificationService(rootCtx.db, timeSource, serverFlags.goRushApiUrl)
+		pushNotificationService := notification.NewPushNotificationService(serverFlags.goRushApiUrl)
 
-		graphqlHandler := api_handler.NewHandler(
-			rootCtx.db,
-			timeSource,
-			pushNotificationService,
+		h := hub.NewHub()
+
+		graphqlHandler := api_handler.NewGraphqlHandler(
+			api.ResolverDependencies{
+				Db:         rootCtx.db,
+				TimeSource: timeSource,
+				Hub:        h,
+				Notifier:   pushNotificationService,
+			},
 			api_handler.HandlerConfig{
 				EnableTracing: serverFlags.enableTracing,
 				EnableLogging: rootFlags.verbosity > 2,
@@ -93,7 +99,10 @@ var serverCmd = &cobra.Command{
 
 		cronJob.Start()
 
-		log.Infof("connect to http://localhost:%d/ for GraphQL playground", serverFlags.port)
+		log.Infof("Serving GraphQL endpoint at http://localhost:%d/query", serverFlags.port)
+		if serverFlags.enablePlayground {
+			log.Infof("Connect to http://localhost:%d/ for GraphQL playground", serverFlags.port)
+		}
 
 		return http.ListenAndServe(fmt.Sprintf(":%d", serverFlags.port), nil)
 	},

@@ -11,12 +11,12 @@ import (
 	"github.com/99designs/gqlgen/handler"
 	sentry "github.com/getsentry/sentry-go"
 	"github.com/gorilla/handlers"
-	"github.com/pkg/errors"
+	"github.com/friendsofgo/errors"
 
-	"myvendor/myproject/backend/api"
-	"myvendor/myproject/backend/api/middleware"
-	"myvendor/myproject/backend/api/root"
-	"myvendor/myproject/backend/security/authentication"
+	"myvendor.mytld/myproject/backend/api"
+	"myvendor.mytld/myproject/backend/api/middleware"
+	"myvendor.mytld/myproject/backend/api/root"
+	"myvendor.mytld/myproject/backend/security/authentication"
 )
 
 type HandlerConfig struct {

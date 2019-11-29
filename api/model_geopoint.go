@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/pkg/errors"
+	"github.com/friendsofgo/errors"
 )
 
 type GeoPoint [2]float64

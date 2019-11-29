@@ -6,14 +6,14 @@ import (
 
 	"github.com/apex/log"
 	"github.com/gofrs/uuid"
-	"github.com/pkg/errors"
+	"github.com/friendsofgo/errors"
 	"github.com/zbyte/go-kallax"
 	"gopkg.in/square/go-jose.v2/jwt"
 
-	"myvendor/myproject/backend/api"
-	"myvendor/myproject/backend/domain"
-	"myvendor/myproject/backend/persistence/records"
-	"myvendor/myproject/backend/security/authentication"
+	"myvendor.mytld/myproject/backend/api"
+	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/persistence/records"
+	"myvendor.mytld/myproject/backend/security/authentication"
 )
 
 // AuthContextMiddleware sets an auth context from a HTTP request
@@ -83,8 +83,7 @@ func authCtxFromToken(accountStore *records.AccountStore, authTokenValue string,
 
 	authCtx.Authenticated = true
 	authCtx.AccountID = accountID
-	if account.OrganisationID != nil {
-		organisationID := uuid.UUID(*account.OrganisationID)
+	if organisationID := account.GetOrganisationID(); organisationID != uuid.Nil {
 		authCtx.OrganisationID = &organisationID
 	}
 	authCtx.IssuedAt = verifiedClaims.IssuedAt.Time()

@@ -1,8 +1,6 @@
 package authentication_test
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,12 +9,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"myvendor/myproject/backend/api"
-	api_handler "myvendor/myproject/backend/api/handler"
-	"myvendor/myproject/backend/api/helper"
-	test_auth "myvendor/myproject/backend/test/auth"
-	test_db "myvendor/myproject/backend/test/db"
-	test_graphql "myvendor/myproject/backend/test/graphql"
+	"myvendor.mytld/myproject/backend/api"
+	api_handler "myvendor.mytld/myproject/backend/api/handler"
+	"myvendor.mytld/myproject/backend/api/helper"
+	test_auth "myvendor.mytld/myproject/backend/test/auth"
+	test_db "myvendor.mytld/myproject/backend/test/db"
+	test_graphql "myvendor.mytld/myproject/backend/test/graphql"
 )
 
 const loginGql = `
@@ -45,6 +43,7 @@ type loginResult struct {
 			} `json:"error"`
 		} `json:"result"`
 	} `json:"data"`
+	test_graphql.GraphqlErrors
 }
 
 const loginStatusGql = `
@@ -57,6 +56,7 @@ type loginStatusResult struct {
 	Data struct {
 		LoginStatus bool `json:"loginStatus"`
 	}
+	test_graphql.GraphqlErrors
 }
 
 const logoutGql = `
@@ -86,6 +86,8 @@ func Test_Login_With_Valid_Credentials(t *testing.T) {
 
 	req := test_graphql.NewRequest(t, query)
 	w := test_graphql.Handle(t, api.ResolverDependencies{Db: db}, req, &loginResult)
+	test_graphql.RequireNoErrors(t, loginResult.GraphqlErrors)
+
 	cookie := readCookie(t, w, "authToken")
 
 	require.Empty(t, loginResult.Data.Login.Error.Code, "data.login.error.code")
@@ -111,6 +113,7 @@ func Test_Login_With_Invalid_Password(t *testing.T) {
 
 	req := test_graphql.NewRequest(t, query)
 	test_graphql.Handle(t, api.ResolverDependencies{Db: db}, req, &loginResult)
+	test_graphql.RequireNoErrors(t, loginResult.GraphqlErrors)
 
 	require.Equal(t, "invalidCredentials", loginResult.Data.Login.Error.Code, "data.login.error.code")
 	assert.Empty(t, loginResult.Data.Login.Account.Id, "data.login.account.id")
@@ -134,6 +137,7 @@ func Test_Login_With_Unknown_EmailAddress(t *testing.T) {
 
 	req := test_graphql.NewRequest(t, query)
 	test_graphql.Handle(t, api.ResolverDependencies{Db: db}, req, &loginResult)
+	test_graphql.RequireNoErrors(t, loginResult.GraphqlErrors)
 
 	require.Equal(t, "invalidCredentials", loginResult.Data.Login.Error.Code, "data.login.error.code")
 	assert.Empty(t, loginResult.Data.Login.Account.Id, "data.login.account.id")
@@ -158,6 +162,8 @@ func Test_LoginStatus_With_Valid_Authentication(t *testing.T) {
 
 	req := test_graphql.NewRequest(t, query)
 	w := test_graphql.Handle(t, api.ResolverDependencies{Db: db}, req, &loginResult)
+	test_graphql.RequireNoErrors(t, loginResult.GraphqlErrors)
+
 	cookie := readCookie(t, w, "authToken")
 
 	query = test_graphql.GraphqlQuery{
@@ -170,6 +176,7 @@ func Test_LoginStatus_With_Valid_Authentication(t *testing.T) {
 	req.Header.Set("X-CSRF-Token", loginResult.Data.Login.CsrfToken)
 	req.AddCookie(cookie)
 	test_graphql.Handle(t, api.ResolverDependencies{Db: db}, req, &loginStatusResult)
+	test_graphql.RequireNoErrors(t, loginStatusResult.GraphqlErrors)
 
 	require.True(t, loginStatusResult.Data.LoginStatus, "data.loginStatus")
 }
@@ -191,6 +198,7 @@ func Test_LoginStatus_With_Invalid_Authentication(t *testing.T) {
 	req.Header.Set("X-CSRF-Token", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1NDUwNzcyNTR9.cZX4qrzVpbKJSoxBdlFsgnAq3fc8CwweD2cmITyNT9U")
 	req.AddCookie(&http.Cookie{Name: "authToken", Value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1NDUwNzcyNTQsImlhdCI6MTU0NTA1NTY1NCwicm9sZSI6IlN5c3RlbUFkbWluaXN0cmF0b3IiLCJzdWIiOiJiMmNlNDYwMi04ODI2LTQ5M2MtOWZkMS00OTI0MzMyNWEyY2UifQ.7rDHvp9W6aEc2rvylhCXiy_eA8kJkvT_FxY9UD8LxmM"})
 	test_graphql.Handle(t, api.ResolverDependencies{Db: db}, req, &loginStatusResult)
+	test_graphql.RequireNoErrors(t, loginStatusResult.GraphqlErrors)
 
 	require.False(t, loginStatusResult.Data.LoginStatus, "data.loginStatus")
 }
@@ -217,6 +225,8 @@ func Test_Token_Refresh(t *testing.T) {
 
 	req := test_graphql.NewRequest(t, query)
 	w := test_graphql.Handle(t, api.ResolverDependencies{Db: db, TimeSource: fixedTime}, req, &loginResult)
+	test_graphql.RequireNoErrors(t, loginResult.GraphqlErrors)
+
 	cookie := readCookie(t, w, "authToken")
 	csrfToken := loginResult.Data.Login.CsrfToken
 
@@ -237,6 +247,7 @@ func Test_Token_Refresh(t *testing.T) {
 	req.Header.Set("X-CSRF-Token", csrfToken)
 	req.AddCookie(cookie)
 	w = test_graphql.Handle(t, api.ResolverDependencies{Db: db, TimeSource: fixedTime}, req, &loginStatusResult)
+	test_graphql.RequireNoErrors(t, loginStatusResult.GraphqlErrors)
 
 	require.True(t, loginStatusResult.Data.LoginStatus, "data.loginStatus")
 
@@ -259,6 +270,7 @@ func Test_Token_Refresh(t *testing.T) {
 	req.Header.Set("X-CSRF-Token", refreshedCsrfToken)
 	req.AddCookie(refreshedAuthTokenCookie)
 	test_graphql.Handle(t, api.ResolverDependencies{Db: db, TimeSource: fixedTime}, req, &loginStatusResult)
+	test_graphql.RequireNoErrors(t, loginStatusResult.GraphqlErrors)
 
 	assert.True(t, loginStatusResult.Data.LoginStatus, "data.loginStatus")
 }
@@ -281,26 +293,10 @@ func Test_Mutation_With_Get_Fails(t *testing.T) {
 	graphqlHandler := api_handler.NewGraphqlHandler(api.ResolverDependencies{
 		Db:         db,
 		TimeSource: helper.FixedTime(),
-		Hub:        nil,
-		Notifier:   nil,
 	}, api_handler.HandlerConfig{})
 	w := httptest.NewRecorder()
 	graphqlHandler.ServeHTTP(w, req)
-	body, err := ioutil.ReadAll(w.Body)
-	if err != nil {
-		t.Fatalf("could not read response body: %v", err)
-	}
-
-	var errs test_graphql.GraphqlErrors
-
-	err = json.Unmarshal(body, &errs)
-	if err != nil {
-		t.Fatalf("could not decode response JSON to check for errors: %v", err)
-	}
-
-	require.NotEmpty(t, errs.Errors, "GraphQL errors")
-
-	assert.Equal(t, "operation  not found", errs.Errors[0].Message, "errors[0].message")
+	require.Equal(t, http.StatusUnprocessableEntity, w.Code, "response status")
 }
 
 func readCookie(t *testing.T, w *httptest.ResponseRecorder, cookieName string) *http.Cookie {

@@ -1,7 +1,7 @@
 package helper
 
 import (
-	"myvendor/myproject/backend/test"
+	"myvendor.mytld/myproject/backend/test"
 )
 
 // FixedTime returns a fixed time for testing

@@ -10,11 +10,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"myvendor/myproject/backend/api"
-	api_handler "myvendor/myproject/backend/api/handler"
-	"myvendor/myproject/backend/api/helper"
-	"myvendor/myproject/backend/service/hub"
-	"myvendor/myproject/backend/service/notification"
+	"myvendor.mytld/myproject/backend/api"
+	api_handler "myvendor.mytld/myproject/backend/api/handler"
+	"myvendor.mytld/myproject/backend/api/helper"
+	"myvendor.mytld/myproject/backend/service/hub"
+	"myvendor.mytld/myproject/backend/service/notification"
 )
 
 func NewRequest(t *testing.T, query GraphqlQuery) *http.Request {

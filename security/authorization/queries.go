@@ -1,6 +1,6 @@
 package authorization
 
-import "myvendor/myproject/backend/domain"
+import "myvendor.mytld/myproject/backend/domain"
 
 func (a *Authorizer) AllowsOrganisationsQuery(query domain.OrganisationsQuery) error {
 	return a.RequireRole(domain.RoleSystemAdministrator)

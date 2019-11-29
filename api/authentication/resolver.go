@@ -1,6 +1,6 @@
 package authentication
 
-import "myvendor/myproject/backend/api"
+import "myvendor.mytld/myproject/backend/api"
 
 type MutationResolver struct{ api.ResolverDependencies }
 

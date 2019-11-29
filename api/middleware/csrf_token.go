@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"myvendor/myproject/backend/api"
+	"myvendor.mytld/myproject/backend/api"
 )
 
 // CsrfTokenMiddleware adds the CSRF token from a HTTP request

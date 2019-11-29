@@ -1,11 +1,11 @@
 package authentication
 
 import (
-	"github.com/pkg/errors"
+	"github.com/friendsofgo/errors"
 	jose "gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
 
-	"myvendor/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain"
 )
 
 func GenerateCsrfToken(account TokenSecretProvider, timeSource domain.TimeSource) (string, error) {

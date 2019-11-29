@@ -1,5 +1,7 @@
 package authentication
 
+import "github.com/gofrs/uuid"
+
 type AuthTokenDataProvider interface {
 	TokenSecretProvider
 	AccountIDProvider
@@ -12,11 +14,11 @@ type TokenSecretProvider interface {
 }
 
 type AccountIDProvider interface {
-	GetAccountID() string
+	GetAccountID() uuid.UUID
 }
 
 type OrganisationIDProvider interface {
-	GetOrganisationID() string
+	GetOrganisationID() uuid.UUID
 }
 
 type RoleIdentifierProvider interface {

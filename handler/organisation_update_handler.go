@@ -5,13 +5,13 @@ import (
 	"database/sql"
 
 	"github.com/apex/log"
-	"github.com/pkg/errors"
+	"github.com/friendsofgo/errors"
 	"github.com/zbyte/go-kallax"
 
-	"myvendor/myproject/backend/domain"
-	"myvendor/myproject/backend/persistence/records"
-	"myvendor/myproject/backend/security/authentication"
-	"myvendor/myproject/backend/security/authorization"
+	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/persistence/records"
+	"myvendor.mytld/myproject/backend/security/authentication"
+	"myvendor.mytld/myproject/backend/security/authorization"
 )
 
 type OrganisationUpdateHandler struct {

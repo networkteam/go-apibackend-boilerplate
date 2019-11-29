@@ -5,9 +5,9 @@ import (
 
 	"github.com/gofrs/uuid"
 
-	"myvendor/myproject/backend/domain"
-	"myvendor/myproject/backend/security/authentication"
-	"myvendor/myproject/backend/security/authorization"
+	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/security/authentication"
+	"myvendor.mytld/myproject/backend/security/authorization"
 )
 
 func TestAuthorizer_AllowsOrganisationsQuery(t *testing.T) {

@@ -1,11 +1,12 @@
 package records
 
 import (
-	"github.com/pkg/errors"
+	"github.com/gofrs/uuid"
+	"github.com/friendsofgo/errors"
 	"github.com/zbyte/go-kallax"
 
-	"myvendor/myproject/backend/domain"
-	security_helper "myvendor/myproject/backend/security/helper"
+	"myvendor.mytld/myproject/backend/domain"
+	security_helper "myvendor.mytld/myproject/backend/security/helper"
 )
 
 const (
@@ -25,16 +26,13 @@ type Account struct {
 	FirstName      *string
 	LastName       *string
 	Secret         []byte
-	EmailAddress   *string   `unique:"true"`
+	EmailAddress   *string `unique:"true"`
 	PasswordHash   []byte
 	DeviceToken    *string
 	DeviceOs       *string
+	DeviceLabel    *string
 
-	// A User Account has an optional OrganisationID, an App Account has a mandatory OrganisationID
-	// TODO Don't use pointer, see https://github.com/src-d/go-kallax/#primary-keys
-	OrganisationID *kallax.UUID
-
-	DeviceLabel *string
+	Organisation *Organisation `fk:",inverse"`
 }
 
 func newAccount() (*Account, error) {
@@ -78,27 +76,20 @@ func (a *Account) RegenerateSecret() error {
 	return nil
 }
 
-func (a *Account) BeforeSave() error {
-	// Store organisationID as null in database for foreign key checks with optional id
-	if a.OrganisationID != nil && a.OrganisationID.IsEmpty() {
-		a.OrganisationID = nil
-	}
-	return nil
-}
-
 func (a *Account) GetTokenSecret() []byte {
 	return a.Secret
 }
 
-func (a *Account) GetAccountID() string {
-	return a.ID.String()
+func (a *Account) GetAccountID() uuid.UUID {
+	return uuid.UUID(a.ID)
 }
 
-func (a *Account) GetOrganisationID() string {
-	if a.OrganisationID == nil {
-		return ""
+func (a *Account) GetOrganisationID() uuid.UUID {
+	organisationID := valueToUUID(a.Value(Schema.Account.OrganisationFK.String()))
+	if organisationID != nil {
+		return uuid.UUID(*organisationID)
 	}
-	return a.OrganisationID.String()
+	return uuid.Nil
 }
 
 func (a *Account) GetRoleIdentifier() string {

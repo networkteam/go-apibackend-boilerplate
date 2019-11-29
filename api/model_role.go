@@ -5,9 +5,9 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/pkg/errors"
+	"github.com/friendsofgo/errors"
 
-	"myvendor/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain"
 )
 
 // TODO Check if external marshal of domain.Role type is better here

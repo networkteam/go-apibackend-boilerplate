@@ -3,8 +3,8 @@ package middleware
 import (
 	"net/http"
 
-	"myvendor/myproject/backend/api"
-	"myvendor/myproject/backend/security/authentication"
+	"myvendor.mytld/myproject/backend/api"
+	"myvendor.mytld/myproject/backend/security/authentication"
 )
 
 // AuthTokenMiddleware adds the auth token from a HTTP request

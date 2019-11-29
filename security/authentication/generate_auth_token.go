@@ -3,11 +3,11 @@ package authentication
 import (
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/friendsofgo/errors"
 	jose "gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
 
-	"myvendor/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain"
 )
 
 const AuthTokenExpiry = 6 * time.Hour
@@ -26,7 +26,7 @@ func GenerateAuthToken(account AuthTokenDataProvider, timeSource domain.TimeSour
 	now := timeSource.Now()
 
 	cl := jwt.Claims{
-		Subject:  account.GetAccountID(),
+		Subject:  account.GetAccountID().String(),
 		IssuedAt: jwt.NewNumericDate(now),
 		Expiry:   jwt.NewNumericDate(now.Add(opts.Expiry)),
 	}
@@ -36,7 +36,7 @@ func GenerateAuthToken(account AuthTokenDataProvider, timeSource domain.TimeSour
 		OrganisationID string `json:"organisationId"`
 	}{
 		Role:           account.GetRoleIdentifier(),
-		OrganisationID: account.GetOrganisationID(),
+		OrganisationID: account.GetOrganisationID().String(),
 	}
 
 	raw, err := jwt.Signed(sig).Claims(cl).Claims(privateCl).CompactSerialize()

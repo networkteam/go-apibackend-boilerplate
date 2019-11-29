@@ -4,18 +4,18 @@ import (
 	"context"
 
 	"github.com/apex/log"
+	"github.com/friendsofgo/errors"
 	"github.com/gofrs/uuid"
-	"github.com/pkg/errors"
 	"github.com/zbyte/go-kallax"
 
-	"myvendor/myproject/backend/api"
-	"myvendor/myproject/backend/api/helper"
-	"myvendor/myproject/backend/persistence/records"
-	"myvendor/myproject/backend/security/authentication"
-	security_helper "myvendor/myproject/backend/security/helper"
+	"myvendor.mytld/myproject/backend/api"
+	"myvendor.mytld/myproject/backend/api/helper"
+	"myvendor.mytld/myproject/backend/persistence/records"
+	"myvendor.mytld/myproject/backend/security/authentication"
+	security_helper "myvendor.mytld/myproject/backend/security/helper"
 )
 
-func (r *MutationResolver) Login(ctx context.Context, credentials api.LoginCredentials) (api.LoginResult, error) {
+func (r *MutationResolver) Login(ctx context.Context, credentials api.LoginCredentials) (*api.LoginResult, error) {
 	log.
 		WithField("emailAddress", credentials.EmailAddress).
 		Debug("Handling login")
@@ -23,6 +23,7 @@ func (r *MutationResolver) Login(ctx context.Context, credentials api.LoginCrede
 	accountStore := records.NewAccountStore(r.Db)
 
 	query := records.NewAccountQuery().
+		WithOrganisation().
 		Where(kallax.Eq(records.Schema.Account.EmailAddress, credentials.EmailAddress))
 	account, err := accountStore.FindOne(query)
 	accountNotFound := err == kallax.ErrNotFound
@@ -32,15 +33,16 @@ func (r *MutationResolver) Login(ctx context.Context, credentials api.LoginCrede
 			PasswordHash: security_helper.DefaultHashForComparison(),
 		}
 	} else if err != nil {
-		return api.LoginResult{}, errors.Wrap(err, "could not query accounts")
+		return nil, errors.Wrap(err, "could not query accounts")
 	}
 
 	err = security_helper.CompareHashAndPassword(account.PasswordHash, []byte(credentials.Password))
 	if err != nil || accountNotFound {
 		log.
 			WithField("emailAddress", credentials.EmailAddress).
-			Info("Login failed")
-		return api.LoginResult{
+			Warn("Login failed")
+		return &api.LoginResult{
+			Account: &api.UserAccount{},
 			Error: &api.Error{
 				Code: "invalidCredentials",
 			},
@@ -51,12 +53,12 @@ func (r *MutationResolver) Login(ctx context.Context, credentials api.LoginCrede
 
 	serializedAuthToken, err := authentication.GenerateAuthToken(account, r.TimeSource, authentication.TokenOpts{Expiry: authentication.AuthTokenExpiry})
 	if err != nil {
-		return api.LoginResult{}, errors.Wrap(err, "could not generate auth token")
+		return nil, errors.Wrap(err, "could not generate auth token")
 	}
 
 	serializedCsrfToken, err := authentication.GenerateCsrfToken(account, r.TimeSource)
 	if err != nil {
-		return api.LoginResult{}, errors.Wrap(err, "could not generate CSRF token")
+		return nil, errors.Wrap(err, "could not generate CSRF token")
 	}
 
 	req := api.GetHTTPRequest(ctx)
@@ -67,19 +69,19 @@ func (r *MutationResolver) Login(ctx context.Context, credentials api.LoginCrede
 	log.
 		WithField("emailAddress", credentials.EmailAddress).
 		WithField("accountID", accountID).
-		Debug("Login success")
+		Info("Login success")
 
 	userAccount, err := helper.MapToUserAccount(account)
 	if err != nil {
-		return api.LoginResult{}, errors.Wrap(err, "could not map account to user account")
+		return nil, errors.Wrap(err, "could not map account to user account")
 	}
 
 	organisation, err := helper.GetOrganisationForAccount(account, r.Db)
 	if err != nil {
-		return api.LoginResult{}, errors.Wrap(err, "failed to fetch associated organisation")
+		return nil, errors.Wrap(err, "failed to fetch associated organisation")
 	}
 
-	return api.LoginResult{
+	return &api.LoginResult{
 		CsrfToken: serializedCsrfToken,
 		Account:   userAccount,
 		// Explicitly return the organisation, since the sub-root of UserAccount->Organisation does not authorize access

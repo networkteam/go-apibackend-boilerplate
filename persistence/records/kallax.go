@@ -51,13 +51,10 @@ func (r *Account) ColumnAddress(col string) (interface{}, error) {
 		return types.Nullable(&r.DeviceToken), nil
 	case "device_os":
 		return types.Nullable(&r.DeviceOs), nil
-	case "organisation_id":
-		if r.OrganisationID == nil {
-			r.OrganisationID = new(kallax.UUID)
-		}
-		return types.Nullable(r.OrganisationID), nil
 	case "device_label":
 		return types.Nullable(&r.DeviceLabel), nil
+	case "organisation_id":
+		return types.Nullable(kallax.VirtualColumn("organisation_id", r, new(kallax.UUID))), nil
 
 	default:
 		return nil, fmt.Errorf("kallax: invalid column in Account: %s", col)
@@ -102,16 +99,17 @@ func (r *Account) Value(col string) (interface{}, error) {
 			return nil, nil
 		}
 		return r.DeviceOs, nil
-	case "organisation_id":
-		if r.OrganisationID == (*kallax.UUID)(nil) {
-			return nil, nil
-		}
-		return r.OrganisationID, nil
 	case "device_label":
 		if r.DeviceLabel == (*string)(nil) {
 			return nil, nil
 		}
 		return r.DeviceLabel, nil
+	case "organisation_id":
+		v := r.Model.VirtualColumn(col)
+		if v == nil {
+			return nil, kallax.ErrEmptyVirtualColumn
+		}
+		return v, nil
 
 	default:
 		return nil, fmt.Errorf("kallax: invalid column in Account: %s", col)
@@ -121,12 +119,30 @@ func (r *Account) Value(col string) (interface{}, error) {
 // NewRelationshipRecord returns a new record for the relatiobship in the given
 // field.
 func (r *Account) NewRelationshipRecord(field string) (kallax.Record, error) {
-	return nil, fmt.Errorf("kallax: model Account has no relationships")
+	switch field {
+	case "Organisation":
+		return new(Organisation), nil
+
+	}
+	return nil, fmt.Errorf("kallax: model Account has no relationship %s", field)
 }
 
 // SetRelationship sets the given relationship in the given field.
 func (r *Account) SetRelationship(field string, rel interface{}) error {
-	return fmt.Errorf("kallax: model Account has no relationships")
+	switch field {
+	case "Organisation":
+		val, ok := rel.(*Organisation)
+		if !ok {
+			return fmt.Errorf("kallax: record of type %t can't be assigned to relationship Organisation", rel)
+		}
+		if !val.GetID().IsEmpty() {
+			r.Organisation = val
+		}
+
+		return nil
+
+	}
+	return fmt.Errorf("kallax: model Account has no relationship %s", field)
 }
 
 // AccountStore is the entity to access the records of the type Account
@@ -168,14 +184,42 @@ func (s *AccountStore) DisableCacher() *AccountStore {
 	return &AccountStore{s.Store.DisableCacher()}
 }
 
+func (s *AccountStore) inverseRecords(record *Account) []modelSaveFunc {
+	var result []modelSaveFunc
+
+	if record.Organisation != nil && !record.Organisation.IsSaving() {
+		record.AddVirtualColumn("organisation_id", record.Organisation.GetID())
+		result = append(result, func(store *kallax.Store) error {
+			_, err := (&OrganisationStore{store}).Save(record.Organisation)
+			return err
+		})
+	}
+
+	return result
+}
+
 // Insert inserts a Account in the database. A non-persisted object is
 // required for this operation.
 func (s *AccountStore) Insert(record *Account) error {
 	record.SetSaving(true)
 	defer record.SetSaving(false)
 
-	if err := record.BeforeSave(); err != nil {
-		return err
+	inverseRecords := s.inverseRecords(record)
+
+	if len(inverseRecords) > 0 {
+		return s.Store.Transaction(func(s *kallax.Store) error {
+			for _, r := range inverseRecords {
+				if err := r(s); err != nil {
+					return err
+				}
+			}
+
+			if err := s.Insert(Schema.Account.BaseSchema, record); err != nil {
+				return err
+			}
+
+			return nil
+		})
 	}
 
 	return s.Store.Insert(Schema.Account.BaseSchema, record)
@@ -191,8 +235,28 @@ func (s *AccountStore) Update(record *Account, cols ...kallax.SchemaField) (upda
 	record.SetSaving(true)
 	defer record.SetSaving(false)
 
-	if err := record.BeforeSave(); err != nil {
-		return 0, err
+	inverseRecords := s.inverseRecords(record)
+
+	if len(inverseRecords) > 0 {
+		err = s.Store.Transaction(func(s *kallax.Store) error {
+			for _, r := range inverseRecords {
+				if err := r(s); err != nil {
+					return err
+				}
+			}
+
+			updated, err = s.Update(Schema.Account.BaseSchema, record, cols...)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		})
+		if err != nil {
+			return 0, err
+		}
+
+		return updated, nil
 	}
 
 	return s.Store.Update(Schema.Account.BaseSchema, record, cols...)
@@ -380,6 +444,11 @@ func (q *AccountQuery) Where(cond kallax.Condition) *AccountQuery {
 	return q
 }
 
+func (q *AccountQuery) WithOrganisation() *AccountQuery {
+	q.AddRelation(Schema.Organisation.BaseSchema, "Organisation", kallax.OneToOne, nil)
+	return q
+}
+
 // FindByID adds a new filter to the query that will require that
 // the ID property is equal to one of the passed values; if no passed values,
 // it will do nothing.
@@ -434,10 +503,10 @@ func (q *AccountQuery) FindByPasswordHash(v ...byte) *AccountQuery {
 	return q.Where(kallax.ArrayContains(Schema.Account.PasswordHash, values...))
 }
 
-// FindByOrganisationID adds a new filter to the query that will require that
-// the OrganisationID property is equal to the passed value.
-func (q *AccountQuery) FindByOrganisationID(v kallax.UUID) *AccountQuery {
-	return q.Where(kallax.Eq(Schema.Account.OrganisationID, v))
+// FindByOrganisation adds a new filter to the query that will require that
+// the foreign key of Organisation is equal to the passed value.
+func (q *AccountQuery) FindByOrganisation(v kallax.UUID) *AccountQuery {
+	return q.Where(kallax.Eq(Schema.Account.OrganisationFK, v))
 }
 
 // AccountResultSet is the set of results returned by a query to the
@@ -570,7 +639,7 @@ func (r *AppAccountRequestToken) ColumnAddress(col string) (interface{}, error) 
 	case "expiry":
 		return &r.Expiry, nil
 	case "organisation_id":
-		return &r.OrganisationID, nil
+		return types.Nullable(kallax.VirtualColumn("organisation_id", r, new(kallax.UUID))), nil
 	case "device_label":
 		return &r.DeviceLabel, nil
 
@@ -591,7 +660,11 @@ func (r *AppAccountRequestToken) Value(col string) (interface{}, error) {
 	case "expiry":
 		return r.Expiry, nil
 	case "organisation_id":
-		return r.OrganisationID, nil
+		v := r.Model.VirtualColumn(col)
+		if v == nil {
+			return nil, kallax.ErrEmptyVirtualColumn
+		}
+		return v, nil
 	case "device_label":
 		return r.DeviceLabel, nil
 
@@ -603,12 +676,30 @@ func (r *AppAccountRequestToken) Value(col string) (interface{}, error) {
 // NewRelationshipRecord returns a new record for the relatiobship in the given
 // field.
 func (r *AppAccountRequestToken) NewRelationshipRecord(field string) (kallax.Record, error) {
-	return nil, fmt.Errorf("kallax: model AppAccountRequestToken has no relationships")
+	switch field {
+	case "Organisation":
+		return new(Organisation), nil
+
+	}
+	return nil, fmt.Errorf("kallax: model AppAccountRequestToken has no relationship %s", field)
 }
 
 // SetRelationship sets the given relationship in the given field.
 func (r *AppAccountRequestToken) SetRelationship(field string, rel interface{}) error {
-	return fmt.Errorf("kallax: model AppAccountRequestToken has no relationships")
+	switch field {
+	case "Organisation":
+		val, ok := rel.(*Organisation)
+		if !ok {
+			return fmt.Errorf("kallax: record of type %t can't be assigned to relationship Organisation", rel)
+		}
+		if !val.GetID().IsEmpty() {
+			r.Organisation = val
+		}
+
+		return nil
+
+	}
+	return fmt.Errorf("kallax: model AppAccountRequestToken has no relationship %s", field)
 }
 
 // AppAccountRequestTokenStore is the entity to access the records of the type AppAccountRequestToken
@@ -650,6 +741,20 @@ func (s *AppAccountRequestTokenStore) DisableCacher() *AppAccountRequestTokenSto
 	return &AppAccountRequestTokenStore{s.Store.DisableCacher()}
 }
 
+func (s *AppAccountRequestTokenStore) inverseRecords(record *AppAccountRequestToken) []modelSaveFunc {
+	var result []modelSaveFunc
+
+	if record.Organisation != nil && !record.Organisation.IsSaving() {
+		record.AddVirtualColumn("organisation_id", record.Organisation.GetID())
+		result = append(result, func(store *kallax.Store) error {
+			_, err := (&OrganisationStore{store}).Save(record.Organisation)
+			return err
+		})
+	}
+
+	return result
+}
+
 // Insert inserts a AppAccountRequestToken in the database. A non-persisted object is
 // required for this operation.
 func (s *AppAccountRequestTokenStore) Insert(record *AppAccountRequestToken) error {
@@ -657,6 +762,24 @@ func (s *AppAccountRequestTokenStore) Insert(record *AppAccountRequestToken) err
 	defer record.SetSaving(false)
 
 	record.Expiry = record.Expiry.Truncate(time.Microsecond)
+
+	inverseRecords := s.inverseRecords(record)
+
+	if len(inverseRecords) > 0 {
+		return s.Store.Transaction(func(s *kallax.Store) error {
+			for _, r := range inverseRecords {
+				if err := r(s); err != nil {
+					return err
+				}
+			}
+
+			if err := s.Insert(Schema.AppAccountRequestToken.BaseSchema, record); err != nil {
+				return err
+			}
+
+			return nil
+		})
+	}
 
 	return s.Store.Insert(Schema.AppAccountRequestToken.BaseSchema, record)
 }
@@ -672,6 +795,30 @@ func (s *AppAccountRequestTokenStore) Update(record *AppAccountRequestToken, col
 
 	record.SetSaving(true)
 	defer record.SetSaving(false)
+
+	inverseRecords := s.inverseRecords(record)
+
+	if len(inverseRecords) > 0 {
+		err = s.Store.Transaction(func(s *kallax.Store) error {
+			for _, r := range inverseRecords {
+				if err := r(s); err != nil {
+					return err
+				}
+			}
+
+			updated, err = s.Update(Schema.AppAccountRequestToken.BaseSchema, record, cols...)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		})
+		if err != nil {
+			return 0, err
+		}
+
+		return updated, nil
+	}
 
 	return s.Store.Update(Schema.AppAccountRequestToken.BaseSchema, record, cols...)
 }
@@ -858,6 +1005,11 @@ func (q *AppAccountRequestTokenQuery) Where(cond kallax.Condition) *AppAccountRe
 	return q
 }
 
+func (q *AppAccountRequestTokenQuery) WithOrganisation() *AppAccountRequestTokenQuery {
+	q.AddRelation(Schema.Organisation.BaseSchema, "Organisation", kallax.OneToOne, nil)
+	return q
+}
+
 // FindByID adds a new filter to the query that will require that
 // the ID property is equal to one of the passed values; if no passed values,
 // it will do nothing.
@@ -890,10 +1042,10 @@ func (q *AppAccountRequestTokenQuery) FindByExpiry(cond kallax.ScalarCond, v tim
 	return q.Where(cond(Schema.AppAccountRequestToken.Expiry, v))
 }
 
-// FindByOrganisationID adds a new filter to the query that will require that
-// the OrganisationID property is equal to the passed value.
-func (q *AppAccountRequestTokenQuery) FindByOrganisationID(v kallax.UUID) *AppAccountRequestTokenQuery {
-	return q.Where(kallax.Eq(Schema.AppAccountRequestToken.OrganisationID, v))
+// FindByOrganisation adds a new filter to the query that will require that
+// the foreign key of Organisation is equal to the passed value.
+func (q *AppAccountRequestTokenQuery) FindByOrganisation(v kallax.UUID) *AppAccountRequestTokenQuery {
+	return q.Where(kallax.Eq(Schema.AppAccountRequestToken.OrganisationFK, v))
 }
 
 // FindByDeviceLabel adds a new filter to the query that will require that
@@ -1446,8 +1598,8 @@ type schemaAccount struct {
 	PasswordHash   kallax.SchemaField
 	DeviceToken    kallax.SchemaField
 	DeviceOs       kallax.SchemaField
-	OrganisationID kallax.SchemaField
 	DeviceLabel    kallax.SchemaField
+	OrganisationFK kallax.SchemaField
 }
 
 type schemaAppAccountRequestToken struct {
@@ -1456,7 +1608,7 @@ type schemaAppAccountRequestToken struct {
 	ConnectToken   kallax.SchemaField
 	RoleIdentifier kallax.SchemaField
 	Expiry         kallax.SchemaField
-	OrganisationID kallax.SchemaField
+	OrganisationFK kallax.SchemaField
 	DeviceLabel    kallax.SchemaField
 }
 
@@ -1472,7 +1624,9 @@ var Schema = &schema{
 			"accounts",
 			"__account",
 			kallax.NewSchemaField("id"),
-			kallax.ForeignKeys{},
+			kallax.ForeignKeys{
+				"Organisation": kallax.NewForeignKey("organisation_id", true),
+			},
 			func() kallax.Record {
 				return new(Account)
 			},
@@ -1487,8 +1641,8 @@ var Schema = &schema{
 			kallax.NewSchemaField("password_hash"),
 			kallax.NewSchemaField("device_token"),
 			kallax.NewSchemaField("device_os"),
-			kallax.NewSchemaField("organisation_id"),
 			kallax.NewSchemaField("device_label"),
+			kallax.NewSchemaField("organisation_id"),
 		),
 		ID:             kallax.NewSchemaField("id"),
 		Type:           kallax.NewSchemaField("type"),
@@ -1500,15 +1654,17 @@ var Schema = &schema{
 		PasswordHash:   kallax.NewSchemaField("password_hash"),
 		DeviceToken:    kallax.NewSchemaField("device_token"),
 		DeviceOs:       kallax.NewSchemaField("device_os"),
-		OrganisationID: kallax.NewSchemaField("organisation_id"),
 		DeviceLabel:    kallax.NewSchemaField("device_label"),
+		OrganisationFK: kallax.NewSchemaField("organisation_id"),
 	},
 	AppAccountRequestToken: &schemaAppAccountRequestToken{
 		BaseSchema: kallax.NewBaseSchema(
 			"app_account_request_tokens",
 			"__appaccountrequesttoken",
 			kallax.NewSchemaField("id"),
-			kallax.ForeignKeys{},
+			kallax.ForeignKeys{
+				"Organisation": kallax.NewForeignKey("organisation_id", true),
+			},
 			func() kallax.Record {
 				return new(AppAccountRequestToken)
 			},
@@ -1524,7 +1680,7 @@ var Schema = &schema{
 		ConnectToken:   kallax.NewSchemaField("connect_token"),
 		RoleIdentifier: kallax.NewSchemaField("role_identifier"),
 		Expiry:         kallax.NewSchemaField("expiry"),
-		OrganisationID: kallax.NewSchemaField("organisation_id"),
+		OrganisationFK: kallax.NewSchemaField("organisation_id"),
 		DeviceLabel:    kallax.NewSchemaField("device_label"),
 	},
 	Organisation: &schemaOrganisation{

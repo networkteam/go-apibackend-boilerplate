@@ -7,7 +7,7 @@ import (
 	sentry "github.com/getsentry/sentry-go"
 	"github.com/robfig/cron"
 
-	"myvendor/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain"
 )
 
 type AppAccountTokenCleanupJob struct {

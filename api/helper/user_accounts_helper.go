@@ -1,11 +1,11 @@
 package helper
 
 import (
+	"github.com/friendsofgo/errors"
 	"github.com/gofrs/uuid"
-	"github.com/pkg/errors"
 
-	"myvendor/myproject/backend/api"
-	"myvendor/myproject/backend/persistence/records"
+	"myvendor.mytld/myproject/backend/api"
+	"myvendor.mytld/myproject/backend/persistence/records"
 )
 
 func MapResultSetToUserAccounts(res *records.AccountResultSet) (accounts []*api.UserAccount, err error) {
@@ -36,8 +36,7 @@ func MapToUserAccount(a *records.Account) (*api.UserAccount, error) {
 		EmailAddress: StringOrEmpty(a.EmailAddress),
 		Role:         api.Role(role),
 	}
-	if a.OrganisationID != nil && !(*a.OrganisationID).IsEmpty() {
-		organisationID := uuid.UUID(*a.OrganisationID)
+	if organisationID := a.GetOrganisationID(); organisationID != uuid.Nil {
 		userAccount.OrganisationID = &organisationID
 	}
 	userAccount.FirstName = StringOrEmpty(a.FirstName)

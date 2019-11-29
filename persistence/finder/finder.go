@@ -3,7 +3,7 @@ package finder
 import (
 	"database/sql"
 
-	"myvendor/myproject/backend/persistence/records"
+	"myvendor.mytld/myproject/backend/persistence/records"
 )
 
 type Finder struct {

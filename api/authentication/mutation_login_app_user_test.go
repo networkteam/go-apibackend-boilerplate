@@ -7,9 +7,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"myvendor/myproject/backend/api/helper"
-	test_db "myvendor/myproject/backend/test/db"
-	test_graphql "myvendor/myproject/backend/test/graphql"
+	"myvendor.mytld/myproject/backend/api"
+	"myvendor.mytld/myproject/backend/api/helper"
+	test_db "myvendor.mytld/myproject/backend/test/db"
+	test_graphql "myvendor.mytld/myproject/backend/test/graphql"
 )
 
 const appUserLoginGql = `
@@ -38,6 +39,7 @@ type appUserLoginResult struct {
 			} `json:"error"`
 		} `json:"result"`
 	} `json:"data"`
+	test_graphql.GraphqlErrors
 }
 
 func Test_AppUserLogin_With_Valid_Credentials(t *testing.T) {
@@ -46,19 +48,20 @@ func Test_AppUserLogin_With_Valid_Credentials(t *testing.T) {
 
 	test_db.ExecFixtures(t, db, "base")
 
-	expectedAccountID := "5c216747-9bdb-4be7-b65e-3249cb5243dc"
+	expectedAccountID := "cfdc5345-cd83-48ae-bbdd-978a8601cfa6"
 
 	query := test_graphql.GraphqlQuery{
 		Query: appUserLoginGql,
 		Variables: map[string]interface{}{
-			"emailAddress": "supervisor@example.com",
-			"password":     "myRandomPassword",
+			"emailAddress": "app@example.com",
+			"password":     "myPassword",
 		},
 	}
 	var loginResult appUserLoginResult
 
 	req := test_graphql.NewRequest(t, query)
-	test_graphql.Handle(t, db, helper.FixedTime(), req, &loginResult)
+	test_graphql.Handle(t, api.ResolverDependencies{Db: db}, req, &loginResult)
+	test_graphql.RequireNoErrors(t, loginResult.GraphqlErrors)
 
 	require.Empty(t, loginResult.Data.AppUserLogin.Error.Code, "data.login.error.code")
 	assert.Equal(t, expectedAccountID, loginResult.Data.AppUserLogin.Account.Id, "data.login.account.id")
@@ -81,7 +84,7 @@ func Test_AppUserLogin_With_Invalid_Password(t *testing.T) {
 	var loginResult appUserLoginResult
 
 	req := test_graphql.NewRequest(t, query)
-	test_graphql.Handle(t, db, helper.FixedTime(), req, &loginResult)
+	test_graphql.Handle(t, api.ResolverDependencies{Db: db}, req, &loginResult)
 
 	require.Equal(t, "invalidCredentials", loginResult.Data.AppUserLogin.Error.Code, "data.login.error.code")
 	assert.Empty(t, loginResult.Data.AppUserLogin.Account.Id, "data.login.account.id")
@@ -104,7 +107,7 @@ func Test_AppUserLogin_With_Unknown_EmailAddress(t *testing.T) {
 	var loginResult appUserLoginResult
 
 	req := test_graphql.NewRequest(t, query)
-	test_graphql.Handle(t, db, helper.FixedTime(), req, &loginResult)
+	test_graphql.Handle(t, api.ResolverDependencies{Db: db}, req, &loginResult)
 
 	require.Equal(t, "invalidCredentials", loginResult.Data.AppUserLogin.Error.Code, "data.login.error.code")
 	assert.Empty(t, loginResult.Data.AppUserLogin.Account.Id, "data.login.account.id")
@@ -120,8 +123,8 @@ func Test_AppUserLogin_Has_No_Expiration(t *testing.T) {
 	query := test_graphql.GraphqlQuery{
 		Query: appUserLoginGql,
 		Variables: map[string]interface{}{
-			"emailAddress": "supervisor@example.com",
-			"password":     "myRandomPassword",
+			"emailAddress": "app@example.com",
+			"password":     "myPassword",
 		},
 	}
 	loginTime := helper.FixedTime()
@@ -131,7 +134,7 @@ func Test_AppUserLogin_Has_No_Expiration(t *testing.T) {
 	var loginResult appUserLoginResult
 
 	req := test_graphql.NewRequest(t, query)
-	test_graphql.Handle(t, db, loginTime, req, &loginResult)
+	test_graphql.Handle(t, api.ResolverDependencies{Db: db, TimeSource: loginTime}, req, &loginResult)
 	authToken := loginResult.Data.AppUserLogin.AuthToken
 
 	require.Empty(t, loginResult.Data.AppUserLogin.Error.Code, "data.login.error.code")
@@ -146,7 +149,7 @@ func Test_AppUserLogin_Has_No_Expiration(t *testing.T) {
 		Query: loginStatusGql,
 	})
 	req.Header.Set("Authorization", authToken)
-	test_graphql.Handle(t, db, firstCheckTime, req, &loginStatusResult)
+	test_graphql.Handle(t, api.ResolverDependencies{Db: db, TimeSource: firstCheckTime}, req, &loginStatusResult)
 
 	require.Equal(t, true, loginStatusResult.Data.LoginStatus, "data.loginStatus")
 
@@ -158,7 +161,7 @@ func Test_AppUserLogin_Has_No_Expiration(t *testing.T) {
 		Query: loginStatusGql,
 	})
 	req.Header.Set("Authorization", authToken)
-	test_graphql.Handle(t, db, laterCheckTime, req, &loginStatusResult)
+	test_graphql.Handle(t, api.ResolverDependencies{Db: db, TimeSource: laterCheckTime}, req, &loginStatusResult)
 
 	require.Equal(t, true, loginStatusResult.Data.LoginStatus, "data.loginStatus")
 }

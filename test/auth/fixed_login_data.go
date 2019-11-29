@@ -6,8 +6,8 @@ import (
 
 	"github.com/gofrs/uuid"
 
-	"myvendor/myproject/backend/domain"
-	"myvendor/myproject/backend/security/authentication"
+	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/security/authentication"
 )
 
 // Auth token for SystemAdministrator

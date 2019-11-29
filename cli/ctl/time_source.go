@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	"myvendor/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain"
 )
 
 type currentTimeSource struct{}

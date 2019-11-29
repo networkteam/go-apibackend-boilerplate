@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/apex/log"
-	"github.com/pkg/errors"
+	"github.com/friendsofgo/errors"
 
 )
 
