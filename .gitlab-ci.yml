@@ -1,0 +1,199 @@
+stages:
+  - apps
+  - build
+  - test
+  - prepare
+  - deploy
+  - cleanup
+
+variables:
+  # Application deployment domain
+  KUBE_DOMAIN: k.networkteam.com
+  CI_REGISTRY_TAG: "${CI_COMMIT_REF_NAME}"
+  # Adjust GOPATH to enable caching of downloaded modules
+  GOPATH: "$CI_PROJECT_DIR/.cache/go"
+
+b:backend:
+  stage: build
+  image: golang:1.13
+  script:
+    - cd backend
+    - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o bin/myproject-ctl ./cli/ctl
+  cache:
+    key: 'golang'
+    paths:
+      - .cache/go
+  artifacts:
+    paths:
+      - backend/bin
+  only:
+    changes:
+      - backend/**/*
+
+t:backend:
+  stage: test
+  image: golang:1.13
+  services:
+    - postgres:10.10
+  variables:
+    TZ: Europe/Berlin
+    POSTGRES_DB: myproject-test
+    POSTGRES_USER: root
+    POSTGRES_PASSWORD: ""
+  script:
+    - cd backend
+    - go mod download
+    - go run gotest.tools/gotestsum --junitfile junit-backend.xml
+    - go test ./... -coverprofile=coverage.out -covermode atomic -coverpkg $(go list ./... | tr "\n" ",")
+  cache:
+    key: 'golang'
+    paths:
+      - .cache/go
+  artifacts:
+    paths:
+      - backend/coverage.out
+    reports:
+      junit: backend/junit-*.xml
+  dependencies: []
+  only:
+    changes:
+      - backend/**/*
+
+# sonar:scan:backend:
+#   stage: prepare
+#   image: registry.networkteam.com/networkteam/build/sonar-scanner
+#   variables:
+#     SONAR_USER_HOME: ${CI_PROJECT_DIR}/.cache/sonar/backend
+#   before_script:
+#     - SONAR_PROJECT_VERSION=$(git describe --match "[0-9]\.[0-9]\.[0-9]" | grep -Eo "^([0-9]*\.)*[0-9](-[0-9]{1,}-g){0,1}" | sed 's/-[0-9]\{1,\}-g/+/g')
+#   script:
+#     - cd backend
+#     - sonar-scanner -Dsonar.host.url=https://sonar.k.networkteam.com -Dsonar.login="$SONAR_AUTH_TOKEN" -Dsonar.projectVersion="$SONAR_PROJECT_VERSION"
+#   cache:
+#     key: 'sonar-backend'
+#     paths:
+#       - .cache/sonar/backend
+#   dependencies:
+#     - t:backend
+#   only:
+#     refs:
+#       - master
+#       - tags
+#     changes:
+#       - backend/**/*
+
+# sonar:report:backend:
+#   stage: prepare
+#   image: registry.networkteam.com/networkteam/build/sonar-scanner
+#   variables:
+#     SONAR_USER_HOME: ${CI_PROJECT_DIR}/.cache/sonar/backend
+#   before_script:
+#     - SONAR_PROJECT_VERSION=$(git describe --match "[0-9]\.[0-9]\.[0-9]" | grep -Eo "^([0-9]*\.)*[0-9](-[0-9]{1,}-g){0,1}" | sed 's/-[0-9]\{1,\}-g/+/g')
+#   script:
+#     - git checkout origin/master
+#     - git merge $CI_COMMIT_SHA --no-commit --no-ff
+#     - cd backend
+#     - sonar-scanner -Dsonar.host.url=https://sonar.k.networkteam.com -Dsonar.login="$SONAR_AUTH_TOKEN" -Dsonar.analysis.mode=preview -Dsonar.gitlab.project_id=$CI_PROJECT_PATH -Dsonar.gitlab.commit_sha=$CI_COMMIT_SHA -Dsonar.gitlab.ref_name=$CI_COMMIT_REF_NAME -Dsonar.projectVersion="$SONAR_PROJECT_VERSION"
+#   cache:
+#     key: 'sonar-backend'
+#     paths:
+#       - .cache/sonar/backend
+#   dependencies:
+#     - t:backend
+#   only:
+#     refs:
+#       - branches
+#     changes:
+#       - backend/**/*
+#   except:
+#     - master
+
+# db:backend:
+#   stage: prepare
+#   image: registry.networkteam.com/networkteam/build/kaniko:latest
+#   variables:
+#     PROJECT_COMPONENT: backend
+#   script:
+#     - build
+#   dependencies:
+#     - b:backend
+#   only:
+#     changes:
+#       - backend/**/*
+
+# review:
+#   stage: deploy
+#   image: registry.networkteam.com/networkteam/kubernetes-deploy:generic
+#   script:
+#     - command deploy
+#   artifacts:
+#     paths:
+#       - ci/deploy/review/.env
+#   environment:
+#     name: review/$CI_COMMIT_REF_NAME
+#     url: http://myproject-$CI_ENVIRONMENT_SLUG.$KUBE_DOMAIN
+#     on_stop: stop_review
+#   variables:
+#     ENV_FILE: ${CI_PROJECT_DIR}/ci/deploy/review/.env
+#     CREATE_FIXTURES: 1
+#   only:
+#     - branches
+#   except:
+#     - master
+#   dependencies: []
+
+# integration:
+#   stage: deploy
+#   image: registry.networkteam.com/networkteam/kubernetes-deploy:generic
+#   script:
+#     - command deploy
+#   artifacts:
+#     paths:
+#       - ci/deploy/review/.env
+#   environment:
+#     name: integration
+#     url: http://myproject-integration.$KUBE_DOMAIN
+#   variables:
+#     ENV_FILE: ${CI_PROJECT_DIR}/ci/deploy/review/.env
+#     CREATE_FIXTURES: 1
+#   only:
+#     - master
+#   dependencies: []
+
+# staging:
+#   stage: deploy
+#   image: registry.networkteam.com/networkteam/kubernetes-deploy:generic
+#   script:
+#     - command deploy
+#   artifacts:
+#     paths:
+#       - ci/deploy/staging/.env
+#   environment:
+#     name: staging
+#     url: http://myproject-staging.$KUBE_DOMAIN
+#   variables:
+#     ENV_FILE: ${CI_PROJECT_DIR}/ci/deploy/staging/.env
+#     DEBUG: "1"
+#   only:
+#     refs:
+#       - tags
+#   dependencies: []
+
+# stop_review:
+#   stage: cleanup
+#   image: registry.networkteam.com/networkteam/kubernetes-deploy:generic
+#   script:
+#     - command destroy
+#   environment:
+#     name: review/$CI_COMMIT_REF_NAME
+#     action: stop
+#   variables:
+#     GIT_STRATEGY: none
+#     ENV_FILE: ${CI_PROJECT_DIR}/ci/deploy/review/.env
+#   when: manual
+#   only:
+#     - branches
+#   except:
+#     - master
+#   dependencies:
+#     - review
