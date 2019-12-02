@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/apex/log"
-	_ "github.com/golang-migrate/migrate/database/postgres"
-	_ "github.com/golang-migrate/migrate/source/file"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/spf13/cobra"
 )
 
@@ -27,7 +27,7 @@ func (l *migrationLogger) Verbose() bool {
 func init() {
 	rootCmd.AddCommand(migrateCmd)
 
-	migrateCmd.PersistentFlags().StringVar(&migrateFlags.directory, "dir", "./migrations", "Directory where migrations are stored")
+	migrateCmd.PersistentFlags().StringVar(&migrateFlags.directory, "dir", "./persistence/migrations", "Directory where migrations are stored")
 }
 
 var migrateCmd = &cobra.Command{
