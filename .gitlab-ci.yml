@@ -59,6 +59,21 @@ t:backend:
     changes:
       - backend/**/*
 
+t:lint:backend:
+  stage: test
+  image: golangci/golangci-lint:v1.21.0
+  script:
+    - cd backend
+    - golangci-lint run
+  cache:
+    key: 'golang'
+    paths:
+      - .cache/go
+  dependencies: []
+  only:
+    changes:
+      - backend/**/*
+
 # sonar:scan:backend:
 #   stage: prepare
 #   image: registry.networkteam.com/networkteam/build/sonar-scanner
