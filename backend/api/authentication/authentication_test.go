@@ -300,7 +300,7 @@ func Test_Mutation_With_Get_Fails(t *testing.T) {
 }
 
 func readCookie(t *testing.T, w *httptest.ResponseRecorder, cookieName string) *http.Cookie {
-	request := &http.Request{Header: http.Header{"Cookie": w.HeaderMap["Set-Cookie"]}}
+	request := &http.Request{Header: http.Header{"Cookie": w.Header()["Set-Cookie"]}}
 	cookie, err := request.Cookie("authToken")
 	require.NoError(t, err, "failed to read %q cookie: %v", cookieName, err)
 

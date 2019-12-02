@@ -5,17 +5,17 @@ import (
 	"strconv"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/gofrs/uuid"
 	"github.com/friendsofgo/errors"
+	"github.com/gofrs/uuid"
 )
 
 func MarshalUUIDScalar(value uuid.UUID) graphql.Marshaler {
 	return graphql.WriterFunc(func(w io.Writer) {
 		// If uuid is empty it should be marshalled to the empty string
 		if value == uuid.Nil {
-			w.Write([]byte(strconv.Quote("")))
+			_, _ = w.Write([]byte(strconv.Quote("")))
 		} else {
-			w.Write([]byte(strconv.Quote(value.String())))
+			_, _ = w.Write([]byte(strconv.Quote(value.String())))
 		}
 	})
 }

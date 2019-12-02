@@ -30,7 +30,7 @@ func (n *TestNotifier) Notify(registration DeviceRegistrationProvider, payload P
 		err = n.Assertion(n.t, registration, payload)
 	}
 
-	return nil
+	return
 }
 
 func (n *TestNotifier) CallCount() int {

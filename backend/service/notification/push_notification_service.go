@@ -24,15 +24,6 @@ type soundPayload struct {
 	Name     string
 }
 
-type dataPayload struct {
-	Navigation navigationPayload `json:"navigation"`
-}
-
-type navigationPayload struct {
-	RouteName string            `json:"routeName"`
-	Params    map[string]string `json:"params"`
-}
-
 type pushNotification struct {
 	Tokens   []string    `json:"tokens"`
 	Platform int         `json:"platform"`

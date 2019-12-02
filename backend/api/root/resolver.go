@@ -15,14 +15,14 @@ var _ api.ResolverRoot = new(Resolver)
 func (r *Resolver) Mutation() api.MutationResolver {
 	return &mutationResolver{
 		ResolverDependencies:           r.ResolverDependencies,
-		authenticationMutationResolver: &authentication.MutationResolver{r.ResolverDependencies},
+		authenticationMutationResolver: &authentication.MutationResolver{ResolverDependencies: r.ResolverDependencies},
 	}
 }
 
 func (r *Resolver) Query() api.QueryResolver {
 	return &queryResolver{
 		ResolverDependencies:        r.ResolverDependencies,
-		authenticationQueryResolver: &authentication.QueryResolver{r.ResolverDependencies},
+		authenticationQueryResolver: &authentication.QueryResolver{ResolverDependencies: r.ResolverDependencies},
 	}
 }
 

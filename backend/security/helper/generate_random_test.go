@@ -10,10 +10,10 @@ import (
 )
 
 func TestGenerateRandomString(t *testing.T) {
-	s, err := helper.GenerateRandomString(0)
+	_, err := helper.GenerateRandomString(0)
 	require.Error(t, err, "zero length not supported")
 
-	s, err = helper.GenerateRandomString(8)
+	s, err := helper.GenerateRandomString(8)
 	require.NoError(t, err)
 	assert.Len(t, s, 8)
 

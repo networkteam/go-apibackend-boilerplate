@@ -30,11 +30,3 @@ func (r Role) IsValid() bool {
 	}
 	return true
 }
-
-func IsValidUserRole(role Role) bool {
-	return role == RoleSystemAdministrator || role == RoleOrganisationAdministrator || role == RoleUser
-}
-
-func isValidAppAccountRole(role Role) bool {
-	return role == RoleApp
-}

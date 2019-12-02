@@ -11,7 +11,7 @@ import (
 
 func MarshalDateTimeScalar(value time.Time) graphql.Marshaler {
 	return graphql.WriterFunc(func(w io.Writer) {
-		w.Write([]byte(strconv.Quote(value.Format(time.RFC3339))))
+		_, _ = w.Write([]byte(strconv.Quote(value.Format(time.RFC3339))))
 	})
 }
 
