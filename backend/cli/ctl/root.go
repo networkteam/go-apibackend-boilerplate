@@ -7,8 +7,8 @@ import (
 
 	"github.com/apex/log"
 	"github.com/apex/log/handlers/cli"
-	_ "github.com/lib/pq"
 	"github.com/friendsofgo/errors"
+	_ "github.com/lib/pq"
 	"github.com/spf13/cobra"
 
 	"myvendor.mytld/myproject/backend/domain"

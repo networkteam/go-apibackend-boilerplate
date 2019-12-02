@@ -17,4 +17,3 @@ func valueToUUID(value interface{}, err error) *kallax.UUID {
 	}
 	return nil
 }
-

@@ -10,7 +10,6 @@ import (
 
 	"github.com/apex/log"
 	"github.com/friendsofgo/errors"
-
 )
 
 type PushNotificationService struct {
@@ -34,8 +33,8 @@ type pushNotification struct {
 }
 
 type PushNotificationInput struct {
-	Message      string
-	Data         map[string]interface{}
+	Message string
+	Data    map[string]interface{}
 }
 
 func NewPushNotificationService(goRushApiUrl string) *PushNotificationService {

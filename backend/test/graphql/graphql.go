@@ -50,7 +50,7 @@ func Handle(t *testing.T, deps api.ResolverDependencies, req *http.Request, dst 
 
 	graphqlHandler := api_handler.NewGraphqlHandler(deps, api_handler.HandlerConfig{
 		DisableRecover: true,
-	}, )
+	})
 	w := httptest.NewRecorder()
 	graphqlHandler.ServeHTTP(w, req)
 	body, err := ioutil.ReadAll(w.Body)

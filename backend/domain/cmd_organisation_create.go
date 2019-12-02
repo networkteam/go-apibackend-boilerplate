@@ -1,8 +1,8 @@
 package domain
 
 import (
-	"github.com/gofrs/uuid"
 	"github.com/friendsofgo/errors"
+	"github.com/gofrs/uuid"
 )
 
 type OrganisationCreateCmd struct {

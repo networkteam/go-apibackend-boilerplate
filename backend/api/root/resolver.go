@@ -29,9 +29,7 @@ func (r *Resolver) Query() api.QueryResolver {
 // Sub-resolver for specific types
 
 func (r *Resolver) AppAccount() api.AppAccountResolver {
-	return &authentication.AppAccountResolver {
-
-	}
+	return &authentication.AppAccountResolver{}
 }
 
 func (r *Resolver) UserAccount() api.UserAccountResolver {

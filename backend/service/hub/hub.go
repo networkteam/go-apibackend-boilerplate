@@ -41,7 +41,6 @@ type organisationSubscription struct {
 	organisationID uuid.UUID
 }
 
-
 func (sub *organisationSubscription) Unsubscribe() {
 	sub.h.mu.Lock()
 	defer sub.h.mu.Unlock()
@@ -53,7 +52,6 @@ func (sub *organisationSubscription) Unsubscribe() {
 
 	close(sub.C)
 }
-
 
 func (h *hub) SubscribeForOrganisation(organisationID uuid.UUID) Unsubscriber {
 	sub := &organisationSubscription{

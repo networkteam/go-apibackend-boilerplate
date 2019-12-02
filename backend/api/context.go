@@ -8,11 +8,11 @@ import (
 type ctxKey string
 
 const (
-	httpRequestKey          ctxKey = "httpRequest"
-	httpResponseKey         ctxKey = "httpResponse"
-	authTokenKey            ctxKey = "authToken"
-	csrfTokenKey            ctxKey = "csrfToken"
-	skipCsrfCheckKey        ctxKey = "skipCsrfCheck"
+	httpRequestKey   ctxKey = "httpRequest"
+	httpResponseKey  ctxKey = "httpResponse"
+	authTokenKey     ctxKey = "authToken"
+	csrfTokenKey     ctxKey = "csrfToken"
+	skipCsrfCheckKey ctxKey = "skipCsrfCheck"
 )
 
 func WithHTTPResponse(ctx context.Context, w http.ResponseWriter) context.Context {

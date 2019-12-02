@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/apex/log"
-	"github.com/gofrs/uuid"
 	"github.com/friendsofgo/errors"
+	"github.com/gofrs/uuid"
 	"github.com/zbyte/go-kallax"
 	"gopkg.in/square/go-jose.v2/jwt"
 

@@ -9,9 +9,9 @@ import (
 	"github.com/99designs/gqlgen-contrib/gqlapollotracing"
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/handler"
+	"github.com/friendsofgo/errors"
 	sentry "github.com/getsentry/sentry-go"
 	"github.com/gorilla/handlers"
-	"github.com/friendsofgo/errors"
 
 	"myvendor.mytld/myproject/backend/api"
 	"myvendor.mytld/myproject/backend/api/middleware"

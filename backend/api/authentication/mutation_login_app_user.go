@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/apex/log"
-	"github.com/gofrs/uuid"
 	"github.com/friendsofgo/errors"
+	"github.com/gofrs/uuid"
 	"github.com/zbyte/go-kallax"
 
 	"myvendor.mytld/myproject/backend/api"

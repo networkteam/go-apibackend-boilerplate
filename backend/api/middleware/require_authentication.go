@@ -13,7 +13,7 @@ import (
 
 const (
 	bypassAuthenticationDirectiveName = "bypassAuthentication"
-	schemaQuery = "__schema"
+	schemaQuery                       = "__schema"
 )
 
 func RequireAuthenticationFieldMiddleware(ctx context.Context, next graphql.Resolver) (res interface{}, err error) {

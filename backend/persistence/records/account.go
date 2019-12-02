@@ -1,8 +1,8 @@
 package records
 
 import (
-	"github.com/gofrs/uuid"
 	"github.com/friendsofgo/errors"
+	"github.com/gofrs/uuid"
 	"github.com/zbyte/go-kallax"
 
 	"myvendor.mytld/myproject/backend/domain"
