@@ -3,16 +3,19 @@ package authentication
 import (
 	"context"
 
-	"github.com/apex/log"
 	"github.com/friendsofgo/errors"
 	"github.com/zbyte/go-kallax"
 
 	"myvendor.mytld/myproject/backend/api"
+	"myvendor.mytld/myproject/backend/logger"
 	"myvendor.mytld/myproject/backend/persistence/records"
 	"myvendor.mytld/myproject/backend/security/authentication"
 )
 
 func (r *MutationResolver) Logout(ctx context.Context) (*api.Error, error) {
+	log := logger.GetLogger(ctx).
+		WithField("handler", "logout")
+
 	log.
 		Debug("Handling logout")
 

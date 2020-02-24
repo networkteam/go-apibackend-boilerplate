@@ -5,7 +5,9 @@ import (
 	"fmt"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/apex/log"
+
+	"myvendor.mytld/myproject/backend/logger"
+	"myvendor.mytld/myproject/backend/security/authentication"
 )
 
 func LoggerFieldMiddleware(ctx context.Context, next graphql.Resolver) (res interface{}, err error) {
@@ -13,10 +15,15 @@ func LoggerFieldMiddleware(ctx context.Context, next graphql.Resolver) (res inte
 
 	shouldLogResolver := (resolverCtx.Parent == nil || resolverCtx.Parent.Parent == nil) && resolverCtx.Field.Name != "__schema"
 	if shouldLogResolver {
-		reqID := GetReqID(ctx)
+		log := logger.GetLogger(ctx)
+
+		authCtx := authentication.GetAuthContext(ctx)
+		log.
+			WithFields(authCtx).
+			Debug("Authentication context")
+
 		defer log.WithField("field", resolverCtx.Field.Name).
 			WithField("type", resolverCtx.Object).
-			WithField("requestID", reqID).
 			Trace(fmt.Sprintf("GraphQL %s %s", resolverCtx.Object, resolverCtx.Field.Name)).Stop(&err)
 	}
 

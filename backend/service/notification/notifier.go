@@ -1,7 +1,9 @@
 package notification
 
+import "context"
+
 type Notifier interface {
-	Notify(registration DeviceRegistrationProvider, payload PayloadProvider) error
+	Notify(ctx context.Context, registration DeviceRegistrationProvider, payload PayloadProvider) error
 }
 
 type PayloadProvider interface {

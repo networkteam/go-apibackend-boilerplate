@@ -4,11 +4,11 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/apex/log"
 	"github.com/friendsofgo/errors"
 	"github.com/zbyte/go-kallax"
 
 	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/logger"
 	"myvendor.mytld/myproject/backend/persistence/records"
 	"myvendor.mytld/myproject/backend/security/authentication"
 	"myvendor.mytld/myproject/backend/security/authorization"
@@ -25,8 +25,10 @@ func NewOrganisationCreateHandler(db *sql.DB) *OrganisationCreateHandler {
 }
 
 func (h *OrganisationCreateHandler) Handle(ctx context.Context, cmd domain.OrganisationCreateCmd) error {
+	log := logger.GetLogger(ctx).
+		WithField("handler", "organisationCreate")
+
 	log.
-		WithField("handler", "OrganisationCreateHandler").
 		WithField("cmd", cmd).
 		Debug("Handling organisation create command")
 
@@ -63,7 +65,6 @@ func (h *OrganisationCreateHandler) Handle(ctx context.Context, cmd domain.Organ
 	}
 
 	log.
-		WithField("handler", "OrganisationCreateHandler").
 		WithField("organisationID", cmd.OrganisationID).
 		Info("Created organisation")
 

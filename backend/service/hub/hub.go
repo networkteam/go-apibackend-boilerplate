@@ -1,15 +1,17 @@
 package hub
 
 import (
+	"context"
 	"sync"
 
-	"github.com/apex/log"
 	"github.com/gofrs/uuid"
+
+	"myvendor.mytld/myproject/backend/logger"
 )
 
 type Hub interface {
 	SubscribeForOrganisation(organisationID uuid.UUID) Unsubscriber
-	Publish(msg Message)
+	Publish(ctx context.Context, msg Message)
 }
 
 type hub struct {
@@ -71,13 +73,16 @@ func (h *hub) SubscribeForOrganisation(organisationID uuid.UUID) Unsubscriber {
 	return sub
 }
 
-func (h *hub) Publish(msg Message) {
+func (h *hub) Publish(ctx context.Context, msg Message) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
+	log := logger.GetLogger(ctx).
+		WithField("component", "hub")
+
 	log.
 		WithField("msg", msg).
-		Debugf("Hub: Publishing %T message", msg)
+		Debugf("Publishing %T message", msg)
 
 	if orgMsg, ok := msg.(OrganisationScoped); ok {
 		organisationID := orgMsg.OrganisationID()
@@ -86,7 +91,7 @@ func (h *hub) Publish(msg Message) {
 			log.
 				WithField("msg", msg).
 				WithField("organisationID", sub.organisationID).
-				Debugf("Hub: Published %T message to organisation subscriber", msg)
+				Debugf("Published %T message to organisation subscriber", msg)
 		}
 	}
 }

@@ -1,6 +1,7 @@
 package notification
 
 import (
+	"context"
 	"testing"
 
 	"github.com/apex/log"
@@ -20,7 +21,7 @@ func NewTestNotifier(t *testing.T) *TestNotifier {
 
 var _ Notifier = new(TestNotifier)
 
-func (n *TestNotifier) Notify(registration DeviceRegistrationProvider, payload PayloadProvider) (err error) {
+func (n *TestNotifier) Notify(ctx context.Context, registration DeviceRegistrationProvider, payload PayloadProvider) (err error) {
 	n.callCount++
 	if n.Assertion == nil || n.t == nil {
 		log.WithField("registration", registration).

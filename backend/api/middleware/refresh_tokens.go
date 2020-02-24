@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/apex/log"
 	"github.com/friendsofgo/errors"
 	"github.com/zbyte/go-kallax"
 
 	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/logger"
 	"myvendor.mytld/myproject/backend/persistence/records"
 	"myvendor.mytld/myproject/backend/security/authentication"
 )
@@ -23,6 +23,7 @@ func RefreshTokensMiddleware(db *sql.DB, timeSource domain.TimeSource, next http
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		log := logger.GetLogger(ctx)
 
 		authCtx := authentication.GetAuthContext(ctx)
 		if authCtx.Authenticated {

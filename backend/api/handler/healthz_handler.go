@@ -5,14 +5,20 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/apex/log"
 	"github.com/friendsofgo/errors"
+
+	"myvendor.mytld/myproject/backend/logger"
 )
 
 func NewHealthzHandler(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, _ *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		if err := db.Ping(); err != nil {
-			log.WithError(errors.WithStack(err)).WithField("handler", "healthz").Error("Could not connect to database")
+			log := logger.GetLogger(r.Context())
+
+			log.
+				WithError(errors.WithStack(err)).
+				WithField("handler", "healthz").
+				Error("Could not connect to database")
 
 			w.WriteHeader(http.StatusInternalServerError)
 			_, _ = fmt.Fprintln(w, "Internal server error: could not connect to database")

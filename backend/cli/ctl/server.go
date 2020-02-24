@@ -10,9 +10,9 @@ import (
 	"github.com/apex/log/handlers/logfmt"
 	"github.com/apex/log/handlers/text"
 	"github.com/friendsofgo/errors"
-	sentry "github.com/getsentry/sentry-go"
+	"github.com/getsentry/sentry-go"
 	sentryhttp "github.com/getsentry/sentry-go/http"
-	isatty "github.com/mattn/go-isatty"
+	"github.com/mattn/go-isatty"
 	"github.com/robfig/cron"
 	"github.com/spf13/cobra"
 

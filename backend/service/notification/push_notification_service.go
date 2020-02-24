@@ -2,14 +2,16 @@ package notification
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/apex/log"
 	"github.com/friendsofgo/errors"
+
+	"myvendor.mytld/myproject/backend/logger"
 )
 
 type PushNotificationService struct {
@@ -44,7 +46,11 @@ func NewPushNotificationService(goRushApiUrl string) *PushNotificationService {
 	}
 }
 
-func (h PushNotificationService) Notify(registration DeviceRegistrationProvider, payload PayloadProvider) error {
+func (h PushNotificationService) Notify(ctx context.Context, registration DeviceRegistrationProvider, payload PayloadProvider) error {
+	log := logger.GetLogger(ctx).
+		WithField("component", "pushNotificationService")
+	ctx = logger.WithLogger(ctx, log)
+
 	message := payload.GetMessage()
 	data := payload.GetData()
 
@@ -61,15 +67,20 @@ func (h PushNotificationService) Notify(registration DeviceRegistrationProvider,
 		return errors.Wrap(err, "could not build push notification")
 	}
 
-	err = h.sendPushNotification(notification)
+	err = h.sendPushNotification(ctx, notification)
 	if err != nil {
 		return errors.Wrap(err, "could not send push notification")
 	}
 
+	log.
+		Debug("Sent push notification")
+
 	return nil
 }
 
-func (h PushNotificationService) sendPushNotification(notification pushNotification) error {
+func (h PushNotificationService) sendPushNotification(ctx context.Context, notification pushNotification) error {
+	log := logger.GetLogger(ctx)
+
 	payload := map[string]interface{}{
 		"notifications": []pushNotification{notification},
 	}

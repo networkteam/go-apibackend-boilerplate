@@ -2,9 +2,9 @@ package authentication
 
 import (
 	"context"
-	"fmt"
 	"time"
 
+	"github.com/apex/log"
 	"github.com/gofrs/uuid"
 
 	"myvendor.mytld/myproject/backend/domain"
@@ -41,26 +41,15 @@ type AuthContext struct {
 	IssuedAt                  time.Time
 }
 
-func (authCtx AuthContext) String() string {
-	return fmt.Sprintf("%+v", struct {
-		Authenticated             bool
-		IgnoreAuthenticationState bool
-		SkipCsrfCheck             bool
-		Error                     error
-		AccountID                 uuid.UUID
-		OrganisationID            *uuid.UUID
-		Role                      domain.Role
-		IssuedAt                  time.Time
-	}{
-		Authenticated:             authCtx.Authenticated,
-		IgnoreAuthenticationState: authCtx.IgnoreAuthenticationState,
-		SkipCsrfCheck:             authCtx.SkipCsrfCheck,
-		Error:                     authCtx.Error,
-		AccountID:                 authCtx.AccountID,
-		OrganisationID:            authCtx.OrganisationID,
-		Role:                      authCtx.Role,
-		IssuedAt:                  authCtx.IssuedAt,
-	})
+func (authCtx AuthContext) Fields() log.Fields {
+	return map[string]interface{}{
+		"authenticated":             authCtx.Authenticated,
+		"ignoreAuthenticationState": authCtx.IgnoreAuthenticationState,
+		"authenticationError":       authCtx.Error,
+		"skipCsrfCheck":             authCtx.SkipCsrfCheck,
+		"accountID":                 authCtx.AccountID,
+		"organisationID":            authCtx.OrganisationID,
+	}
 }
 
 // AuthContextWithError builds an auth context with an error

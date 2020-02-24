@@ -3,19 +3,22 @@ package authentication
 import (
 	"context"
 
-	"github.com/apex/log"
 	"github.com/friendsofgo/errors"
 	"github.com/gofrs/uuid"
 	"github.com/zbyte/go-kallax"
 
 	"myvendor.mytld/myproject/backend/api"
 	"myvendor.mytld/myproject/backend/api/helper"
+	"myvendor.mytld/myproject/backend/logger"
 	"myvendor.mytld/myproject/backend/persistence/records"
 	"myvendor.mytld/myproject/backend/security/authentication"
 	security_helper "myvendor.mytld/myproject/backend/security/helper"
 )
 
 func (r *MutationResolver) Login(ctx context.Context, credentials api.LoginCredentials) (*api.LoginResult, error) {
+	log := logger.GetLogger(ctx).
+		WithField("handler", "login")
+
 	log.
 		WithField("emailAddress", credentials.EmailAddress).
 		Debug("Handling login")
@@ -38,9 +41,17 @@ func (r *MutationResolver) Login(ctx context.Context, credentials api.LoginCrede
 
 	err = security_helper.CompareHashAndPassword(account.PasswordHash, []byte(credentials.Password))
 	if err != nil || accountNotFound {
-		log.
-			WithField("emailAddress", credentials.EmailAddress).
-			Warn("Login failed")
+		if accountNotFound {
+			log.
+				WithField("emailAddress", credentials.EmailAddress).
+				Warn("Login failed, account not found")
+		} else {
+			log.
+				WithField("emailAddress", credentials.EmailAddress).
+				WithError(err).
+				Warn("Login failed, invalid password")
+		}
+
 		return &api.LoginResult{
 			Account: &api.UserAccount{},
 			Error: &api.Error{

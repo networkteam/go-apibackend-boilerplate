@@ -4,13 +4,13 @@ import (
 	"context"
 	"time"
 
-	"github.com/apex/log"
 	"github.com/friendsofgo/errors"
 	"github.com/gofrs/uuid"
 	"github.com/zbyte/go-kallax"
 
 	"myvendor.mytld/myproject/backend/api"
 	"myvendor.mytld/myproject/backend/api/helper"
+	"myvendor.mytld/myproject/backend/logger"
 	"myvendor.mytld/myproject/backend/persistence/records"
 	"myvendor.mytld/myproject/backend/security/authentication"
 	security_helper "myvendor.mytld/myproject/backend/security/helper"
@@ -22,6 +22,9 @@ const (
 )
 
 func (r *MutationResolver) LoginAppUser(ctx context.Context, credentials api.AppUserLoginCredentials) (*api.AppUserLoginResult, error) {
+	log := logger.GetLogger(ctx).
+		WithField("handler", "loginAppUser")
+
 	log.
 		WithField("emailAddress", credentials.EmailAddress).
 		Debug("Handling login app user")

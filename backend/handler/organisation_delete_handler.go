@@ -4,11 +4,11 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/apex/log"
 	"github.com/friendsofgo/errors"
 	"github.com/zbyte/go-kallax"
 
 	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/logger"
 	"myvendor.mytld/myproject/backend/persistence/records"
 	"myvendor.mytld/myproject/backend/security/authentication"
 	"myvendor.mytld/myproject/backend/security/authorization"
@@ -25,8 +25,10 @@ func NewOrganisationDeleteHandler(db *sql.DB) *OrganisationDeleteHandler {
 }
 
 func (h *OrganisationDeleteHandler) Handle(ctx context.Context, cmd domain.OrganisationDeleteCmd) error {
+	log := logger.GetLogger(ctx).
+		WithField("handler", "organisationDelete")
+
 	log.
-		WithField("handler", "OrganisationDeleteHandler").
 		WithField("cmd", cmd).
 		Debug("Handling organisation delete command")
 
@@ -54,7 +56,6 @@ func (h *OrganisationDeleteHandler) Handle(ctx context.Context, cmd domain.Organ
 	}
 
 	log.
-		WithField("handler", "OrganisationDeleteHandler").
 		WithField("organisationID", cmd.OrganisationID).
 		Info("Deleted organisation")
 

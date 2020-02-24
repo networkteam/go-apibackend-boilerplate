@@ -26,10 +26,10 @@ func NewRequest(t *testing.T, query GraphqlQuery) *http.Request {
 	}
 
 	req, err := http.NewRequest(http.MethodPost, "http://localhost/query", bytes.NewReader(data))
-	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		t.Fatalf("could not build GraphQL request: %v", err)
 	}
+	req.Header.Set("Content-Type", "application/json")
 	return req
 }
 
