@@ -49,7 +49,7 @@ func GetAuthTokenAndSkipCsrfCheckFromRequest(r *http.Request) (authToken string,
 		return authToken, true
 	}
 
-	// Otherwise use auth token from cookie
+	// Otherwise, use auth token from cookie
 	authToken = getAuthTokenFromCookie(r)
 	return authToken, skipCsrfCheck
 }
