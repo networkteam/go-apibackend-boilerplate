@@ -7,6 +7,7 @@ import (
 const (
 	authTokenCookieName        = "authToken"
 	refreshAuthTokenHeaderName = "X-Refresh-Auth-Token"
+	//#nosec G101 -- This constant is only the header name
 	refreshCsrfTokenHeaderName = "X-Refresh-CSRF-Token"
 	authTokenHeaderName        = "Authorization"
 )
