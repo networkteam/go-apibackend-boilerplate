@@ -1,0 +1,89 @@
+.backend-job:
+  extends: .component-job
+  variables:
+    COMPONENT: backend
+    # Adjust GOPATH to enable caching of downloaded modules
+    GOPATH: "$CI_PROJECT_DIR/.cache/go"
+    # The Go image to use
+    GOLANG_IMAGE: golang:1.18-rc
+  before_script:
+    - !reference [.docker-build-default, before_script]
+    - cd backend
+  cache:
+    key: "golang"
+    paths:
+      - .cache/go
+
+backend:build:
+  extends: .backend-job
+  stage: build
+  needs: []
+  dependencies: []
+  image: $GOLANG_IMAGE
+  script:
+    - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o bin/myproject-ctl ./cli/ctl
+  artifacts:
+    paths:
+      - backend/bin
+
+backend:test:
+  extends: .backend-job
+  stage: test
+  needs: []
+  dependencies: []
+  image: $GOLANG_IMAGE
+  services:
+    - postgres:13.6
+  variables:
+    TZ: Europe/Berlin
+    POSTGRES_DB: myproject-test
+    POSTGRES_USER: root
+    POSTGRES_PASSWORD: ""
+    POSTGRES_HOST_AUTH_METHOD: trust
+  script:
+    - go mod download
+    - go run ./cli/ctl test preparedb
+    - go run gotest.tools/gotestsum --junitfile junit-backend.xml
+    - go test ./... -coverprofile=coverage.out -covermode atomic -coverpkg $(go list ./... | tr "\n" ",")
+  artifacts:
+    paths:
+      - backend/coverage.out
+    reports:
+      junit: backend/junit-*.xml
+    when: always
+
+backend:lint:
+  extends: .backend-job
+  stage: test
+  needs: []
+  dependencies: []
+  image: golangci/golangci-lint:v1.44-alpine
+  script:
+    # Write the code coverage report to gl-code-quality-report.json
+    # and print linting issues to stdout in the format: path/to/file:line description
+    # remove `--issues-exit-code 0` or set to non-zero to fail the job if linting issues are detected
+    - golangci-lint run --issues-exit-code 0 --out-format code-climate | tee gl-code-quality-report.json | jq -r '.[] | "\(.location.path):\(.location.lines.begin) \(.description)"'
+  artifacts:
+    reports:
+      codequality: backend/gl-code-quality-report.json
+    paths:
+      - backend/gl-code-quality-report.json
+
+# Build docker image for backend
+backend:docker:
+  extends:
+    - .backend-job
+    - .docker-build
+  stage: docker-build
+  needs:
+    - backend:build
+  dependencies:
+    - backend:build
+  variables:
+    PROJECT_COMPONENT: backend
+
+# Copy the latest docker image for component if no changes occurred
+backend:copy-docker:
+  extends: .component-dockercopy-job
+  variables:
+    COMPONENT: backend

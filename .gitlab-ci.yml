@@ -1,217 +1,56 @@
 stages:
-  - apps
+  - prepare
   - build
   - test
-  - prepare
+  - docker-build
   - deploy
-  - cleanup
+  - acceptance
 
-variables:
-  # Application deployment domain
-  KUBE_DOMAIN: k.networkteam.com
-  CI_REGISTRY_TAG: "${CI_COMMIT_REF_NAME}"
-  # Adjust GOPATH to enable caching of downloaded modules
-  GOPATH: "$CI_PROJECT_DIR/.cache/go"
+include:
+  - local: ci/gitlab/**.yml
+  - project: "networkteam/gitlab-ci-common"
+    file: "/includes/docker-build.yaml"
 
-b:backend:
-  stage: build
-  image: golang:1.18-rc
-  script:
-    - cd backend
-    - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o bin/myproject-ctl ./cli/ctl
-  cache:
-    key: 'golang'
-    paths:
-      - .cache/go
-  artifacts:
-    paths:
-      - backend/bin
-  only:
-    changes:
-      - backend/**/*
+# Template for component specific jobs
+#
+# We cannot use child pipelines currently, since some features like test reports and showing information
+# on the according merge request are not supported. So the idea is to split the jobs into components
+# and use template jobs for each component. With merge request pipelines and `changes` rules, we can
+# control which jobs run depending on the actual changes in the merge request.
+.component-job:
+  # Needs a COMPONENT variable
+  # variables: COMPONENT: "backend"
+  rules:
+    # Only run the job on merge requests if changes in the component or CI definitions for component occurred
+    - if: $CI_MERGE_REQUEST_ID
+      changes:
+        - .gitlab-ci.yml
+        - ci/gitlab/$COMPONENT.yml
+        - $COMPONENT/**/*
+    # Always run the job on the main branch
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
-t:backend:
-  stage: test
-  image: golang:1.18-rc
-  services:
-    - postgres:13.6
-  variables:
-    TZ: Europe/Berlin
-    POSTGRES_DB: myproject-test
-    POSTGRES_USER: root
-    POSTGRES_PASSWORD: ""
-    POSTGRES_HOST_AUTH_METHOD: trust
-  script:
-    - cd backend
-    - go mod download
-    - go run ./cli/ctl test preparedb
-    - go run gotest.tools/gotestsum --junitfile junit-backend.xml
-    - go test ./... -coverprofile=coverage.out -covermode atomic -coverpkg $(go list ./... | tr "\n" ",")
-  cache:
-    key: 'golang'
-    paths:
-      - .cache/go
-  artifacts:
-    paths:
-      - backend/coverage.out
-    reports:
-      junit: backend/junit-*.xml
-    when: always
+# Copy (tag) docker image if _no_ changes for this component occurred, and we are in a merge request
+.component-dockercopy-job:
+  stage: docker-build
+  image: registry.networkteam.com/networkteam/docker/oci-tools:latest
+  # Needs a COMPONENT variable
+  # variables: COMPONENT: "frontend"
+  rules:
+    # Do not run the job on merge requests if changes in the component or CI definitions for component occurred
+    - if: $CI_MERGE_REQUEST_ID
+      changes:
+        - .gitlab-ci.yml
+        - ci/gitlab/$COMPONENT.yml
+        - $COMPONENT/**/*
+      when: never
+    # Otherwise, run the job for merge request pipelines
+    - if: $CI_MERGE_REQUEST_ID
+  needs: []
   dependencies: []
-  only:
-    changes:
-      - backend/**/*
-
-t:lint:backend:
-  stage: test
-  image: golangci/golangci-lint:v1.21.0
   script:
-    - cd backend
-    - golangci-lint run
-  cache:
-    key: 'golang'
-    paths:
-      - .cache/go
-  dependencies: []
-  only:
-    changes:
-      - backend/**/*
-
-# sonar:scan:backend:
-#   stage: prepare
-#   image: registry.networkteam.com/networkteam/build/sonar-scanner
-#   variables:
-#     SONAR_USER_HOME: ${CI_PROJECT_DIR}/.cache/sonar/backend
-#   before_script:
-#     - SONAR_PROJECT_VERSION=$(git describe --match "[0-9]\.[0-9]\.[0-9]" | grep -Eo "^([0-9]*\.)*[0-9](-[0-9]{1,}-g){0,1}" | sed 's/-[0-9]\{1,\}-g/+/g')
-#   script:
-#     - cd backend
-#     - sonar-scanner -Dsonar.host.url=https://sonar.k.networkteam.com -Dsonar.login="$SONAR_AUTH_TOKEN" -Dsonar.projectVersion="$SONAR_PROJECT_VERSION"
-#   cache:
-#     key: 'sonar-backend'
-#     paths:
-#       - .cache/sonar/backend
-#   dependencies:
-#     - t:backend
-#   only:
-#     refs:
-#       - master
-#       - tags
-#     changes:
-#       - backend/**/*
-
-# sonar:report:backend:
-#   stage: prepare
-#   image: registry.networkteam.com/networkteam/build/sonar-scanner
-#   variables:
-#     SONAR_USER_HOME: ${CI_PROJECT_DIR}/.cache/sonar/backend
-#   before_script:
-#     - SONAR_PROJECT_VERSION=$(git describe --match "[0-9]\.[0-9]\.[0-9]" | grep -Eo "^([0-9]*\.)*[0-9](-[0-9]{1,}-g){0,1}" | sed 's/-[0-9]\{1,\}-g/+/g')
-#   script:
-#     - git checkout origin/master
-#     - git merge $CI_COMMIT_SHA --no-commit --no-ff
-#     - cd backend
-#     - sonar-scanner -Dsonar.host.url=https://sonar.k.networkteam.com -Dsonar.login="$SONAR_AUTH_TOKEN" -Dsonar.analysis.mode=preview -Dsonar.gitlab.project_id=$CI_PROJECT_PATH -Dsonar.gitlab.commit_sha=$CI_COMMIT_SHA -Dsonar.gitlab.ref_name=$CI_COMMIT_REF_NAME -Dsonar.projectVersion="$SONAR_PROJECT_VERSION"
-#   cache:
-#     key: 'sonar-backend'
-#     paths:
-#       - .cache/sonar/backend
-#   dependencies:
-#     - t:backend
-#   only:
-#     refs:
-#       - branches
-#     changes:
-#       - backend/**/*
-#   except:
-#     - master
-
-# db:backend:
-#   stage: prepare
-#   image: registry.networkteam.com/networkteam/build/kaniko:latest
-#   variables:
-#     PROJECT_COMPONENT: backend
-#   script:
-#     - build
-#   dependencies:
-#     - b:backend
-#   only:
-#     changes:
-#       - backend/**/*
-
-# review:
-#   stage: deploy
-#   image: registry.networkteam.com/networkteam/kubernetes-deploy:generic
-#   script:
-#     - command deploy
-#   artifacts:
-#     paths:
-#       - ci/deploy/review/.env
-#   environment:
-#     name: review/$CI_COMMIT_REF_NAME
-#     url: http://myproject-$CI_ENVIRONMENT_SLUG.$KUBE_DOMAIN
-#     on_stop: stop_review
-#   variables:
-#     ENV_FILE: ${CI_PROJECT_DIR}/ci/deploy/review/.env
-#     CREATE_FIXTURES: 1
-#   only:
-#     - branches
-#   except:
-#     - master
-#   dependencies: []
-
-# integration:
-#   stage: deploy
-#   image: registry.networkteam.com/networkteam/kubernetes-deploy:generic
-#   script:
-#     - command deploy
-#   artifacts:
-#     paths:
-#       - ci/deploy/review/.env
-#   environment:
-#     name: integration
-#     url: http://myproject-integration.$KUBE_DOMAIN
-#   variables:
-#     ENV_FILE: ${CI_PROJECT_DIR}/ci/deploy/review/.env
-#     CREATE_FIXTURES: 1
-#   only:
-#     - master
-#   dependencies: []
-
-# staging:
-#   stage: deploy
-#   image: registry.networkteam.com/networkteam/kubernetes-deploy:generic
-#   script:
-#     - command deploy
-#   artifacts:
-#     paths:
-#       - ci/deploy/staging/.env
-#   environment:
-#     name: staging
-#     url: http://myproject-staging.$KUBE_DOMAIN
-#   variables:
-#     ENV_FILE: ${CI_PROJECT_DIR}/ci/deploy/staging/.env
-#     DEBUG: "1"
-#   only:
-#     refs:
-#       - tags
-#   dependencies: []
-
-# stop_review:
-#   stage: cleanup
-#   image: registry.networkteam.com/networkteam/kubernetes-deploy:generic
-#   script:
-#     - command destroy
-#   environment:
-#     name: review/$CI_COMMIT_REF_NAME
-#     action: stop
-#   variables:
-#     GIT_STRATEGY: none
-#     ENV_FILE: ${CI_PROJECT_DIR}/ci/deploy/review/.env
-#   when: manual
-#   only:
-#     - branches
-#   except:
-#     - master
-#   dependencies:
-#     - review
+    - skopeo login
+      --username $CI_REGISTRY_USER
+      --password $CI_REGISTRY_PASSWORD
+      $CI_REGISTRY
+    - skopeo copy docker://$CI_REGISTRY_IMAGE/$COMPONENT:latest docker://$CI_REGISTRY_IMAGE/$COMPONENT:$CI_REGISTRY_TAG
