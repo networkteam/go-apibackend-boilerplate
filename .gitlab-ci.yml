@@ -11,6 +11,9 @@ include:
   - project: "networkteam/gitlab-ci-common"
     file: "/includes/docker-build.yaml"
 
+variables:
+  SECURE_ANALYZERS_PREFIX: registry.gitlab.com/gitlab-org/security-products/analyzers
+
 # Template for component specific jobs
 #
 # We cannot use child pipelines currently, since some features like test reports and showing information
