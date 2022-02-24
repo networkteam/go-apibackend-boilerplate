@@ -57,7 +57,7 @@ backend:lint:
   stage: test
   needs: []
   dependencies: []
-  image: golangci/golangci-lint:v1.44-alpine
+  image: registry.networkteam.com/networkteam/docker/golangci-lint:1.44.2
   script:
     # Write the code coverage report to gl-code-quality-report.json
     # and print linting issues to stdout in the format: path/to/file:line description
