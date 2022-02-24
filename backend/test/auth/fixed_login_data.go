@@ -2,7 +2,9 @@ package auth
 
 import (
 	"context"
+	"encoding/hex"
 	"net/http"
+	"testing"
 
 	"github.com/gofrs/uuid"
 
@@ -10,46 +12,98 @@ import (
 	"myvendor.mytld/myproject/backend/security/authentication"
 )
 
-// Auth token for SystemAdministrator
-var FixedCookieValueSystemAdministrator = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1NDUwNzkzNzcsImlhdCI6MTU0NTA1Nzc3Nywicm9sZSI6IlN5c3RlbUFkbWluaXN0cmF0b3IiLCJzdWIiOiIwMzUyMzI0Yy0yNWFhLTRkZWYtOTM1ZC0wZWVkOTk5ZjFmOTkifQ.7yE39P_xZGPvOzKDuNXy5qlU9WilfbA_x1xj-a9C7-E"
-var FixedCsrfTokenSystemAdministrator = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1NDUwNzkzNzd9.lobqm1XgilwvA9kpamBw6l5HiUf1jgpjg8ngWNy7HK4"
+var (
+	fixedSystemAdminAccountID = uuid.Must(uuid.FromString("d7037ad0-d4bb-4dcc-8759-d82fbb3354e8"))
 
-// Auth token for OrganisationAdministrator for organisation networkteam (7bc9e6b5-9cc0-435f-9ad5-8c4f482f0c45)
-var FixedCookieValueOrganisationAdministrator = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1NDUwNzkzNzcsImlhdCI6MTU0NTA1Nzc3Nywicm9sZSI6Ik9yZ2FuaXNhdGlvbkFkbWluaXN0cmF0b3IiLCJzdWIiOiIwMzUyMzI0Yy0yNWFhLTRkZWYtOTM1ZC0wZWVkOTk5ZjFmYTAifQ.QRPKDg46ghSx5vxl1AnZLm9VfuymjLH9sbicL13hxqk"
-var FixedCsrfTokenOrganisationAdministrator = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1NDUwNzkzNzd9.lobqm1XgilwvA9kpamBw6l5HiUf1jgpjg8ngWNy7HK4"
+	fixedOrganisationAdminAccountID = uuid.Must(uuid.FromString("3ad082c7-cbda-49e1-a707-c53e1962be65"))
+	fixedOrganisationID             = uuid.Must(uuid.FromString("6330de58-2761-411e-a243-bec6d0c53876"))
 
-// app account 1dcec63f-5d0c-4abf-9d4c-f707632a1a73
-var FixedAuthTokenOperatorAccount = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MDgxMjk3NzcsImlhdCI6MTU0NTA1Nzc3Nywib3JnYW5pc2F0aW9uSWQiOiI3YmM5ZTZiNS05Y2MwLTQzNWYtOWFkNS04YzRmNDgyZjBjNDUiLCJyb2xlIjoiT3BlcmF0b3IiLCJzdWIiOiIxZGNlYzYzZi01ZDBjLTRhYmYtOWQ0Yy1mNzA3NjMyYTFhNzMifQ.8ijrEfXQjIQIwckW695Zm5cOfqn184WVBJ3TRWitRW0"
+	fixedTokenSecret = "f71ab8929ad747915e135b8e9a5e01403329cc6b202c8e540e74920a78394e36f6266e4a505bf9cd362206bfd39665c69330e038f96ba72bbbc1f4a522564410"
+)
 
-func ApplyFixedAuthValuesSystemAdministrator(req *http.Request) {
-	req.Header.Set("X-CSRF-Token", FixedCsrfTokenSystemAdministrator)
+type ApplyAuthValuesFunc func(t *testing.T, timeSource domain.TimeSource, req *http.Request) FixedAuthTokenData
+
+func ApplyFixedAuthValuesOrganisationAdministrator(t *testing.T, timeSource domain.TimeSource, req *http.Request) FixedAuthTokenData {
+	authTokenData := FixedAuthTokenData{
+		TokenSecret:    mustHexDecode(fixedTokenSecret),
+		AccountID:      fixedOrganisationAdminAccountID,
+		OrganisationID: uuid.NullUUID{Valid: true, UUID: fixedOrganisationID},
+		RoleIdentifier: string(domain.RoleOrganisationAdministrator),
+	}
+
+	addTokenToRequest(t, timeSource, req, authTokenData)
+
+	return authTokenData
+}
+
+var _ ApplyAuthValuesFunc = ApplyFixedAuthValuesOrganisationAdministrator
+
+func ApplyFixedAuthValuesSystemAdministrator(t *testing.T, timeSource domain.TimeSource, req *http.Request) FixedAuthTokenData {
+	authTokenData := FixedAuthTokenData{
+		TokenSecret:    mustHexDecode(fixedTokenSecret),
+		AccountID:      fixedSystemAdminAccountID,
+		RoleIdentifier: string(domain.RoleSystemAdministrator),
+	}
+
+	addTokenToRequest(t, timeSource, req, authTokenData)
+
+	return authTokenData
+}
+
+var _ ApplyAuthValuesFunc = ApplyFixedAuthValuesSystemAdministrator
+
+func addTokenToRequest(t *testing.T, timeSource domain.TimeSource, req *http.Request, authTokenData FixedAuthTokenData) {
+	tokenOpts := authentication.TokenOptsForAccount(authTokenData)
+	authToken, err := authentication.GenerateAuthToken(authTokenData, timeSource, tokenOpts)
+	if err != nil {
+		t.Fatalf("failed to generate auth token: %v", err)
+	}
+
+	csrfToken, err := authentication.GenerateCsrfToken(authTokenData, timeSource, tokenOpts)
+	if err != nil {
+		t.Fatalf("failed to generate CSRF token: %v", err)
+	}
+
+	req.Header.Set("X-CSRF-Token", csrfToken)
 	cookie := http.Cookie{
 		Name:  "authToken",
-		Value: FixedCookieValueSystemAdministrator,
+		Value: authToken,
 	}
 	req.AddCookie(&cookie)
 }
 
-func ApplyFixedAuthValuesOrganisationAdministrator(req *http.Request) {
-	req.Header.Set("X-CSRF-Token", FixedCsrfTokenOrganisationAdministrator)
-	cookie := http.Cookie{
-		Name:  "authToken",
-		Value: FixedCookieValueOrganisationAdministrator,
+func mustHexDecode(secret string) []byte {
+	data, err := hex.DecodeString(secret)
+	if err != nil {
+		panic(err)
 	}
-	req.AddCookie(&cookie)
+	return data
 }
 
-func ApplyFixedAuthValuesOperator(req *http.Request) {
-	req.Header.Set("Authorization", FixedAuthTokenOperatorAccount)
+func GetContextWithSystemAdministrator() context.Context {
+	ctx := context.Background()
+
+	return authentication.WithAuthContext(ctx, authentication.AuthContext{
+		Authenticated: true,
+		Role:          domain.RoleSystemAdministrator,
+	})
 }
 
 func GetContextWithOrganisationAdministrator() context.Context {
 	ctx := context.Background()
 
-	organisationID := uuid.FromStringOrNil("7bc9e6b5-9cc0-435f-9ad5-8c4f482f0c45")
+	organisationID := fixedOrganisationID
 	return authentication.WithAuthContext(ctx, authentication.AuthContext{
 		Authenticated:  true,
 		OrganisationID: &organisationID,
 		Role:           domain.RoleOrganisationAdministrator,
+	})
+}
+
+func GetContextWithAnonymous() context.Context {
+	ctx := context.Background()
+
+	return authentication.WithAuthContext(ctx, authentication.AuthContext{
+		Authenticated: false,
 	})
 }

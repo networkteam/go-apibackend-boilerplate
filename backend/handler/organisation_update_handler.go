@@ -4,36 +4,25 @@ import (
 	"context"
 	"database/sql"
 
+	logger "github.com/apex/log"
 	"github.com/friendsofgo/errors"
-	"github.com/zbyte/go-kallax"
 
 	"myvendor.mytld/myproject/backend/domain"
-	"myvendor.mytld/myproject/backend/logger"
-	"myvendor.mytld/myproject/backend/persistence/records"
+	"myvendor.mytld/myproject/backend/persistence/repository"
 	"myvendor.mytld/myproject/backend/security/authentication"
 	"myvendor.mytld/myproject/backend/security/authorization"
 )
 
-type OrganisationUpdateHandler struct {
-	organisationStore *records.OrganisationStore
-}
-
-func NewOrganisationUpdateHandler(db *sql.DB) *OrganisationUpdateHandler {
-	return &OrganisationUpdateHandler{
-		organisationStore: records.NewOrganisationStore(db),
-	}
-}
-
-func (h *OrganisationUpdateHandler) Handle(ctx context.Context, cmd domain.OrganisationUpdateCmd) error {
-	log := logger.GetLogger(ctx).
-		WithField("handler", "organisationUpdate")
+func (h *Handler) OrganisationUpdate(ctx context.Context, cmd domain.OrganisationUpdateCmd) error {
+	log := logger.FromContext(ctx).
+		WithField("component", "handler").
+		WithField("handler", "OrganisationUpdate")
 
 	log.
 		WithField("cmd", cmd).
 		Debug("Handling organisation update command")
 
-	err := cmd.Validate()
-	if err != nil {
+	if err := cmd.Validate(); err != nil {
 		return err
 	}
 
@@ -42,47 +31,41 @@ func (h *OrganisationUpdateHandler) Handle(ctx context.Context, cmd domain.Organ
 		return err
 	}
 
-	q := records.NewOrganisationQuery().
-		FindByID(kallax.UUID(cmd.OrganisationID))
-
-	organisation, err := h.organisationStore.FindOne(q)
-	if err == kallax.ErrNotFound {
-		return domain.FieldError{
-			// Field named as in GraphQL schema
-			Field:     "id",
-			Code:      domain.ErrorCodeNotExists,
-			Arguments: []string{cmd.OrganisationID.String()},
+	var prevOrganisationName string
+	err := repository.Transactional(ctx, h.db, func(tx *sql.Tx) error {
+		prevRecord, err := repository.FindOrganisationByID(ctx, tx, cmd.OrganisationID)
+		if err == repository.ErrNotFound {
+			return domain.FieldError{
+				Field: "organisationId",
+				Code:  domain.ErrorCodeNotExists,
+			}
+		} else if err != nil {
+			return errors.Wrap(err, "finding organisation")
 		}
-	} else if err != nil {
-		return errors.Wrap(err, "could not query organisation")
-	}
+		prevOrganisationName = prevRecord.Name
 
-	q = records.NewOrganisationQuery().
-		Where(
-			kallax.And(
-				records.LowerCaseEqual(records.Schema.Organisation.Name, cmd.Name),
-				kallax.Neq(records.Schema.Organisation.ID, cmd.OrganisationID),
-			),
-		)
-	if n, err := h.organisationStore.Count(q); err != nil {
-		return errors.Wrap(err, "could not query organisation")
-	} else if n > 0 {
-		return domain.FieldError{
-			Field:     "name",
-			Code:      domain.ErrorCodeAlreadyExists,
-			Arguments: []string{cmd.Name},
+		changeSet := repository.OrganisationChangeSet{
+			Name: &cmd.Name,
 		}
-	}
 
-	organisation.Name = cmd.Name
+		err = repository.UpdateOrganisation(ctx, tx, cmd.OrganisationID, changeSet)
+		if err != nil {
+			if constraintErr := repository.OrganisationConstraintErr(err); constraintErr != nil {
+				return constraintErr
+			}
+			return errors.Wrap(err, "update organisation")
+		}
 
-	_, err = h.organisationStore.Update(organisation)
+		return nil
+	})
 	if err != nil {
-		return errors.Wrap(err, "could not update organisation")
+		return errors.Wrap(err, "running transaction")
 	}
 
 	log.
 		WithField("organisationID", cmd.OrganisationID).
+		WithField("organisationName", cmd.Name).
+		WithField("prevOrganisationName", prevOrganisationName).
 		Info("Updated organisation")
 
 	return nil

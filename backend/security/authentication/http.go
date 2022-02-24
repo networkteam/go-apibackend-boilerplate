@@ -1,12 +1,19 @@
 package authentication
 
-import "net/http"
+import (
+	"net/http"
+)
 
 const (
 	authTokenCookieName        = "authToken"
+	refreshAuthTokenHeaderName = "X-Refresh-Auth-Token"
 	refreshCsrfTokenHeaderName = "X-Refresh-CSRF-Token"
 	authTokenHeaderName        = "Authorization"
 )
+
+func SetRefreshAuthTokenHeader(w http.ResponseWriter, authToken string) {
+	w.Header().Set(refreshAuthTokenHeaderName, authToken)
+}
 
 func SetRefreshCsrfTokenHeader(w http.ResponseWriter, csrfToken string) {
 	w.Header().Set(refreshCsrfTokenHeaderName, csrfToken)
@@ -18,6 +25,7 @@ func SetAuthTokenCookie(w http.ResponseWriter, r *http.Request, authToken string
 		Value:    authToken,
 		HttpOnly: true,
 		Secure:   r.URL.Scheme == "https",
+		SameSite: http.SameSiteStrictMode,
 	})
 }
 
@@ -30,22 +38,24 @@ func GetAuthTokenAndSkipCsrfCheckFromRequest(r *http.Request) (authToken string,
 	if isMethodSafe(r.Method) {
 		skipCsrfCheck = true
 	}
-	var ok bool
-	if authToken, ok = getAuthTokenFromCookie(r); !ok {
-		authToken = getAuthTokenFromHeader(r)
+
+	// First check if auth token is sent as header
+	authToken = getAuthTokenFromHeader(r)
+	if authToken != "" {
 		// Also skip CSRF check if Authorization header is present, since it cannot be "faked"
-		if authToken != "" {
-			skipCsrfCheck = true
-		}
+		return authToken, true
 	}
+
+	// Otherwise use auth token from cookie
+	authToken = getAuthTokenFromCookie(r)
 	return authToken, skipCsrfCheck
 }
 
-func getAuthTokenFromCookie(r *http.Request) (token string, ok bool) {
+func getAuthTokenFromCookie(r *http.Request) string {
 	if cookie, err := r.Cookie(authTokenCookieName); err == nil {
-		return cookie.Value, true
+		return cookie.Value
 	}
-	return "", false
+	return ""
 }
 
 func getAuthTokenFromHeader(r *http.Request) string {

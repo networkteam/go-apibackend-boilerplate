@@ -3,6 +3,8 @@ package graphql
 import (
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func RequireNoErrors(t *testing.T, errs GraphqlErrors) {
@@ -28,4 +30,16 @@ func RequireErrors(t *testing.T, errs GraphqlErrors) {
 		t.Error("Expected GraphQL errors, but got none")
 		t.FailNow()
 	}
+}
+
+func RequireNotAuthorizedError(t *testing.T, errs GraphqlErrors) {
+	t.Helper()
+
+	if len(errs.Errors) != 1 {
+		t.Errorf("Expected 1 GraphQL error, but got %d", len(errs.Errors))
+		t.FailNow()
+	}
+
+	firstError := errs.Errors[0]
+	require.Equal(t, "notAuthorized", firstError.Extensions.Type)
 }

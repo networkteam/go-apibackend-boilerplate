@@ -19,7 +19,7 @@ func ExecFixtures(t *testing.T, db *sql.DB, fixtureFilenames ...string) {
 		}
 		_, err = db.Exec(string(data))
 		if err != nil {
-			t.Fatalf("could not execute migration %s: %v", file, err)
+			t.Fatalf("could not execute fixture %q: %v", file, err)
 		}
 	}
 }

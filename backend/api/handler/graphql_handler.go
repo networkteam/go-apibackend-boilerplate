@@ -2,21 +2,17 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"strings"
 
-	"github.com/99designs/gqlgen-contrib/gqlapollotracing"
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/99designs/gqlgen/handler"
-	"github.com/friendsofgo/errors"
-	sentry "github.com/getsentry/sentry-go"
-	"github.com/gorilla/handlers"
+	graphql_handler "github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/apollotracing"
 
 	"myvendor.mytld/myproject/backend/api"
-	"myvendor.mytld/myproject/backend/api/middleware"
-	"myvendor.mytld/myproject/backend/api/root"
-	"myvendor.mytld/myproject/backend/security/authentication"
+	"myvendor.mytld/myproject/backend/api/graph"
+	"myvendor.mytld/myproject/backend/api/graph/generated"
+	graphql_middleware "myvendor.mytld/myproject/backend/api/graph/middleware"
+	http_middleware "myvendor.mytld/myproject/backend/api/http/middleware"
 )
 
 type HandlerConfig struct {
@@ -29,95 +25,37 @@ func NewGraphqlHandler(
 	deps api.ResolverDependencies,
 	handlerConfig HandlerConfig,
 ) http.Handler {
-	config := api.Config{
-		Resolvers: &root.Resolver{
+	config := generated.Config{
+		Resolvers: &graph.Resolver{
 			ResolverDependencies: deps,
 		},
-		Directives: api.DirectiveRoot{
-			// No op implementation
+		Directives: generated.DirectiveRoot{
+			// No op implementation, will be checked in middleware
 			BypassAuthentication: func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
 				return next(ctx)
 			},
 		},
 	}
-	exec := api.NewExecutableSchema(config)
-	var opts []handler.Option
+	exec := generated.NewExecutableSchema(config)
+	srv := graphql_handler.NewDefaultServer(exec)
+	srv.SetErrorPresenter(ErrorPresenter)
+
 	if handlerConfig.EnableLogging {
-		opts = append(opts, handler.ResolverMiddleware(middleware.LoggerFieldMiddleware))
+		srv.AroundFields(graphql_middleware.LoggerFieldMiddleware)
 	}
 
-	opts = append(opts, handler.ResolverMiddleware(middleware.RequireAuthenticationFieldMiddleware))
-	opts = append(opts, handler.ResolverMiddleware(middleware.SentryGraphqlMiddleware))
+	srv.AroundFields(graphql_middleware.RequireAuthenticationFieldMiddleware)
+	srv.AroundFields(graphql_middleware.SentryGraphqlMiddleware)
 
 	if handlerConfig.EnableTracing {
-		opts = append(
-			opts,
-			handler.RequestMiddleware(gqlapollotracing.RequestMiddleware()),
-			handler.Tracer(gqlapollotracing.NewTracer()),
-		)
+		srv.Use(apollotracing.Tracer{})
 	}
 	if !handlerConfig.DisableRecover {
-		opts = append(opts, handler.RecoverFunc(sentryRecoverFunc))
+		srv.SetRecoverFunc(sentryRecoverFunc)
 	}
-	graphqlHandler := handler.GraphQL(
-		exec,
-		opts...,
+	// else: DefaultRecover from gqlgen is okay for tests, it dumps a stacktrace to the console
+
+	return http_middleware.RequestAndResponseWriterMiddleware(
+		srv,
 	)
-
-	return middleware.RequestID(
-		handlers.ProxyHeaders(
-			middleware.SentryMiddleware(
-				middleware.AuthTokenMiddleware(
-					middleware.CsrfTokenMiddleware(
-						middleware.AuthContextMiddleware(
-							deps.Db,
-							deps.TimeSource,
-							middleware.RefreshTokensMiddleware(
-								deps.Db,
-								deps.TimeSource,
-								middleware.RequestAndResponseWriterMiddleware(
-									graphqlHandler,
-								),
-							),
-						),
-					),
-				),
-			),
-		),
-	)
-}
-
-func sentryRecoverFunc(ctx context.Context, err interface{}) error {
-	req := api.GetHTTPRequest(ctx)
-
-	parts := []string{""}
-	if req.RemoteAddr != "" {
-		parts = strings.Split(req.RemoteAddr, ":")
-	}
-
-	remoteAddr := parts[0]
-
-	userInfo := authentication.GetAuthContext(ctx)
-	sentry.ConfigureScope(func(scope *sentry.Scope) {
-		scope.SetUser(sentry.User{
-			ID: userInfo.AccountID.String(),
-		})
-
-		scope.SetContext("Request", map[string]string{
-			"Method":    req.Method,
-			"URL":       req.RequestURI,
-			"Client IP": remoteAddr,
-		})
-	})
-
-	var newErr error
-	if realErr, ok := err.(error); ok {
-		newErr = realErr
-	} else {
-		newErr = errors.New(fmt.Sprintf("%s", err))
-	}
-
-	sentry.CaptureException(newErr)
-
-	return newErr
 }

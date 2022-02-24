@@ -4,36 +4,25 @@ import (
 	"context"
 	"database/sql"
 
+	logger "github.com/apex/log"
 	"github.com/friendsofgo/errors"
-	"github.com/zbyte/go-kallax"
 
 	"myvendor.mytld/myproject/backend/domain"
-	"myvendor.mytld/myproject/backend/logger"
-	"myvendor.mytld/myproject/backend/persistence/records"
+	"myvendor.mytld/myproject/backend/persistence/repository"
 	"myvendor.mytld/myproject/backend/security/authentication"
 	"myvendor.mytld/myproject/backend/security/authorization"
 )
 
-type OrganisationCreateHandler struct {
-	organisationStore *records.OrganisationStore
-}
-
-func NewOrganisationCreateHandler(db *sql.DB) *OrganisationCreateHandler {
-	return &OrganisationCreateHandler{
-		organisationStore: records.NewOrganisationStore(db),
-	}
-}
-
-func (h *OrganisationCreateHandler) Handle(ctx context.Context, cmd domain.OrganisationCreateCmd) error {
-	log := logger.GetLogger(ctx).
-		WithField("handler", "organisationCreate")
+func (h *Handler) OrganisationCreate(ctx context.Context, cmd domain.OrganisationCreateCmd) error {
+	log := logger.FromContext(ctx).
+		WithField("component", "handler").
+		WithField("handler", "OrganisationCreate")
 
 	log.
 		WithField("cmd", cmd).
 		Debug("Handling organisation create command")
 
-	err := cmd.Validate()
-	if err != nil {
+	if err := cmd.Validate(); err != nil {
 		return err
 	}
 
@@ -42,30 +31,29 @@ func (h *OrganisationCreateHandler) Handle(ctx context.Context, cmd domain.Organ
 		return err
 	}
 
-	q := records.NewOrganisationQuery().Where(
-		records.LowerCaseEqual(records.Schema.Organisation.Name, cmd.Name),
-	)
-	if n, err := h.organisationStore.Count(q); err != nil {
-		return errors.Wrap(err, "could not query organisations")
-	} else if n > 0 {
-		return domain.FieldError{
-			Field:     "name",
-			Code:      domain.ErrorCodeAlreadyExists,
-			Arguments: []string{cmd.Name},
+	err := repository.Transactional(ctx, h.db, func(tx *sql.Tx) error {
+		changeSet := repository.OrganisationChangeSet{
+			ID:   &cmd.OrganisationID,
+			Name: &cmd.Name,
 		}
-	}
 
-	organisation := records.NewOrganisation()
-	organisation.ID = kallax.UUID(cmd.OrganisationID)
-	organisation.Name = cmd.Name
+		err := repository.InsertOrganisation(ctx, tx, changeSet)
+		if err != nil {
+			if constraintErr := repository.OrganisationConstraintErr(err); constraintErr != nil {
+				return constraintErr
+			}
+			return errors.Wrap(err, "insert organisation")
+		}
 
-	err = h.organisationStore.Insert(organisation)
+		return nil
+	})
 	if err != nil {
-		return errors.Wrap(err, "could not insert organisation")
+		return errors.Wrap(err, "running transaction")
 	}
 
 	log.
 		WithField("organisationID", cmd.OrganisationID).
+		WithField("organisationName", cmd.Name).
 		Info("Created organisation")
 
 	return nil

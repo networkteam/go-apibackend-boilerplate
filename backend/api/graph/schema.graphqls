@@ -1,0 +1,72 @@
+#
+# Domain
+#
+
+directive @bypassAuthentication on FIELD_DEFINITION
+
+scalar UUID
+scalar Date
+scalar DateTime
+scalar ByteSize
+
+type Candidate {
+  id: UUID!
+  firstname: String!
+  lastname: String!
+  emailAddress: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+#
+# Queries
+#
+
+type Query {
+  "Hello, echo ;)"
+  echo(hello: String!): String! @bypassAuthentication
+}
+
+#
+# Mutations
+#
+
+# type Mutation {
+# }
+
+#
+# Inputs
+#
+
+#
+# Results
+#
+
+type Result {
+  "An error if the operation failed"
+  error: FieldsError
+}
+
+"A generic application error (for expected errors)"
+type Error {
+  "An error code that can be translated in the client"
+  code: String!
+  "Arguments for translation of the code"
+  arguments: [String!]!
+}
+
+"An error with information about fields"
+type FieldsError {
+  "List of errors specific to a field (or global)"
+  errors: [FieldError!]!
+}
+
+"A generic field based error"
+type FieldError {
+  "A path to the field where the error occured, empty array if the error is not bound to a specific field"
+  path: [String!]!
+  "An error code that can be translated in the client"
+  code: String!
+  "Arguments for translation of the code"
+  arguments: [String!]!
+}

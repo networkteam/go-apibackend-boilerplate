@@ -44,6 +44,7 @@ type AuthContext struct {
 func (authCtx AuthContext) Fields() log.Fields {
 	return map[string]interface{}{
 		"authenticated":             authCtx.Authenticated,
+		"role":                      authCtx.Role,
 		"ignoreAuthenticationState": authCtx.IgnoreAuthenticationState,
 		"authenticationError":       authCtx.Error,
 		"skipCsrfCheck":             authCtx.SkipCsrfCheck,

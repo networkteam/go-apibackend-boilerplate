@@ -49,4 +49,4 @@ echo "    go run ./cli/ctl migrate up"
 echo
 echo "Run a server for development:"
 echo
-echo "    go run ./cli/refresh"
+echo "    go run github.com/networkteam/refresh"

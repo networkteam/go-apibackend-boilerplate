@@ -12,7 +12,7 @@ import (
 func GenerateRandomBytes(n int) ([]byte, error) {
 	b := make([]byte, n)
 	_, err := rand.Read(b)
-	// Note that err == nil only if we read len(b) bytes.
+	// It applies that err == nil only if we read len(b) bytes.
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +29,6 @@ func GenerateRandomString(n int) (string, error) {
 		return "", errors.New("length must be greater zero")
 	}
 
-	//noinspection ALL
 	const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 	bytes, err := GenerateRandomBytes(n)
 	if err != nil {

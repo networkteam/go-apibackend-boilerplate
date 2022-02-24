@@ -1,0 +1,69 @@
+#
+# Domain
+#
+
+type Account {
+  id: UUID!
+  emailAddress: String!
+  role: Role!
+  lastLogin: DateTime
+  organisationId: UUID
+  personId: UUID
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum Role {
+  SystemAdministrator
+  OrganisationAdministrator
+  Employee
+}
+
+#
+# Queries
+#
+
+extend type Query {
+  "Get the current login status"
+  loginStatus: Boolean! @bypassAuthentication
+}
+
+#
+# Mutations
+#
+
+extend type Mutation {
+  "Perform a login with credentials of a user account"
+  login(credentials: LoginCredentials!): LoginResult! @bypassAuthentication
+
+  "Perform a logout of the current user account"
+  logout: Error
+}
+
+#
+# Inputs
+#
+
+"Login credentials for accounts"
+input LoginCredentials {
+  "Email address of the account"
+  emailAddress: String!
+  "Password of the account"
+  password: String!
+}
+
+#
+# Results
+#
+
+"Login result"
+type LoginResult {
+  "The authenticated account (if error is null)"
+  account: Account
+  "Auth token for using header based authentication (if error is null)"
+  authToken: String!
+  "CSRF token to be sent in subsequent requests (if error is null)"
+  csrfToken: String!
+  "An error if authentication failed"
+  error: Error
+}

@@ -2,21 +2,71 @@
 -- Organisations
 --
 
-INSERT INTO organisations VALUES ('6330de58-2761-411e-a243-bec6d0c53876', 'Acme Inc.');
+INSERT INTO
+    organisations (organisation_id, name)
+VALUES ('6330de58-2761-411e-a243-bec6d0c53876',
+           'Acme Inc.'),
+       ('dba20d09-a3df-4975-9406-2fb6fd8f0940',
+           'Other Corp');
 
 --
 -- Accounts
 --
 
--- User (0352324c-25aa-4def-935d-0eed999f1f99)
---   emailAddress: test@example.com
+-- Account (d7037ad0-d4bb-4dcc-8759-d82fbb3354e8)
+--   username: admin@example.com
 --   password: myRandomPassword
 --   role: SystemAdministrator
--- User (faa2b027-8045-4473-8b07-02dc02ceea39)
---   emailAddress: member@example.com
---   password: myPassword
 
-INSERT INTO accounts VALUES ('0352324c-25aa-4def-935d-0eed999f1f99', 'user', 'SystemAdministrator', '\xf71ab8929ad747915e135b8e9a5e01403329cc6b202c8e540e74920a78394e36f6266e4a505bf9cd362206bfd39665c69330e038f96ba72bbbc1f4a522564410', 'test@example.com', '\x2432612431302446546d4639554258746c6f414d36316a6451594271753053642e6f714d46774a535661664877594d6a77776c6f65612e6c427a5432');
-INSERT INTO accounts VALUES ('0352324c-25aa-4def-935d-0eed999f1fa0', 'user', 'OrganisationAdministrator', '\xf71ab8929ad747915e135b8e9a5e01403329cc6b202c8e540e74920a78394e36f6266e4a505bf9cd362206bfd39665c69330e038f96ba72bbbc1f4a522564410', 'admin@organisation.com', '\x2432612431302446546d4639554258746c6f414d36316a6451594271753053642e6f714d46774a535661664877594d6a77776c6f65612e6c427a5432', NULL, '6330de58-2761-411e-a243-bec6d0c53876', 'Admin');
-INSERT INTO accounts VALUES ('faa2b027-8045-4473-8b07-02dc02ceea39', 'user', 'User', '\x2093aca61334820978e07db818fcef732031e64e5c3e54303556551e1832d60417df21b6ac718e59f620884722d14a48f955e44d4de57e8608a72ab187b84e12', 'member@example.com', '\x243261243132244d744a37315455504a7a4b48464c68734f4d39425a7550547a686a76335a4a7534526d5277736f426372527672615a4f5159764f61', NULL, '6330de58-2761-411e-a243-bec6d0c53876');
-INSERT INTO accounts VALUES ('cfdc5345-cd83-48ae-bbdd-978a8601cfa6', 'app', 'App', '\x2093aca61334820978e07db818fcef732031e64e5c3e54303556551e1832d60417df21b6ac718e59f620884722d14a48f955e44d4de57e8608a72ab187b84e12', 'app@example.com', '\x243261243132244d744a37315455504a7a4b48464c68734f4d39425a7550547a686a76335a4a7534526d5277736f426372527672615a4f5159764f61', 'Paul', '6330de58-2761-411e-a243-bec6d0c53876');
+INSERT INTO
+    accounts (account_id, role_identifier, secret, email_address, password_hash)
+VALUES ('d7037ad0-d4bb-4dcc-8759-d82fbb3354e8',
+        'SystemAdministrator',
+        '\xf71ab8929ad747915e135b8e9a5e01403329cc6b202c8e540e74920a78394e36f6266e4a505bf9cd362206bfd39665c69330e038f96ba72bbbc1f4a522564410',
+        'admin@example.com',
+        '\x24326124303424664b4263675349637966474f6f4571534b5a566c6c4f6d4f347461395161623162545a65556c556e6b4962455269764a645930624f');
+
+-- Account (3ad082c7-cbda-49e1-a707-c53e1962be65)
+--   username: admin+acmeinc@example.com
+--   password: myRandomPassword
+--   role: OrganisationAdministrator
+
+INSERT INTO
+    accounts (account_id, role_identifier, secret, email_address, password_hash, organisation_id)
+VALUES ('3ad082c7-cbda-49e1-a707-c53e1962be65',
+        'OrganisationAdministrator',
+        '\xf71ab8929ad747915e135b8e9a5e01403329cc6b202c8e540e74920a78394e36f6266e4a505bf9cd362206bfd39665c69330e038f96ba72bbbc1f4a522564410',
+        'admin+acmeinc@example.com',
+        '\x24326124303424664b4263675349637966474f6f4571534b5a566c6c4f6d4f347461395161623162545a65556c556e6b4962455269764a645930624f',
+           -- Acme Inc.
+        '6330de58-2761-411e-a243-bec6d0c53876');
+
+-- Account (f045e5d1-cdad-4964-a7e2-139c8a87346c)
+--   username: otheradmin+acmeinc@example.com
+--   password: myRandomPassword
+--   role: OrganisationAdministrator
+
+INSERT INTO
+    accounts (account_id, role_identifier, secret, email_address, password_hash, organisation_id)
+VALUES ('f045e5d1-cdad-4964-a7e2-139c8a87346c',
+        'OrganisationAdministrator',
+        '\xf71ab8929ad747915e135b8e9a5e01403329cc6b202c8e540e74920a78394e36f6266e4a505bf9cd362206bfd39665c69330e038f96ba72bbbc1f4a522564410',
+        'otheradmin+acmeinc@example.com',
+        '\x24326124303424664b4263675349637966474f6f4571534b5a566c6c4f6d4f347461395161623162545a65556c556e6b4962455269764a645930624f',
+           -- Acme Inc.
+        '6330de58-2761-411e-a243-bec6d0c53876');
+
+-- Account (2035f4da-f385-42c4-a609-02d9aa7290e5)
+--   username: admin+othercorp@example.com
+--   password: myRandomPassword
+--   role: OrganisationAdministrator
+
+INSERT INTO
+    accounts (account_id, role_identifier, secret, email_address, password_hash, organisation_id)
+VALUES ('2035f4da-f385-42c4-a609-02d9aa7290e5',
+        'OrganisationAdministrator',
+        '\xf71ab8929ad747915e135b8e9a5e01403329cc6b202c8e540e74920a78394e36f6266e4a505bf9cd362206bfd39665c69330e038f96ba72bbbc1f4a522564410',
+        'admin+othercorp@example.com',
+        '\x2424326124303424664b4263675349637966474f6f4571534b5a566c6c4f6d4f347461395161623162545a65556c556e6b4962455269764a645930624f',
+           -- Other Corp
+        'dba20d09-a3df-4975-9406-2fb6fd8f0940');

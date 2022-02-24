@@ -18,7 +18,7 @@ type AccountIDProvider interface {
 }
 
 type OrganisationIDProvider interface {
-	GetOrganisationID() uuid.UUID
+	GetOrganisationID() uuid.NullUUID
 }
 
 type RoleIdentifierProvider interface {

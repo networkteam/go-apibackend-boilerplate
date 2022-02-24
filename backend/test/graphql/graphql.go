@@ -10,11 +10,15 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"myvendor.mytld/myproject/backend/api"
 	api_handler "myvendor.mytld/myproject/backend/api/handler"
-	"myvendor.mytld/myproject/backend/api/helper"
-	"myvendor.mytld/myproject/backend/service/hub"
-	"myvendor.mytld/myproject/backend/service/notification"
+	http_api "myvendor.mytld/myproject/backend/api/http"
+	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/mail"
+	"myvendor.mytld/myproject/backend/mail/fixture"
+	"myvendor.mytld/myproject/backend/test"
 )
 
 func NewRequest(t *testing.T, query GraphqlQuery) *http.Request {
@@ -36,23 +40,29 @@ func NewRequest(t *testing.T, query GraphqlQuery) *http.Request {
 func Handle(t *testing.T, deps api.ResolverDependencies, req *http.Request, dst interface{}) *httptest.ResponseRecorder {
 	t.Helper()
 
+	// Use default config if config is zero value
+	if deps.Config == (domain.Config{}) {
+		deps.Config = domain.DefaultConfig()
+		// Use a reduced hash cost
+		deps.Config.HashCost = bcrypt.MinCost
+	}
+
 	if deps.TimeSource == nil {
-		deps.TimeSource = helper.FixedTime()
+		deps.TimeSource = test.FixedTime()
 	}
 
-	if deps.Notifier == nil {
-		deps.Notifier = notification.NewTestNotifier(nil)
-	}
-
-	if deps.Hub == nil {
-		deps.Hub = hub.NewHub()
+	if deps.Mailer == nil {
+		sender := fixture.NewSender()
+		deps.Mailer = mail.NewMailer(sender, mail.DefaultConfig(domain.DefaultConfig()))
 	}
 
 	graphqlHandler := api_handler.NewGraphqlHandler(deps, api_handler.HandlerConfig{
 		DisableRecover: true,
 	})
+	srv := http_api.MiddlewareStack(deps, graphqlHandler)
+
 	w := httptest.NewRecorder()
-	graphqlHandler.ServeHTTP(w, req)
+	srv.ServeHTTP(w, req)
 	body, err := ioutil.ReadAll(w.Body)
 	if err != nil {
 		t.Fatalf("could not read response body: %v", err)
@@ -141,7 +151,9 @@ type GraphqlErrors struct {
 		Message    string        `json:"message"`
 		Path       []interface{} `json:"path"`
 		Extensions struct {
-			Type string `json:"type"`
+			Field string `json:"field"`
+			Type  string `json:"type"`
+			Code  string `json:"code"`
 		} `json:"extensions"`
 	} `json:"errors"`
 }

@@ -31,4 +31,13 @@ func (n FieldError) ErrorCode() string {
 	return n.Code
 }
 
+func (n FieldError) Extensions() map[string]interface{} {
+	return map[string]interface{}{
+		"type":      "validationFailed",
+		"code":      n.Code,
+		"field":     n.Field,
+		"arguments": n.Arguments,
+	}
+}
+
 var _ FieldResolvableError = new(FieldError)

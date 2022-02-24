@@ -1,20 +1,20 @@
 app_root: .
 ignored_folders:
-- vendor
-- log
-- logs
-- tmp
-- node_modules
-- bin
-- templates
+  - vendor
+  - log
+  - logs
+  - tmp
+  - node_modules
+  - bin
+  - templates
 included_extensions:
-- .go
+  - .go
 build_target_path: "./cli/ctl"
 build_path: ./tmp/
-build_flags: []
-build_delay: 200ns
+build_flags: [ ]
+build_delay: 100ms
 binary_name: refresh-build
-command_flags: ["server","-v=4","--playground"]
-command_env: []
+command_flags: [ "-v=4","server","--playground" ]
+command_env: [ ]
 enable_colors: true
 log_name: ""

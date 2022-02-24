@@ -1,5 +1,29 @@
-// Handlers perform actions on persistence and services through domain commands
-//
-// API or CLI or other endpoints will call handlers to cause side-effects (write).
-// Each handler should perform a transactional step. It should either succeed or fail completely.
 package handler
+
+import (
+	"database/sql"
+
+	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/mail"
+)
+
+type Handler struct {
+	db         *sql.DB
+	timeSource domain.TimeSource
+	mailer     *mail.Mailer
+	config     domain.Config
+}
+
+func NewHandler(
+	db *sql.DB,
+	timeSource domain.TimeSource,
+	mailer *mail.Mailer,
+	config domain.Config,
+) *Handler {
+	return &Handler{
+		db:         db,
+		timeSource: timeSource,
+		mailer:     mailer,
+		config:     config,
+	}
+}

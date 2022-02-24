@@ -3,6 +3,8 @@ package main
 import (
 	"time"
 
+	"github.com/urfave/cli/v2"
+
 	"myvendor.mytld/myproject/backend/domain"
 )
 
@@ -12,6 +14,8 @@ func (cts currentTimeSource) Now() time.Time {
 	return time.Now()
 }
 
-func newCurrentTimeSource() domain.TimeSource {
-	return currentTimeSource{}
+func newCurrentTimeSource(c *cli.Context) (domain.TimeSource, error) {
+	// TODO Get location from CLI context and store in time source
+
+	return currentTimeSource{}, nil
 }

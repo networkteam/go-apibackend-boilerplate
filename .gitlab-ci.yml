@@ -15,7 +15,7 @@ variables:
 
 b:backend:
   stage: build
-  image: golang:1.13
+  image: golang:1.18-rc
   script:
     - cd backend
     - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o bin/myproject-ctl ./cli/ctl
@@ -32,17 +32,19 @@ b:backend:
 
 t:backend:
   stage: test
-  image: golang:1.13
+  image: golang:1.18-rc
   services:
-    - postgres:10.10
+    - postgres:13.6
   variables:
     TZ: Europe/Berlin
     POSTGRES_DB: myproject-test
     POSTGRES_USER: root
     POSTGRES_PASSWORD: ""
+    POSTGRES_HOST_AUTH_METHOD: trust
   script:
     - cd backend
     - go mod download
+    - go run ./cli/ctl test preparedb
     - go run gotest.tools/gotestsum --junitfile junit-backend.xml
     - go test ./... -coverprofile=coverage.out -covermode atomic -coverpkg $(go list ./... | tr "\n" ",")
   cache:
@@ -54,6 +56,7 @@ t:backend:
       - backend/coverage.out
     reports:
       junit: backend/junit-*.xml
+    when: always
   dependencies: []
   only:
     changes:

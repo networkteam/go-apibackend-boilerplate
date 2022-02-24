@@ -2,13 +2,13 @@ package authentication
 
 import (
 	"github.com/friendsofgo/errors"
-	jose "gopkg.in/square/go-jose.v2"
+	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
 
 	"myvendor.mytld/myproject/backend/domain"
 )
 
-func GenerateCsrfToken(account TokenSecretProvider, timeSource domain.TimeSource) (string, error) {
+func GenerateCsrfToken(account TokenSecretProvider, timeSource domain.TimeSource, opts TokenOpts) (string, error) {
 	key := account.GetTokenSecret()
 	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: key}, (&jose.SignerOptions{}).WithType("JWT"))
 	if err != nil {
@@ -18,7 +18,7 @@ func GenerateCsrfToken(account TokenSecretProvider, timeSource domain.TimeSource
 	now := timeSource.Now()
 
 	cl := jwt.Claims{
-		Expiry: jwt.NewNumericDate(now.Add(AuthTokenExpiry)),
+		Expiry: jwt.NewNumericDate(now.Add(opts.Expiry)),
 	}
 	raw, err := jwt.Signed(sig).Claims(cl).CompactSerialize()
 	if err != nil {

@@ -28,7 +28,7 @@ func WithHTTPRequest(ctx context.Context, r *http.Request) context.Context {
 	return context.WithValue(ctx, httpRequestKey, r)
 }
 
-// GetHTTPResponse gets the *http.Request from context
+// GetHTTPRequest gets the *http.Request from context
 func GetHTTPRequest(ctx context.Context) *http.Request {
 	return ctx.Value(httpRequestKey).(*http.Request)
 }

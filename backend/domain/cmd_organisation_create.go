@@ -3,17 +3,21 @@ package domain
 import (
 	"github.com/friendsofgo/errors"
 	"github.com/gofrs/uuid"
+
+	"myvendor.mytld/myproject/backend/persistence/types"
 )
 
 type OrganisationCreateCmd struct {
 	OrganisationID uuid.UUID
 	Name           string
+	ContactPerson  string
+	CrmID          types.NullInt64
 }
 
 func NewOrganisationCreateCmd() (cmd OrganisationCreateCmd, err error) {
 	organisationID, err := uuid.NewV4()
 	if err != nil {
-		return cmd, errors.Wrap(err, "could not generate UUID")
+		return cmd, errors.Wrap(err, "generating id")
 	}
 
 	return OrganisationCreateCmd{
@@ -22,7 +26,7 @@ func NewOrganisationCreateCmd() (cmd OrganisationCreateCmd, err error) {
 }
 
 func (c OrganisationCreateCmd) Validate() error {
-	if isBlank(c.Name) {
+	if IsBlank(c.Name) {
 		return FieldError{
 			Field: "name",
 			Code:  ErrorCodeRequired,

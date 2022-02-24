@@ -1,25 +1,56 @@
-schema: schema.graphql
-exec:
-  filename: api/generated.go
-  package: api
-model:
-  filename: api/models_gen.go
-  package: api
-resolver:
-  filename: api/root/resolver.go
-  package: root
-  type: Resolver
+# Where are all the schema files located? globs are supported eg  src/**/*.graphqls
+schema:
+  - api/graph/*.graphqls
 
+# Where should the generated server code go?
+exec:
+  filename: api/graph/generated/generated.go
+  package: generated
+
+# Uncomment to enable federation
+# federation:
+#   filename: graph/generated/federation.go
+#   package: generated
+
+# Where should any generated models go?
+model:
+  filename: api/graph/model/models_gen.go
+  package: model
+
+# Where should the resolver implementations go?
+resolver:
+  layout: follow-schema
+  dir: api/graph
+  package: graph
+
+# Optional: turn on use `gqlgen:"fieldName"` tags in your models
+# struct_tag: json
+
+# Optional: turn on to use []Thing instead of []*Thing
+# omit_slice_element_pointers: false
+
+# Optional: set to speed up generation time by not performing a final validation pass.
+# skip_validation: true
+
+# gqlgen will search for any type names in the schema in these go packages
+# if they match it will use them, otherwise it will generate them.
+autobind:
+  - "myvendor.mytld/myproject/backend/api/graph/model"
+
+# This section declares type mapping between the GraphQL and go type systems
+#
+# The first line in each type will be used as defaults for resolver arguments and
+# modelgen, the others will be allowed when binding to fields. Configure them to
+# your liking
 models:
-  Role:
-    model: myvendor.mytld/myproject/backend/api.Role
   UUID:
-    model: myvendor.mytld/myproject/backend/api.UUIDScalar
+    model: myvendor.mytld/myproject/backend/api/graph/model.UUIDScalar
   DateTime:
-    model: myvendor.mytld/myproject/backend/api.DateTimeScalar
-  # Use sub resolver
-  AppAccount:
-    model: myvendor.mytld/myproject/backend/api.AppAccount
-  # Use sub resolver
-  UserAccount:
-    model: myvendor.mytld/myproject/backend/api.UserAccount
+    model: myvendor.mytld/myproject/backend/api/graph/model.DateTimeScalar
+  Date:
+    model: myvendor.mytld/myproject/backend/api/graph/model.DateScalar
+  Int:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int64
+      - github.com/99designs/gqlgen/graphql.Int32

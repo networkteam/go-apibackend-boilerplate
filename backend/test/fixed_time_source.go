@@ -25,3 +25,8 @@ func MustFixedTimeSource(isoTime string) FixedTimeSource {
 	}
 	return FixedTimeSource(t)
 }
+
+// FixedTime returns a fixed time for testing
+func FixedTime() FixedTimeSource {
+	return MustFixedTimeSource("2020-09-23T08:34:57.321Z")
+}

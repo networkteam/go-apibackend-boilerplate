@@ -9,7 +9,6 @@ type OrganisationDeleteCmd struct {
 }
 
 func NewOrganisationDeleteCmd(organisationID uuid.UUID) OrganisationDeleteCmd {
-
 	return OrganisationDeleteCmd{
 		OrganisationID: organisationID,
 	}

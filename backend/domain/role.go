@@ -6,8 +6,6 @@ type Role string
 
 const RoleSystemAdministrator = Role("SystemAdministrator")
 const RoleOrganisationAdministrator = Role("OrganisationAdministrator")
-const RoleUser = Role("User")
-const RoleApp = Role("App")
 
 var ErrUnknownRole = errors.New("unknown role")
 
@@ -23,8 +21,6 @@ func (r Role) IsValid() bool {
 	switch r {
 	case RoleSystemAdministrator:
 	case RoleOrganisationAdministrator:
-	case RoleUser:
-	case RoleApp:
 	default:
 		return false
 	}

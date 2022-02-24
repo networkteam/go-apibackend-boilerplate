@@ -1,0 +1,104 @@
+### Schema for admin related queries and mutations
+
+#
+# Domain
+#
+
+type Organisation {
+  id: UUID!
+  name: String!
+
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+#
+# Queries
+#
+
+extend type Query {
+  Account(id: UUID!): Account
+  allAccounts(
+    page: Int
+    perPage: Int
+    sortField: String
+    sortOrder: String
+    filter: AccountFilter
+  ): [Account!]!
+  _allAccountsMeta(
+    page: Int
+    perPage: Int
+    sortField: String
+    sortOrder: String
+    filter: AccountFilter
+  ): ListMetadata
+
+  Organisation(id: UUID!): Organisation
+  allOrganisations(
+    page: Int
+    perPage: Int
+    sortField: String
+    sortOrder: String
+    filter: OrganisationFilter
+  ): [Organisation!]!
+  _allOrganisationsMeta(
+    page: Int
+    perPage: Int
+    sortField: String
+    sortOrder: String
+    filter: OrganisationFilter
+  ): ListMetadata
+}
+
+#
+# Mutations
+#
+
+extend type Mutation {
+  createAccount(
+    role: Role!
+    emailAddress: String!
+    password: String!
+    organisationId: UUID
+  ): Account
+  updateAccount(
+    id: UUID!
+    role: Role!
+    emailAddress: String!
+    password: String
+    organisationId: UUID
+  ): Account
+  deleteAccount(id: UUID!): Account
+
+  createOrganisation(name: String!): Organisation
+  updateOrganisation(id: UUID!, name: String!): Organisation
+  deleteOrganisation(id: UUID!): Organisation
+}
+
+#
+# Inputs
+#
+
+input AccountFilter {
+  "Filter by multiple ids for fetching references"
+  ids: [UUID!]
+  "Filter by a query string on all text fields"
+  q: String
+  "Filter by organisation id"
+  organisationId: UUID
+}
+
+input OrganisationFilter {
+  "Filter by multiple ids for fetching references"
+  ids: [UUID!]
+  "Filter by a query string on all text fields"
+  q: String
+}
+
+#
+# Results
+#
+
+type ListMetadata {
+  count: Int!
+}
