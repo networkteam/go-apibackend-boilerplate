@@ -71,6 +71,7 @@ func truncateDB(db *sql.DB) error {
 
 	log.WithField("tables", tableNames).Info("Truncating tables")
 
+	// nosemgrep: go.lang.security.audit.database.string-formatted-query.string-formatted-query, go.lang.security.audit.sqli.gosql-sqli.gosql-sqli
 	_, err = db.Exec(fmt.Sprintf("TRUNCATE TABLE %s CASCADE", strings.Join(tableNames, ", ")))
 	if err != nil {
 		return errors.Wrap(err, "truncating tables")

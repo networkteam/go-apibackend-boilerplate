@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"html"
 	"net/http"
 
 	logger "github.com/apex/log"
@@ -36,10 +37,12 @@ func NewHealthzHandler(db DBPinger) http.HandlerFunc {
 func respondErr(w http.ResponseWriter, ignoreErrors bool, message string) {
 	if ignoreErrors {
 		w.WriteHeader(http.StatusOK)
-		_, _ = fmt.Fprintf(w, "WARN: %s\n", message)
+		// nosemgrep: go.lang.security.audit.xss.no-fprintf-to-responsewriter.no-fprintf-to-responsewriter
+		_, _ = fmt.Fprintf(w, "WARN: %s\n", html.EscapeString(message))
 		return
 	}
 
 	w.WriteHeader(http.StatusInternalServerError)
-	_, _ = fmt.Fprintf(w, "ERROR: %s\n", message)
+	// nosemgrep: go.lang.security.audit.xss.no-fprintf-to-responsewriter.no-fprintf-to-responsewriter
+	_, _ = fmt.Fprintf(w, "ERROR: %s\n", html.EscapeString(message))
 }

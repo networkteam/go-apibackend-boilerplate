@@ -20,6 +20,7 @@ func SetRefreshCsrfTokenHeader(w http.ResponseWriter, csrfToken string) {
 }
 
 func SetAuthTokenCookie(w http.ResponseWriter, r *http.Request, authToken string) {
+	// nosemgrep: go.lang.security.audit.net.cookie-missing-secure.cookie-missing-secure
 	http.SetCookie(w, &http.Cookie{
 		Name:     authTokenCookieName,
 		Value:    authToken,

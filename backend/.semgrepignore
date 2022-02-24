@@ -1,1 +1,3 @@
 api/graph/generated/generated.go
+test/
+*_test.go
