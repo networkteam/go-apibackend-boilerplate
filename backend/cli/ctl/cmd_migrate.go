@@ -5,13 +5,17 @@ import (
 	"github.com/pressly/goose/v3"
 	"github.com/urfave/cli/v2"
 
-	_ "myvendor.mytld/myproject/backend/persistence/migrations"
+	"myvendor.mytld/myproject/backend/persistence/migrations"
 )
 
 func newMigrateCmd() *cli.Command {
 	return &cli.Command{
 		Name:  "migrate",
 		Usage: "Manage database migrations",
+		Before: func(c *cli.Context) error {
+			goose.SetBaseFS(migrations.FS)
+			return nil
+		},
 		Subcommands: []*cli.Command{
 			{
 				Name:  "up",
@@ -28,12 +32,12 @@ func newMigrateCmd() *cli.Command {
 					}
 
 					if c.IsSet("version") {
-						err = goose.UpTo(db, "./persistence/migrations", c.Int64("version"))
+						err = goose.UpTo(db, ".", c.Int64("version"))
 						if err != nil {
 							return errors.Wrap(err, "applying migrations")
 						}
 					} else {
-						err = goose.Up(db, "./persistence/migrations")
+						err = goose.Up(db, ".")
 						if err != nil {
 							return errors.Wrap(err, "applying migrations")
 						}
@@ -57,12 +61,12 @@ func newMigrateCmd() *cli.Command {
 					}
 
 					if c.IsSet("version") {
-						err = goose.DownTo(db, "./persistence/migrations", c.Int64("version"))
+						err = goose.DownTo(db, ".", c.Int64("version"))
 						if err != nil {
 							return errors.Wrap(err, "applying migrations")
 						}
 					} else {
-						err = goose.Down(db, "./persistence/migrations")
+						err = goose.Down(db, ".")
 						if err != nil {
 							return errors.Wrap(err, "applying migrations")
 						}

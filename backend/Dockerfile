@@ -15,8 +15,4 @@ ENTRYPOINT ["/app/entrypoint.sh"]
 
 COPY ./docker/wait-for ./wait-for
 
-# TODO Use go:embed to include fixtures and migrations
-COPY ./test/fixtures ./test/fixtures
-COPY ./persistence/migrations ./persistence/migrations
-
 COPY ./bin/myproject-ctl ./myproject-ctl

@@ -3,12 +3,13 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"io/ioutil"
 	"strings"
 
 	"github.com/apex/log"
 	"github.com/friendsofgo/errors"
 	"github.com/urfave/cli/v2"
+
+	"myvendor.mytld/myproject/backend/test/fixtures"
 )
 
 func newFixturesCmd() *cli.Command {
@@ -46,7 +47,8 @@ func newFixturesCmd() *cli.Command {
 
 			for _, file := range fixtureFilenames {
 				log.Infof("Importing %q", file)
-				data, err := ioutil.ReadFile(fmt.Sprintf("./test/fixtures/%s.sql", file))
+
+				data, err := fixtures.FS.ReadFile(fmt.Sprintf("%s.sql", file))
 				if err != nil {
 					return errors.Wrapf(err, "could not read fixture %q", file)
 				}
