@@ -155,7 +155,7 @@ func AccountConstraintErr(err error) error {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
 		switch {
-		case pgErr.Code == pgErrCode_unique_violation && pgErr.ConstraintName == "accounts_emailaddress_idx":
+		case pgErr.Code == pgErrCode_unique_violation && pgErr.ConstraintName == "accounts_email_address_idx":
 			return domain.FieldError{
 				Field: "emailAddress",
 				Code:  domain.ErrorCodeAlreadyExists,

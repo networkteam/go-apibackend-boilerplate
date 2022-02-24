@@ -75,8 +75,7 @@ backend:gosec-sast:
   needs: []
   dependencies: []
   variables:
-    # Do not detect full project!
-    CI_PROJECT_DIR: ''
+    ANALYZER_TARGET_DIR: $CI_PROJECT_DIR/backend
     SEARCH_MAX_DEPTH: 4
     SAST_ANALYZER_IMAGE_TAG: 3
     SAST_ANALYZER_IMAGE: "$SECURE_ANALYZERS_PREFIX/gosec:$SAST_ANALYZER_IMAGE_TAG"
@@ -96,8 +95,7 @@ backend:semgrep-sast:
   needs: []
   dependencies: []
   variables:
-    # Do not detect full project!
-    CI_PROJECT_DIR: ''
+    ANALYZER_TARGET_DIR: $CI_PROJECT_DIR/backend
     SEARCH_MAX_DEPTH: 4
     SAST_ANALYZER_IMAGE_TAG: 2
     SAST_ANALYZER_IMAGE: "$SECURE_ANALYZERS_PREFIX/semgrep:$SAST_ANALYZER_IMAGE_TAG"

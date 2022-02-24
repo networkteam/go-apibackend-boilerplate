@@ -67,6 +67,23 @@ func TestMutationResolver_CreateAccount(t *testing.T) {
 			},
 		},
 		{
+			name:          "with SystemAdministrator and existing email address",
+			applyAuthFunc: test_auth.ApplyFixedAuthValuesSystemAdministrator,
+			fixtures:      []string{"base"},
+			variables: map[string]interface{}{
+				"role":         "SystemAdministrator",
+				"emailAddress": "admin@example.com",
+				"password":     "myRandomPassword",
+			},
+			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
+				test_graphql.RequireErrors(t, res.GraphqlErrors)
+
+				require.Len(t, res.GraphqlErrors.Errors, 1)
+				assert.Equal(t, "emailAddress", res.GraphqlErrors.Errors[0].Extensions.Field)
+				assert.Equal(t, "alreadyExists", res.GraphqlErrors.Errors[0].Extensions.Code)
+			},
+		},
+		{
 			name:          "with OrganisationAdministrator and valid values",
 			applyAuthFunc: test_auth.ApplyFixedAuthValuesOrganisationAdministrator,
 			fixtures:      []string{"base"},
