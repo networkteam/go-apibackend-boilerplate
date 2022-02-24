@@ -18,7 +18,6 @@ var (
 	fixedOrganisationAdminAccountID = uuid.Must(uuid.FromString("3ad082c7-cbda-49e1-a707-c53e1962be65"))
 	fixedOrganisationID             = uuid.Must(uuid.FromString("6330de58-2761-411e-a243-bec6d0c53876"))
 
-	//#nosec G101 -- This is a fixed value only for tests
 	fixedTokenSecret = "f71ab8929ad747915e135b8e9a5e01403329cc6b202c8e540e74920a78394e36f6266e4a505bf9cd362206bfd39665c69330e038f96ba72bbbc1f4a522564410"
 )
 
