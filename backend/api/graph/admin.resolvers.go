@@ -14,7 +14,7 @@ import (
 	"myvendor.mytld/myproject/backend/persistence/repository"
 )
 
-func (r *mutationResolver) CreateAccount(ctx context.Context, role model.Role, emailAddress string, password string, organisationID *uuid.UUID) (*model.Account, error) {
+func (r *mutationResolver) CreateAccount(ctx context.Context, role domain_model.Role, emailAddress string, password string, organisationID *uuid.UUID) (*model.Account, error) {
 	cmd, err := domain_model.NewAccountCreateCmd(emailAddress, domain_model.Role(role), password)
 	if err != nil {
 		return nil, err
@@ -38,7 +38,7 @@ func (r *mutationResolver) CreateAccount(ctx context.Context, role model.Role, e
 	return helper.MapToAccount(record), nil
 }
 
-func (r *mutationResolver) UpdateAccount(ctx context.Context, id uuid.UUID, role model.Role, emailAddress string, password *string, organisationID *uuid.UUID) (*model.Account, error) {
+func (r *mutationResolver) UpdateAccount(ctx context.Context, id uuid.UUID, role domain_model.Role, emailAddress string, password *string, organisationID *uuid.UUID) (*model.Account, error) {
 	// Fetch previous record to get organisation id
 	prevRecord, err := r.Finder().QueryAccount(ctx, domain_model.AccountQuery{
 		AccountID: id,

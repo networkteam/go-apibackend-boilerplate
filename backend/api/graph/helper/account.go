@@ -9,7 +9,7 @@ func MapToAccount(record domain.Account) *model.Account {
 	return &model.Account{
 		ID:             record.ID,
 		EmailAddress:   record.EmailAddress,
-		Role:           model.Role(record.Role),
+		Role:           record.Role,
 		LastLogin:      record.LastLogin,
 		OrganisationID: uuidOrNil(record.OrganisationID),
 		CreatedAt:      record.CreatedAt,

@@ -67,8 +67,6 @@ func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCre
 			return fog_errors.Wrap(err, "updating account last login")
 		}
 
-		// TODO Use different expiry based on account role
-
 		tokenOpts := authentication.TokenOptsForAccount(account)
 		serializedAuthToken, err = authentication.GenerateAuthToken(account, r.TimeSource, tokenOpts)
 		if err != nil {

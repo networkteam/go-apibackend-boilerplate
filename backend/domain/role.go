@@ -1,6 +1,11 @@
 package domain
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+	"io"
+	"strconv"
+)
 
 type Role string
 
@@ -25,4 +30,23 @@ func (r Role) IsValid() bool {
 		return false
 	}
 	return true
+}
+
+func (r *Role) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return errors.New("enums must be strings")
+	}
+
+	domainRole, err := RoleByIdentifier(str)
+	if err != nil {
+		return err
+	}
+
+	*r = domainRole
+	return nil
+}
+
+func (r Role) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(string(r)))
 }
