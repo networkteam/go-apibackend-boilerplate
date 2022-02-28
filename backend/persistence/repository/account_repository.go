@@ -106,21 +106,6 @@ func FindAccountByEmailAddress(ctx context.Context, runner squirrel.BaseRunner, 
 	return accountScanJsonRow(row)
 }
 
-func FindAccountByConfirmationToken(ctx context.Context, timeSource domain.TimeSource, runner squirrel.BaseRunner, confirmationToken string) (domain.Account, error) {
-	now := timeSource.Now()
-	row := queryBuilder(runner).
-		Select(buildAccountJSON()).
-		From("accounts").
-		LeftJoin("confirmation_tokens ON confirmation_tokens.account_id = accounts.account_id").
-		Where(squirrel.And{
-			squirrel.Eq{"confirmation_tokens.token": confirmationToken},
-			squirrel.Gt{"confirmation_tokens.expires": now},
-		}).
-		Limit(1).
-		QueryRowContext(ctx)
-	return accountScanJsonRow(row)
-}
-
 func InsertAccount(ctx context.Context, runner squirrel.BaseRunner, changeSet AccountChangeSet) error {
 	_, err := queryBuilder(runner).
 		Insert("accounts").
