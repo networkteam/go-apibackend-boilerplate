@@ -9,14 +9,7 @@ scalar Date
 scalar DateTime
 scalar ByteSize
 
-type Candidate {
-  id: UUID!
-  firstname: String!
-  lastname: String!
-  emailAddress: String!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-}
+## TODO Add domain types for your general schema here
 
 #
 # Queries

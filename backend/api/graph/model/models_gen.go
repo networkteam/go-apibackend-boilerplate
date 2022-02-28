@@ -29,15 +29,6 @@ type AccountFilter struct {
 	OrganisationID *uuid.UUID `json:"organisationId"`
 }
 
-type Candidate struct {
-	ID           uuid.UUID `json:"id"`
-	Firstname    string    `json:"firstname"`
-	Lastname     string    `json:"lastname"`
-	EmailAddress string    `json:"emailAddress"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
-}
-
 // A generic application error (for expected errors)
 type Error struct {
 	// An error code that can be translated in the client
