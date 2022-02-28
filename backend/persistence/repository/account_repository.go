@@ -97,11 +97,12 @@ func CountAllAccounts(ctx context.Context, runner squirrel.BaseRunner, filter do
 }
 
 func FindAccountByEmailAddress(ctx context.Context, runner squirrel.BaseRunner, emailAddress string) (domain.Account, error) {
-	row := queryBuilder(runner).
-		Select(buildAccountJSON()).
-		From("accounts").
-		Where(squirrel.Eq{fmt.Sprintf("LOWER(%s)", account_emailAddress): strings.ToLower(emailAddress)}).
-		QueryRowContext(ctx)
+	query := queryBuilder(runner).
+		Select(buildAccountJSON())
+	query = accountBuildFindQuery(query).
+		Where(squirrel.Eq{fmt.Sprintf("LOWER(%s)", account_emailAddress): strings.ToLower(emailAddress)})
+
+	row := query.QueryRowContext(ctx)
 	return accountScanJsonRow(row)
 }
 

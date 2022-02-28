@@ -17,6 +17,7 @@ myproject=$4
 echo "Copy $DIR/backend to $target"
 
 mkdir -p $target
+# TODO Copy root files as well
 cp -r $DIR/backend $target/
 
 cd $target
