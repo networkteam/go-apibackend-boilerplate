@@ -12,15 +12,16 @@ import (
 )
 
 const (
-	account_id             = "accounts.account_id"
-	account_emailAddress   = "accounts.email_address"
-	account_secret         = "accounts.secret"
-	account_passwordHash   = "accounts.password_hash"
-	account_role           = "accounts.role_identifier"
-	account_lastLogin      = "accounts.last_login"
-	account_organisationID = "accounts.organisation_id"
-	account_createdAt      = "accounts.created_at"
-	account_updatedAt      = "accounts.updated_at"
+	account_id               = "accounts.account_id"
+	account_emailAddress     = "accounts.email_address"
+	account_secret           = "accounts.secret"
+	account_passwordHash     = "accounts.password_hash"
+	account_role             = "accounts.role_identifier"
+	account_lastLogin        = "accounts.last_login"
+	account_organisationID   = "accounts.organisation_id"
+	account_createdAt        = "accounts.created_at"
+	account_updatedAt        = "accounts.updated_at"
+	account_organisationName = "organisations.name"
 )
 
 var accountSortFields = map[string]string{
@@ -89,7 +90,8 @@ var accountDefaultSelectJson = cjson.JsonBuildObject().
 	Set("LastLogin", cjson.Exp("accounts.last_login")).
 	Set("OrganisationID", cjson.Exp("accounts.organisation_id")).
 	Set("CreatedAt", cjson.Exp("accounts.created_at")).
-	Set("UpdatedAt", cjson.Exp("accounts.updated_at"))
+	Set("UpdatedAt", cjson.Exp("accounts.updated_at")).
+	Set("OrganisationName", cjson.Exp("organisations.name"))
 
 func accountScanJsonRow(row construct.RowScanner) (result domain.Account, err error) {
 	var data []byte

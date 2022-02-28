@@ -21,6 +21,9 @@ type Account struct {
 
 	CreatedAt time.Time `read_col:"accounts.created_at,sortable"`
 	UpdatedAt time.Time `read_col:"accounts.updated_at,sortable"`
+
+	// Side-loaded from referenced organisation
+	OrganisationName string `read_col:"organisations.name"`
 }
 
 // Methods to implement authentication.AuthTokenDataProvider:

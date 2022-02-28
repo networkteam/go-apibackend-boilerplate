@@ -1,0 +1,10 @@
+{{- /*gotype: myvendor.mytld/myproject/backend/mail.NewSupportFormMsg*/ -}}
+Neue Kontaktanfrage von {{ .SenderName }} ({{ .OrganisationName }})
+
+Name: {{ .SenderName }}
+Organisation: {{ .OrganisationName }}
+Betreff: {{ .Subject }}
+Nachricht: {{ .Message }}
+{{if .FileName -}}
+Anhang: {{ .FileName }}
+{{- end -}}

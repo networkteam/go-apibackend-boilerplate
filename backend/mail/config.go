@@ -1,19 +1,13 @@
 package mail
 
-import (
-	"myvendor.mytld/myproject/backend/domain"
-)
+import "myvendor.mytld/myproject/backend/domain"
 
 // Config stores mail specific configuration
 type Config struct {
 	// Embed base config for easier passing around
 	domain.Config
 
-	DefaultFrom             string
-	ErrorReportingRecipient string
-	TemplateIDs             struct {
-		RegisterConfirm string
-	}
+	DefaultFrom string
 }
 
 func DefaultConfig(c domain.Config) Config {
@@ -21,10 +15,7 @@ func DefaultConfig(c domain.Config) Config {
 		Config: c,
 	}
 
-	config.DefaultFrom = "info@example.com"
-	config.ErrorReportingRecipient = "admin@example.com"
+	config.DefaultFrom = "app@myproject.mytld"
 
-	// TODO Set MailJet template IDs
-	config.TemplateIDs.RegisterConfirm = "to-be-set"
 	return config
 }

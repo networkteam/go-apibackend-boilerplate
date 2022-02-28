@@ -13,7 +13,7 @@ import (
 type Sender struct {
 	LastMail     string
 	TemplatePath string
-	SendCallback func()
+	SendCallback func(message *gomail.Message)
 }
 
 func NewSender() *Sender {
@@ -24,7 +24,7 @@ var _ mail.Sender = &Sender{}
 
 func (m *Sender) Send(message *gomail.Message) error {
 	if m.SendCallback != nil {
-		defer m.SendCallback()
+		defer m.SendCallback(message)
 	}
 
 	var b = new(bytes.Buffer)

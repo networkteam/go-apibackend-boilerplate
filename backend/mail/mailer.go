@@ -2,6 +2,7 @@ package mail
 
 import (
 	"github.com/friendsofgo/errors"
+	"gopkg.in/gomail.v2"
 )
 
 type Mailer struct {
@@ -16,22 +17,12 @@ func NewMailer(sender Sender, config Config) *Mailer {
 	}
 }
 
-type MessageDataProvider interface {
-	TemplateID(config Config) string
-	Recipient(config Config) string
-	Subject(config Config) string
-	Data(config Config) interface{}
+type MessageProvider interface {
+	ToMessage(Config) (*gomail.Message, error)
 }
 
-func (m *Mailer) Send(msg MessageDataProvider) error {
-	message, err := BuildMailJetMessage(
-		msg.TemplateID(m.config),
-		msg.Recipient(m.config),
-		m.config.DefaultFrom,
-		msg.Subject(m.config),
-		m.config.ErrorReportingRecipient,
-		msg.Data(m.config),
-	)
+func (m *Mailer) Send(msg MessageProvider) error {
+	message, err := msg.ToMessage(m.config)
 	if err != nil {
 		return errors.Wrap(err, "building message")
 	}
