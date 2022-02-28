@@ -54,7 +54,6 @@ type ComplexityRoot struct {
 		ID             func(childComplexity int) int
 		LastLogin      func(childComplexity int) int
 		OrganisationID func(childComplexity int) int
-		PersonID       func(childComplexity int) int
 		Role           func(childComplexity int) int
 		UpdatedAt      func(childComplexity int) int
 	}
@@ -189,13 +188,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Account.OrganisationID(childComplexity), true
-
-	case "Account.personId":
-		if e.complexity.Account.PersonID == nil {
-			break
-		}
-
-		return e.complexity.Account.PersonID(childComplexity), true
 
 	case "Account.role":
 		if e.complexity.Account.Role == nil {
@@ -684,7 +676,6 @@ type Account {
   role: Role!
   lastLogin: DateTime
   organisationId: UUID
-  personId: UUID
   createdAt: DateTime!
   updatedAt: DateTime!
 }
@@ -1467,38 +1458,6 @@ func (ec *executionContext) _Account_organisationId(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.OrganisationID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*uuid.UUID)
-	fc.Result = res
-	return ec.marshalOUUID2ᚖgithubᚗcomᚋgofrsᚋuuidᚐUUID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Account_personId(ctx context.Context, field graphql.CollectedField, obj *model.Account) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Account",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PersonID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4177,13 +4136,6 @@ func (ec *executionContext) _Account(ctx context.Context, sel ast.SelectionSet, 
 		case "organisationId":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Account_organisationId(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-		case "personId":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Account_personId(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)

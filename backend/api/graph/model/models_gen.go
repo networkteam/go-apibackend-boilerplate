@@ -15,7 +15,6 @@ type Account struct {
 	Role           domain.Role `json:"role"`
 	LastLogin      *time.Time  `json:"lastLogin"`
 	OrganisationID *uuid.UUID  `json:"organisationId"`
-	PersonID       *uuid.UUID  `json:"personId"`
 	CreatedAt      time.Time   `json:"createdAt"`
 	UpdatedAt      time.Time   `json:"updatedAt"`
 }

@@ -8,7 +8,6 @@ type Account {
   role: Role!
   lastLogin: DateTime
   organisationId: UUID
-  personId: UUID
   createdAt: DateTime!
   updatedAt: DateTime!
 }
