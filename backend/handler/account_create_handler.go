@@ -58,7 +58,7 @@ func (h *Handler) AccountCreate(ctx context.Context, cmd domain.AccountCreateCmd
 	log.
 		WithField("accountID", cmd.AccountID).
 		WithField("organisationID", organisationID).
-		WithField("username", cmd.EmailAddress).
+		WithField("emailAddress", cmd.EmailAddress).
 		WithField("role", cmd.Role).
 		Info("Created account")
 

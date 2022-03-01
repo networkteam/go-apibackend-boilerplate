@@ -3,15 +3,11 @@ package domain
 import (
 	"github.com/friendsofgo/errors"
 	"github.com/gofrs/uuid"
-
-	"myvendor.mytld/myproject/backend/persistence/types"
 )
 
 type OrganisationCreateCmd struct {
 	OrganisationID uuid.UUID
 	Name           string
-	ContactPerson  string
-	CrmID          types.NullInt64
 }
 
 func NewOrganisationCreateCmd() (cmd OrganisationCreateCmd, err error) {

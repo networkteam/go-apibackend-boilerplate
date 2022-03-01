@@ -9,6 +9,7 @@ import (
 
 	logger "github.com/apex/log"
 	fog_errors "github.com/friendsofgo/errors"
+
 	"myvendor.mytld/myproject/backend/api"
 	"myvendor.mytld/myproject/backend/api/graph/helper"
 	"myvendor.mytld/myproject/backend/api/graph/model"
@@ -48,11 +49,11 @@ func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCre
 		if err != nil || accountNotFound {
 			if accountNotFound {
 				log.
-					WithField("username", credentials.EmailAddress).
+					WithField("emailAddress", credentials.EmailAddress).
 					Warn("Login failed, account not found")
 			} else {
 				log.
-					WithField("username", credentials.EmailAddress).
+					WithField("emailAddress", credentials.EmailAddress).
 					WithError(err).
 					Warn("Login failed, invalid password")
 			}

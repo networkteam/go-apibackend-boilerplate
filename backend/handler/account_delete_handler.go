@@ -29,7 +29,7 @@ func (h *Handler) AccountDelete(ctx context.Context, cmd domain.AccountDeleteCmd
 
 	var (
 		organisationID string
-		username       string
+		emailAddress   string
 		role           domain.Role
 	)
 	err := repository.Transactional(ctx, h.db, func(tx *sql.Tx) error {
@@ -44,7 +44,7 @@ func (h *Handler) AccountDelete(ctx context.Context, cmd domain.AccountDeleteCmd
 		}
 
 		// For logging
-		username = record.EmailAddress
+		emailAddress = record.EmailAddress
 		role = record.Role
 		if record.OrganisationID.Valid {
 			organisationID = record.OrganisationID.UUID.String()
@@ -63,7 +63,7 @@ func (h *Handler) AccountDelete(ctx context.Context, cmd domain.AccountDeleteCmd
 	log.
 		WithField("accountID", cmd.AccountID).
 		WithField("organisationID", organisationID).
-		WithField("username", username).
+		WithField("emailAddress", emailAddress).
 		WithField("role", role).
 		Info("Deleted account")
 

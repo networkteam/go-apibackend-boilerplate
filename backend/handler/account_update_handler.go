@@ -87,7 +87,7 @@ func (h *Handler) AccountUpdate(ctx context.Context, cmd domain.AccountUpdateCmd
 		WithField("prevOrganisationID", prevOrganisationID).
 		WithField("organisationID", organisationID).
 		WithField("prevUsername", prevUsername).
-		WithField("username", cmd.EmailAddress).
+		WithField("emailAddress", cmd.EmailAddress).
 		WithField("prevRole", prevRole).
 		WithField("role", cmd.Role).
 		Info("Updated account")
