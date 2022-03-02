@@ -37,6 +37,14 @@ go run github.com/99designs/gqlgen
 
 popd
 
+echo "Creating README.md"
+echo <<EOF > README.md
+# $myproject
+
+This project was kickstarted by go-apibackend-boilerplate.
+
+EOF
+
 echo "Creating Git repository"
 
 git init -q
