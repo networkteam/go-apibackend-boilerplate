@@ -39,7 +39,7 @@ func SentryGraphqlMiddleware(ctx context.Context, next graphql.Resolver) (res in
 			})
 
 			var eventID string
-			eID := sentry.CaptureException(err)
+			eID := hub.CaptureException(err)
 			if eID != nil {
 				eventID = string(*eID)
 				log.
