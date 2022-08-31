@@ -3,9 +3,9 @@
   "packageManager": "yarn@3.2.0",
   "private": true,
   "scripts": {
-    "init": "docker run --rm -it -v ${PWD}:/docs ghcr.io/afritzler/mkdocs-material:8.2.3 new .",
-    "start": "docker run --rm -it -p 8000:8000 -v ${PWD}:/docs ghcr.io/afritzler/mkdocs-material:8.2.3",
-    "build": "docker run --rm -it -v ${PWD}:/docs ghcr.io/afritzler/mkdocs-material:8.2.3 build",
+    "init": "docker run --rm -it -v ${PWD}:/docs ghcr.io/afritzler/mkdocs-material:8.4.2 new .",
+    "start": "docker run --rm -it -p 8000:8000 -v ${PWD}:/docs ghcr.io/afritzler/mkdocs-material:8.4.2",
+    "build": "docker run --rm -it -v ${PWD}:/docs ghcr.io/afritzler/mkdocs-material:8.4.2 build",
     "docs:build": "yarn run build",
     "docs:start": "yarn run start"
   }
