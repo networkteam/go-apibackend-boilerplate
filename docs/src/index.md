@@ -55,18 +55,17 @@ Business logic and validation rules are defined in the backend.
 
 [Frontend (React)](development/frontend.md)
 
-:   The frontend is a single-page application based on React. It uses the GraphQL for authentication
-    and retrieving data.
+:   The frontend is a single-page application based on React. It uses the GraphQL API for authentication
+    and retrieving and manipulating data.
 
     <figure markdown>
       ![Screenshot of the frontend](./images/frontend-example.png)
       <figcaption>The frontend provides the public user interface</figcaption>
     </figure>
 
-[Admin (React)](entwicklung/admin.md)
+[Admin (React)](development/admin.md)
 
-:   Die Admin UI basiert auf `react-admin` und ist eine Single-Page-Application, welche auf die GraphQL API des Backend zugreift.
-Sie stellt eine Benutzerverwaltung und Definition der Parks und Buchungsregeln bereit.
+:   The admin UI is based on `react-admin` as a single page application (SPA) which accesses the GraphQL API of the backend.
 
     <figure markdown>
       ![Screenshot of the admin UI](./images/admin-example.png)

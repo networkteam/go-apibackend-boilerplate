@@ -7,7 +7,7 @@ The code of the backend is located in the `backend` folder in the repository.
 ## General structure
 
 - The GraphQL API is implemented using [gqlgen](https://gqlgen.com/).
-- It uses an architecture inspired by [CQRS](https://en.wikipedia.org/wiki/Command%E2%80%93query_separation), 
+- It uses an architecture inspired by [CQRS](https://en.wikipedia.org/wiki/Command%E2%80%93query_separation),
   where _queries_ (reads) are separated from _commands_ (writes).
 - The domain package is free of implementation details and encapsulates domain logic, validation, and common types.
 - Each _command_ either succeeds (no error) or fails (returns an error) - it must be handled transactionally.
@@ -25,7 +25,7 @@ The code of the backend is located in the `backend` folder in the repository.
 
     !!! info
 
-        SQL SELECTS mostly return a single JSON value for direct struct mapping. Aggregation and loading of referenced values should be used to optimize the number of queries (and avoid the `N+1` select problem)
+        SQL SELECTS mostly return a single JSON value for direct mapping to Go structs. Aggregation and loading of referenced values should be used to optimize the number of queries (and avoid the `N+1` select problem)
 
 - For authentication, JSON Web Tokens (JWT) are used in an HTTP-only cookie as well as CSRF tokens.
 - Authorization is done either before applying a command or executing a query by checking permissions.
@@ -171,7 +171,7 @@ and forms the innermost layer of the architecture.
      Tests use fixed time values with `test.FixedTimeSource` for reproducible execution of time-based logics.
 
 :  !!! warning
-        
+
          Direct usage of `time.Now()` should be prevent throughout the whole application and
          `domain.TimeSource` should be used instead as a dependency (or passed as an argument).
          This makes time-related behaviour much easier to test.
@@ -227,7 +227,7 @@ go run ./cli/ctl test preparedb
 !!! info
 
     Why is it necessary to prepare the database?
-    Tests run in parallel and PostgreSQL can have race conditions with `CREATE EXTENSION` on a single database. 
+    Tests run in parallel and PostgreSQL can have race conditions with `CREATE EXTENSION` on a single database.
 
 ### 2. Import fixtures
 
@@ -285,7 +285,7 @@ finished (`db.CreateTestDatabase`) - by this approach tests with complete DB acc
 !!! note
 
     Before running the tests, the [test database must be set up](#create-and-prepare-database-for-tests).
-    
+
 ```shell
 cd backend
 go test ./...
@@ -439,7 +439,7 @@ USAGE:
 
 OPTIONS:
    --role value            (default: "SystemAdministrator")
-   --email value           
-   --organisationId value  
+   --email value
+   --organisationId value
    --help, -h              show help (default: false)
 ```
