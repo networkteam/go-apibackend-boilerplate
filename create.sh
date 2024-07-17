@@ -42,7 +42,19 @@ echo <<EOF > README.md
 # $myproject
 
 This project was kickstarted by go-apibackend-boilerplate.
+See [./docs](docs) for more information.
 
+## Development Quickstart
+
+With Devbox:
+
+```sh
+devbox services up
+```
+
+### Requirements
+
+* [Devbox](https://www.jetify.com/devbox/docs/installing_devbox/)
 EOF
 
 echo "Creating Git repository"
@@ -55,15 +67,6 @@ git commit -q -m "Initial commit"
 echo "Done."
 echo
 
-echo "Run the following commands to create test and dev databases:"
+echo "Run project via Devbox:"
 echo
-echo "    createdb $myproject-dev"
-echo "    createdb $myproject-test"
-echo
-echo "Run migrations:"
-echo
-echo "    go run ./cli/ctl migrate up"
-echo
-echo "Run a server for development:"
-echo
-echo "    go run github.com/networkteam/refresh"
+echo "    devbox services up"
