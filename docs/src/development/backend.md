@@ -7,7 +7,7 @@ The code of the backend is located in the `backend` folder in the repository.
 ## General structure
 
 - The GraphQL API is implemented using [gqlgen](https://gqlgen.com/).
-- It uses an architecture inspired by [CQRS](https://en.wikipedia.org/wiki/Command%E2%80%93query_separation),
+- It uses a lightweight [CQRS](https://en.wikipedia.org/wiki/Command%E2%80%93query_separation) architecture,
   where _queries_ (reads) are separated from _commands_ (writes).
 - The domain package is free of implementation details and encapsulates domain logic, validation, and common types.
 - Each _command_ either succeeds (no error) or fails (returns an error) - it must be handled transactionally.
@@ -15,22 +15,22 @@ The code of the backend is located in the `backend` folder in the repository.
     !!! note
 
         Multiple commands using a single transaction are not yet considered and can usually be bypassed by using eventual consistency.
+        It can also be solved by choosing another granularity of commands (e.g. bundling multiple commands into a single command that manages a transaction).
 
 - Commands are handled by methods of `handler.Handler` - it validates the command, performs authorization checks and
   executes queries via the repository and can call external services or send emails.
 - Queries are executed by methods of `finder.Finder` - it validates the query, performs authorization checks and
   executes the query via repository functions.
-- Persistence is implemented via `database/sql` with a dedicated code generator ([construct](https://github.com/networkteam/construct/)) for mapping fields.
-- Queries are implemented as functions in `persistence/repository`.
+- Persistence is implemented via pure SQL (using pgx) with a dedicated code generator ([construct](https://github.com/networkteam/construct/)) for mapping fields.
+- Queries are implemented as functions in `persistence/repository` using [qrb](https://github.com/networkteam/qrb) for building PostgreSQL queries.
 
     !!! info
 
-        SQL SELECTS mostly return a single JSON value for direct mapping to Go structs. Aggregation and loading of referenced values should be used to optimize the number of queries (and avoid the `N+1` select problem)
+        SQL SELECTS mostly return a single JSON value for direct mapping to Go structs. Aggregation and loading of references via subselects should be used to optimize the number of queries (and avoid the `N+1` select problem). The field selection from GraphQL is forwarded to query options, that can eagerly include the needed relations and aggregations.
 
 - For authentication, JSON Web Tokens (JWT) are used in an HTTP-only cookie as well as CSRF tokens.
 - Authorization is done either before applying a command or executing a query by checking permissions.
-    - Authorization is built around simple functions that check commands or queries (all part of the `domain` package)
-      based on an authentication context.
+    - Authorization is built around simple functions that check commands or queries (all part of the `domain` package) based on an authentication context. If needed, additional data is passed to these functions.
 
 ### Backend architecture
 

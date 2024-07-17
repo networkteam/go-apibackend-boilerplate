@@ -1,7 +1,0 @@
-{
-  "name": "@myvendor/myproject",
-  "packageManager": "yarn@3.2.0",
-  "workspaces": [
-    "docs"
-  ]
-}

@@ -1,0 +1,46 @@
+{
+  "packages": [
+    "go@1.22",
+    "nodejs@20",
+    "postgresql_16",
+    "python@3.10",
+    "python310Packages.pip"
+  ],
+  "include": ["github:networkteam/devbox-plugins?dir=postgresql"],
+  "shell": {
+    "scripts": {
+      "backend:setup": ["devbox run backend:migrate"],
+      "backend:lint": ["cd backend", "golangci-lint run --out-format tab"],
+      "backend:migrate": [
+        "cd backend",
+        "go run ./cli/ctl migrate up",
+        "go run ./cli/ctl test preparedb"
+      ],
+      "backend:fixtures": [
+        "cd backend",
+        "go run ./cli/ctl fixtures import --confirm"
+      ],
+      "docs:setup": [
+        "cd docs",
+        ". $VENV_DIR/bin/activate",
+        "pip install -r requirements.txt"
+      ],
+      "docs:build": [
+        "cd docs",
+        ". $VENV_DIR/bin/activate",
+        "mkdocs build"
+      ],
+      "docs:dev": [
+        "cd docs",
+        ". $VENV_DIR/bin/activate",
+        "mkdocs serve"
+      ]
+    }
+  },
+  "env": {
+    "BACKEND_ENV": "development",
+    "DATABASE_NAME": "myproject-dev",
+    "TEST_DATABASE_NAME": "myproject-test",
+    "DEVBOX_COREPACK_ENABLED": "1"
+  }
+}

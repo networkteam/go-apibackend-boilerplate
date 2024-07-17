@@ -1,0 +1,18 @@
+version: "0.5"
+
+processes:
+  backend:dev:
+    command: go run github.com/networkteam/refresh
+    working_dir: backend
+    depends_on:
+      backend:setup:
+        condition: process_completed_successfully
+    availability:
+      restart: "always"
+
+  backend:setup:
+    working_dir: backend
+    command: devbox run backend:setup
+    depends_on:
+      postgresql:createdb:
+        condition: process_completed_successfully
