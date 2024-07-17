@@ -196,50 +196,91 @@ implementation can be changed by providing different CLI options.
 
 ### Requirements
 
-- **Go** (>=1.18)
-- **PostgreSQL** (>=13)
+The project root contains a complete [**Devbox**](https://www.jetify.com/devbox/) setup that declares dependencies, scripts and services for running all project components.
 
-### 1. Set up the database
+Follow the [Devbox installation](https://www.jetify.com/devbox/docs/installing_devbox/) to install Devbox and Nix on your system, if not yet present.
 
-```shell
-cd backend
-```
+??? tip "Automatically enabling the development environment with direnv"
 
-#### Create new database:
+    The project root includes an `.envrc` for direnv that automatically activates the Devbox environment.
+    Direnv must be installed globally (e.g. via `devbox global` or Homebrew).
 
-```shell
-createdb myproject-dev
-```
 
-#### Execute migrations:
+### Running services
 
 ```shell
-go run ./cli/ctl migrate up
+devbox services up
 ```
 
-#### Create and prepare database for tests:
+The GraphQL API is now accessible at [http://localhost:8080/query](http://localhost:8080/query).
+A GraphQL playground to directly view the schema and execute queries / mutations can be opened at [http://localhost:8080/](http://localhost:8080/) (if the `--playground` flag is set).
+See also [CLI](#cli) for a reference of all commands and flags for the backend.
 
-```shell
-createdb myproject-test
-go run ./cli/ctl test preparedb
-```
+??? note "Manual steps when not using Devbox"
 
-!!! info
+    You need the following dependencies to setup and run the backend:
 
-    Why is it necessary to prepare the database?
-    Tests run in parallel and PostgreSQL can have race conditions with `CREATE EXTENSION` on a single database.
+      - **Go** (>=1.22)
+      - **PostgreSQL** (>=16)
 
-### 2. Import fixtures
+    Follow these steps to setup and run the services needed for the backend:
 
-Fixed data (fixtures) can be imported into the database for development:
+    1. Switch to the backend
 
-```shell
-go run ./cli/ctl fixtures --confirm
-```
+        ```shell
+        cd backend
+        ```
 
-!!! warning
+    2. Set up the database
 
-    All existing data in the database will be deleted by the command.
+        ```shell
+        createdb myproject-dev
+        ```
+
+    3. Execute migrations:
+
+        ```shell
+        go run ./cli/ctl migrate up
+        ```
+
+    4. Create and prepare database for tests:
+
+        ```shell
+        createdb myproject-test
+        go run ./cli/ctl test preparedb
+        ```
+
+        !!! info "Why is it necessary to prepare the database?"
+
+            Tests run in parallel and PostgreSQL can have race conditions with `CREATE EXTENSION` on a single database.
+
+    5. Import fixtures
+
+        Fixed data (fixtures) can be imported into the database for development:
+
+        ```shell
+        go run ./cli/ctl fixtures --confirm
+        ```
+
+        !!! warning
+
+            All existing data in the database will be deleted by the command.
+
+    6. Start the server
+
+        ```shell
+        go run ./cli/ctl server --playground
+        ```
+
+
+        !!! tip
+
+            When developing, `refresh` can be used to automatically restart the backend server when files have been modified:
+
+            ```shell
+            go run github.com/networkteam/refresh
+            ```
+
 
 #### Test accounts
 
@@ -250,23 +291,6 @@ The following accounts are defined in the fixture data and can be used for devel
 | admin@example.com           | myRandomPassword | _SystemAdministrator_       |              |
 | admin+acmeinc@example.com   | myRandomPassword | _OrganisationAdministrator_ | Acme Inc.    |
 | admin+othercorp@example.com | myRandomPassword | _OrganisationAdministrator_ | Other Corp   |
-
-### 3. Start the server
-
-```shell
-cd backend
-go run ./cli/ctl server --playground
-```
-
-The GraphQL API is now accessible at [http://localhost:8080/query](http://localhost:8080/query). A GraphQL playground to directly view the schema and execute queries / mutations can be called at [http://localhost:8080/](http://localhost:8080/) (if the `--playground` flag is set). See also [CLI](#cli) for a reference of all options.
-
-!!! tip
-
-    When developing, `refresh` can be used to automatically restart the backend server when files have been modified:
-
-    ```shell
-    go run ./cli/refresh
-    ```
 
 ## Development
 
@@ -284,7 +308,7 @@ finished (`db.CreateTestDatabase`) - by this approach tests with complete DB acc
 
 !!! note
 
-    Before running the tests, the [test database must be set up](#create-and-prepare-database-for-tests).
+    Before running the tests, the test database must be set up (happens automatically with Devbox).
 
 ```shell
 cd backend
@@ -297,7 +321,7 @@ The GraphQL API is implemented schema-first and is generated via [gqlgen](https:
 
 #### Changing the GraphQL schema
 
-After changes to the GraphQL schema, the code must be regenerated. This is done via `go run ./cli/gqlgen`.
+After changes to the GraphQL schema, the code must be regenerated. This is done via `go run github.com/99designs/gqlgen`.
 
 New resolvers are then available as a function and can be filled with the actual implementation.
 
@@ -311,14 +335,14 @@ New resolvers are then available as a function and can be filled with the actual
 *Repository*
 
 :    operations are built as functions in the `persistence/repository` package and use constants and functions generated by `construct` as a base.
-     Queries can be built directly using `*sql.DB` or [squirrel](https://github.com/Masterminds/squirrel) as query builder.
-     Repository functions use `squirrel.BaseRunner` as interface for the current database connection or transaction.
+     Queries can be built directly using `pgx` or [qrb](https://github.com/networkteam/qrb) as query builder.
+     Repository functions use `qrbpgx.Executor` as interface for the current database connection or transaction.
 
 *Queries*
 
 :    use JSON results for complex data and Common Table Expressions (CTE) to build more complex queries.
      Necessary data is side-loaded into queries to avoid further selects (`N+1` problem).
-     Eager loading of relations can be accomplished using `JSON_AGG()`.
+     Eager loading of relations can be accomplished using `JSON_AGG()` or using subselects.
 
 #### Create a new migration
 
@@ -332,7 +356,6 @@ New resolvers are then available as a function and can be filled with the actual
 #### Update field mappings
 
 After creating or modifying fields in the DB Models, `construct` must be called via `go generate ./persistence/repository`.
-New models with construct mappings must be added to `mappings.go`.
 
 ## CLI
 

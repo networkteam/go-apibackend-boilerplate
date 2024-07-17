@@ -10,7 +10,7 @@
   "shell": {
     "scripts": {
       "backend:setup": ["devbox run backend:migrate"],
-      "backend:lint": ["cd backend", "golangci-lint run --out-format tab"],
+      "backend:lint":  ["cd backend", "golangci-lint run --out-format tab"],
       "backend:migrate": [
         "cd backend",
         "go run ./cli/ctl migrate up",
@@ -38,9 +38,9 @@
     }
   },
   "env": {
-    "BACKEND_ENV": "development",
-    "DATABASE_NAME": "myproject-dev",
-    "TEST_DATABASE_NAME": "myproject-test",
+    "BACKEND_ENV":             "development",
+    "DATABASE_NAME":           "myproject-dev",
+    "TEST_DATABASE_NAME":      "myproject-test",
     "DEVBOX_COREPACK_ENABLED": "1"
   }
 }
