@@ -57,17 +57,20 @@ backend:lint:
   stage: test
   needs: []
   dependencies: []
-  image: registry.networkteam.com/networkteam/docker/golangci-lint:1.44.2
+  image: registry.networkteam.com/networkteam/docker/golangci-lint:1.55.2
   script:
+    - cd backend
     # Write the code coverage report to gl-code-quality-report.json
-    # and print linting issues to stdout in the format: path/to/file:line description
-    # remove `--issues-exit-code 0` or set to non-zero to fail the job if linting issues are detected
-    - golangci-lint run --issues-exit-code 0 --out-format code-climate | tee gl-code-quality-report.json | jq -r '.[] | "\(.location.path):\(.location.lines.begin) \(.description)"'
+    # and print linting issues to stdout in the format: path/to/file:line description.
+    - golangci-lint run --out-format code-climate | tee gl-code-quality-report.json | jq -r '.[] | "\(.severity)\t\(.location.path):\(.location.lines.begin) \(.description)"'
+    # Fail if any issue with severity "blocker" is found
+    - test -z "$(jq -r '.[] | select(.severity == "blocker") | .description' gl-code-quality-report.json)"
   artifacts:
     reports:
       codequality: backend/gl-code-quality-report.json
     paths:
       - backend/gl-code-quality-report.json
+  interruptible: true
 
 backend:gosec-sast:
   extends: .backend-job

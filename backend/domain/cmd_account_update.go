@@ -41,7 +41,7 @@ func NewAccountUpdateCmd(config Config, currentOrganisationID uuid.NullUUID, acc
 	return cmd, nil
 }
 
-func (c AccountUpdateCmd) Validate(config Config) error {
+func (c AccountUpdateCmd) Validate(_ Config) error {
 	if IsBlank(c.EmailAddress) {
 		return FieldError{
 			Field: "emailAddress",

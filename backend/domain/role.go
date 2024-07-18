@@ -40,7 +40,7 @@ func (r Role) IsValid() bool {
 func (r *Role) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
-		return errors.New("enums must be strings")
+		return ErrEnumsMustBeStrings
 	}
 
 	domainRole, err := RoleByIdentifier(str)

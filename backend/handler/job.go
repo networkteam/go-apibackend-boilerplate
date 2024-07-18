@@ -17,7 +17,8 @@ func (c *cronJob) init() {
 	c.sentryHub.Scope().SetTag("section", "cron")
 }
 
-func (c cronJob) context() context.Context {
+//nolint:unused // This should be used by jobs
+func (c *cronJob) context() context.Context {
 	ctx := context.Background()
 	ctx = sentry.SetHubOnContext(ctx, c.sentryHub)
 	return ctx

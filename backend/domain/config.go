@@ -12,7 +12,7 @@ const defaultHashCost = 12
 type Config struct {
 	AppName string
 	// Base URL of the app (for sending mails and linking back)
-	AppBaseUrl string
+	AppBaseURL string
 	// Bcrypt hash cost for passwords
 	HashCost int
 	// Location for date / time calculations, defaults to Europe/Berlin
@@ -32,7 +32,7 @@ func DefaultConfig() Config {
 }
 func (c Config) BuildURL(path string) string {
 	// Strip slashes to prevent mixup of double slashes or no slashes at all
-	baseURL := strings.TrimRight(c.AppBaseUrl, "/")
+	baseURL := strings.TrimRight(c.AppBaseURL, "/")
 	p := strings.TrimLeft(path, "/")
 	return baseURL + "/" + p
 }

@@ -49,6 +49,102 @@
         }
       }
     },
+    "golangci-lint@1.55.2": {
+      "last_modified": "2024-02-10T18:15:24Z",
+      "resolved": "github:NixOS/nixpkgs/10b813040df67c4039086db0f6eaf65c536886c6#golangci-lint",
+      "source": "devbox-search",
+      "version": "1.55.2",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/2hiyqyisiqrrp4g3xqa2c35w63ylp928-golangci-lint-1.55.2",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/2hiyqyisiqrrp4g3xqa2c35w63ylp928-golangci-lint-1.55.2"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/sxprhbskfahbqrfp14agsr4fj51n0fjd-golangci-lint-1.55.2",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/sxprhbskfahbqrfp14agsr4fj51n0fjd-golangci-lint-1.55.2"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/41bra9w6hn5vc8j28rfz1djwab637g5s-golangci-lint-1.55.2",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/41bra9w6hn5vc8j28rfz1djwab637g5s-golangci-lint-1.55.2"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/6gz1dqhjq45bz1icl8gxry7j0hrib99w-golangci-lint-1.55.2",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/6gz1dqhjq45bz1icl8gxry7j0hrib99w-golangci-lint-1.55.2"
+        }
+      }
+    },
+    "mailhog@latest": {
+      "last_modified": "2024-07-07T07:43:47Z",
+      "resolved": "github:NixOS/nixpkgs/b60793b86201040d9dee019a05089a9150d08b5b#mailhog",
+      "source": "devbox-search",
+      "version": "1.0.1",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/hp7l6gnk6vxfgj00vsfgdn5aqsib8lf6-MailHog-1.0.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/hp7l6gnk6vxfgj00vsfgdn5aqsib8lf6-MailHog-1.0.1"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/22kix69kg7w9xg5jq03fz3lfddcacmf7-MailHog-1.0.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/22kix69kg7w9xg5jq03fz3lfddcacmf7-MailHog-1.0.1"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/9h3nl95hxqxaabgx9br3nk9wamzr75nz-MailHog-1.0.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/9h3nl95hxqxaabgx9br3nk9wamzr75nz-MailHog-1.0.1"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/wjmcr55ni4yfbaz4b83wwl657hc7mrn8-MailHog-1.0.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/wjmcr55ni4yfbaz4b83wwl657hc7mrn8-MailHog-1.0.1"
+        }
+      }
+    },
     "nodejs@20": {
       "last_modified": "2024-07-10T06:55:44Z",
       "plugin_version": "0.0.2",

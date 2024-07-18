@@ -40,8 +40,7 @@ func GenerateAuthToken(account AuthTokenDataProvider, timeSource domain.TimeSour
 	}
 
 	now := timeSource.Now()
-
-	cl := jwt.Claims{
+	claims := jwt.Claims{
 		Subject:  account.GetAccountID().String(),
 		IssuedAt: jwt.NewNumericDate(now),
 		Expiry:   jwt.NewNumericDate(now.Add(opts.Expiry)),
@@ -59,7 +58,7 @@ func GenerateAuthToken(account AuthTokenDataProvider, timeSource domain.TimeSour
 		OrganisationID: organisationIDValue,
 	}
 
-	raw, err := jwt.Signed(sig).Claims(cl).Claims(privateCl).Serialize()
+	raw, err := jwt.Signed(sig).Claims(claims).Claims(privateCl).Serialize()
 	if err != nil {
 		return "", errors.Wrap(err, "signing and serializing JWT")
 	}

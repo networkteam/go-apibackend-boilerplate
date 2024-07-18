@@ -49,13 +49,13 @@ func newAccountCmd() *cli.Command {
 						return err
 					}
 
-					organisationIdStr := c.String("organisationId")
-					if organisationIdStr != "" {
-						organisationId, err := uuid.FromString(organisationIdStr)
+					organisationIDStr := c.String("organisationId")
+					if organisationIDStr != "" {
+						organisationID, err := uuid.FromString(organisationIDStr)
 						if err != nil {
-							return errors.Wrap(err, "parsing organisationId")
+							return errors.Wrap(err, "parsing organisation id")
 						}
-						cmd.OrganisationID = uuid.NullUUID{Valid: true, UUID: organisationId}
+						cmd.OrganisationID = uuid.NullUUID{Valid: true, UUID: organisationID}
 					}
 
 					db, err := connectDatabase(c)

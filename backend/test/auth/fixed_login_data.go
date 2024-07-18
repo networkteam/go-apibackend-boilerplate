@@ -12,18 +12,21 @@ import (
 	"myvendor.mytld/myproject/backend/security/authentication"
 )
 
+//nolint:gochecknoglobals
 var (
 	fixedSystemAdminAccountID = uuid.Must(uuid.FromString("d7037ad0-d4bb-4dcc-8759-d82fbb3354e8"))
 
 	fixedOrganisationAdminAccountID = uuid.Must(uuid.FromString("3ad082c7-cbda-49e1-a707-c53e1962be65"))
 	fixedOrganisationID             = uuid.Must(uuid.FromString("6330de58-2761-411e-a243-bec6d0c53876"))
 
-	fixedTokenSecret = "f71ab8929ad747915e135b8e9a5e01403329cc6b202c8e540e74920a78394e36f6266e4a505bf9cd362206bfd39665c69330e038f96ba72bbbc1f4a522564410"
+	fixedTokenSecret = "f71ab8929ad747915e135b8e9a5e0140" //nolint:gosec
 )
 
 type ApplyAuthValuesFunc func(t *testing.T, timeSource domain.TimeSource, req *http.Request) FixedAuthTokenData
 
 func ApplyFixedAuthValuesOrganisationAdministrator(t *testing.T, timeSource domain.TimeSource, req *http.Request) FixedAuthTokenData {
+	t.Helper()
+
 	authTokenData := FixedAuthTokenData{
 		TokenSecret:    mustHexDecode(fixedTokenSecret),
 		AccountID:      fixedOrganisationAdminAccountID,
@@ -39,6 +42,8 @@ func ApplyFixedAuthValuesOrganisationAdministrator(t *testing.T, timeSource doma
 var _ ApplyAuthValuesFunc = ApplyFixedAuthValuesOrganisationAdministrator
 
 func ApplyFixedAuthValuesSystemAdministrator(t *testing.T, timeSource domain.TimeSource, req *http.Request) FixedAuthTokenData {
+	t.Helper()
+
 	authTokenData := FixedAuthTokenData{
 		TokenSecret:    mustHexDecode(fixedTokenSecret),
 		AccountID:      fixedSystemAdminAccountID,

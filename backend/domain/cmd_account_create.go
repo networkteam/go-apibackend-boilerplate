@@ -31,7 +31,7 @@ func NewAccountCreateCmd(emailAddress string, role Role, password string) (cmd A
 	}, nil
 }
 
-func (c AccountCreateCmd) Validate(config Config) error {
+func (c AccountCreateCmd) Validate(_ Config) error {
 	if IsBlank(c.EmailAddress) {
 		return FieldError{
 			Field: "emailAddress",

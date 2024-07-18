@@ -40,4 +40,4 @@ func (n FieldError) Extensions() map[string]interface{} {
 	}
 }
 
-var _ FieldResolvableError = new(FieldError)
+var _ FieldResolvableError = new(FieldError) //nolint:errcheck

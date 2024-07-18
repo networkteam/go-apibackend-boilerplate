@@ -203,10 +203,11 @@ func buildMailer(c *cli.Context) (*mail.Mailer, error) {
 	return mailer, nil
 }
 
+//nolint:unparam // parsing other flags could return an error
 func getConfig(c *cli.Context) (domain.Config, error) {
 	config := domain.DefaultConfig()
-	config.AppBaseUrl = c.String("app-base-url")
+	config.AppBaseURL = c.String("app-base-url")
 	config.HashCost = c.Int("hash-cost")
-	// Add more config options here (parsing these could return an error)
+	// Add more config options here
 	return config, nil
 }

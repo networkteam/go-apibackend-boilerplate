@@ -14,8 +14,7 @@ import (
 //go:embed templates/*.txt
 var templatesFS embed.FS
 
-func executeTemplate(name string, data interface{}) (subject, body string, err error) {
-
+func executeTemplate(name string, data any) (subject, body string, err error) {
 	templates, err := template.
 		New("").
 		Funcs(sprig.TxtFuncMap()).

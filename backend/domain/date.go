@@ -54,9 +54,13 @@ func (d Date) IsValid() bool {
 //
 // In is always consistent with time.Date, even when time.Date returns a time
 // on a different day. For example, if loc is America/Indiana/Vincennes, then both
-//     time.Date(1955, time.May, 1, 0, 0, 0, 0, loc)
+//
+//	time.Date(1955, time.May, 1, 0, 0, 0, 0, loc)
+//
 // and
-//     civil.Date{Year: 1955, Month: time.May, Day: 1}.In(loc)
+//
+//	civil.Date{Year: 1955, Month: time.May, Day: 1}.In(loc)
+//
 // return 23:00:00 on April 30, 1955.
 //
 // In panics if loc is nil.
@@ -144,16 +148,17 @@ func (d Date) Value() (driver.Value, error) {
 }
 
 func (d *Date) Scan(src interface{}) error {
-	switch v := src.(type) {
+	switch value := src.(type) {
 	case string:
-		parsedDate, err := ParseDate(v)
+		parsedDate, err := ParseDate(value)
 		if err != nil {
 			return err
 		}
 		*d = parsedDate
 	case time.Time:
-		*d = DateOf(v)
+		*d = DateOf(value)
 	default:
+		//nolint:goerr113
 		return fmt.Errorf("unhandled type: %T", src)
 	}
 

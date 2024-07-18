@@ -236,8 +236,8 @@ func serve(c *cli.Context, handler http.Handler, onShutdown func(c *cli.Context)
 func setupCancelOnSignal(c *cli.Context) {
 	log := logger.FromContext(c.Context)
 
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch,
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals,
 		// kill -SIGINT XXXX or Ctrl+c
 		syscall.SIGINT,
 		// kill -SIGTERM XXXX
@@ -247,13 +247,14 @@ func setupCancelOnSignal(c *cli.Context) {
 	var cancel context.CancelFunc
 	c.Context, cancel = context.WithCancel(c.Context)
 	go func() {
-		sig := <-ch
+		sig := <-signals
 		log.Infof("Received signal: %v", sig)
 		cancel()
 	}()
 }
 
-func startCronJobs(c *cli.Context, db *sql.DB) (func(), error) {
+//nolint:unparam // Adding jobs needs to return errors
+func startCronJobs(c *cli.Context, _ *sql.DB) (func(), error) {
 	log := logger.FromContext(c.Context)
 
 	cronJobs := cron.New()

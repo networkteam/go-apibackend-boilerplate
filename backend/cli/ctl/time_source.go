@@ -14,7 +14,7 @@ func (cts currentTimeSource) Now() time.Time {
 	return time.Now()
 }
 
-func newCurrentTimeSource(c *cli.Context) (domain.TimeSource, error) {
+func newCurrentTimeSource(_ *cli.Context) (domain.TimeSource, error) {
 	// TODO Get location from CLI context and store in time source
 
 	return currentTimeSource{}, nil
