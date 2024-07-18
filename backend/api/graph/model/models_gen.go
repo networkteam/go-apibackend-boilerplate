@@ -13,19 +13,19 @@ type Account struct {
 	ID             uuid.UUID   `json:"id"`
 	EmailAddress   string      `json:"emailAddress"`
 	Role           domain.Role `json:"role"`
-	LastLogin      *time.Time  `json:"lastLogin"`
-	OrganisationID *uuid.UUID  `json:"organisationId"`
+	LastLogin      *time.Time  `json:"lastLogin,omitempty"`
+	OrganisationID *uuid.UUID  `json:"organisationId,omitempty"`
 	CreatedAt      time.Time   `json:"createdAt"`
 	UpdatedAt      time.Time   `json:"updatedAt"`
 }
 
 type AccountFilter struct {
 	// Filter by multiple ids for fetching references
-	Ids []uuid.UUID `json:"ids"`
+	Ids []uuid.UUID `json:"ids,omitempty"`
 	// Filter by a query string on all text fields
-	Q *string `json:"q"`
+	Q *string `json:"q,omitempty"`
 	// Filter by organisation id
-	OrganisationID *uuid.UUID `json:"organisationId"`
+	OrganisationID *uuid.UUID `json:"organisationId,omitempty"`
 }
 
 // A generic application error (for expected errors)
@@ -62,18 +62,23 @@ type LoginCredentials struct {
 	EmailAddress string `json:"emailAddress"`
 	// Password of the account
 	Password string `json:"password"`
+	// Enable longer session
+	KeepMeLoggedIn *bool `json:"keepMeLoggedIn,omitempty"`
 }
 
 // Login result
 type LoginResult struct {
 	// The authenticated account (if error is null)
-	Account *Account `json:"account"`
+	Account *Account `json:"account,omitempty"`
 	// Auth token for using header based authentication (if error is null)
 	AuthToken string `json:"authToken"`
 	// CSRF token to be sent in subsequent requests (if error is null)
 	CsrfToken string `json:"csrfToken"`
 	// An error if authentication failed
-	Error *Error `json:"error"`
+	Error *Error `json:"error,omitempty"`
+}
+
+type Mutation struct {
 }
 
 type Organisation struct {
@@ -85,12 +90,15 @@ type Organisation struct {
 
 type OrganisationFilter struct {
 	// Filter by multiple ids for fetching references
-	Ids []uuid.UUID `json:"ids"`
+	Ids []uuid.UUID `json:"ids,omitempty"`
 	// Filter by a query string on all text fields
-	Q *string `json:"q"`
+	Q *string `json:"q,omitempty"`
+}
+
+type Query struct {
 }
 
 type Result struct {
 	// An error if the operation failed
-	Error *FieldsError `json:"error"`
+	Error *FieldsError `json:"error,omitempty"`
 }

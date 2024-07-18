@@ -4,9 +4,12 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
+	"github.com/networkteam/construct/v2"
 )
 
 type Organisation struct {
+	construct.Table `table_name:"organisations"`
+
 	ID   uuid.UUID `read_col:"organisations.organisation_id" write_col:"organisation_id"`
 	Name string    `read_col:"organisations.name,sortable" write_col:"name"`
 
@@ -15,8 +18,8 @@ type Organisation struct {
 }
 
 type OrganisationsQuery struct {
-	IDs []uuid.UUID
-	Q   *string
+	IDs        []uuid.UUID
+	SearchTerm string
 }
 
 func (f *OrganisationsQuery) SetOrganisationID(organisationID *uuid.UUID) {

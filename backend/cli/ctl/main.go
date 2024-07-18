@@ -7,10 +7,11 @@ import (
 	"github.com/apex/log"
 	cli_handler "github.com/apex/log/handlers/cli"
 	"github.com/friendsofgo/errors"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/stdlib"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/stdlib"
+	"github.com/jackc/pgx/v5/tracelog"
 	"github.com/networkteam/apexlogutils"
-	apexlogutils_pgx "github.com/networkteam/apexlogutils/pgx"
+	apexlogutils_pgx "github.com/networkteam/apexlogutils/pgx/v5"
 	"github.com/urfave/cli/v2"
 
 	"myvendor.mytld/myproject/backend/domain"
@@ -108,9 +109,11 @@ func connectDatabase(c *cli.Context) (*sql.DB, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "parsing PostgreSQL connection string")
 	}
-	connConfig.Logger = apexlogutils_pgx.NewLogger(log.Log)
 	verbosity := apexlogutils.Verbosity(c.Int("verbosity"))
-	connConfig.LogLevel = apexlogutils_pgx.ToPgxLogLevel(verbosity)
+	connConfig.Tracer = &tracelog.TraceLog{
+		Logger:   apexlogutils_pgx.NewLogger(log.Log),
+		LogLevel: apexlogutils_pgx.ToPgxLogLevel(verbosity),
+	}
 	connStr := stdlib.RegisterConnConfig(connConfig)
 	db, err := sql.Open("pgx", connStr)
 	if err != nil {

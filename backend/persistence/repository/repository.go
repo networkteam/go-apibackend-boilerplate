@@ -4,18 +4,11 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/Masterminds/squirrel"
-	"github.com/networkteam/construct"
+	"github.com/networkteam/construct/v2"
 )
 
 var ErrNotFound = construct.ErrNotFound
 
 type QueryRower interface {
 	QueryRowContext(context.Context, string, ...interface{}) *sql.Row
-}
-
-func queryBuilder(runner squirrel.BaseRunner) squirrel.StatementBuilderType {
-	return squirrel.StatementBuilder.
-		PlaceholderFormat(squirrel.Dollar).
-		RunWith(runner)
 }

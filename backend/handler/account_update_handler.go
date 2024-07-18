@@ -37,8 +37,8 @@ func (h *Handler) AccountUpdate(ctx context.Context, cmd domain.AccountUpdateCmd
 		prevRole           string
 	)
 	err := repository.Transactional(ctx, h.db, func(tx *sql.Tx) error {
-		prevRecord, err := repository.FindAccountByID(ctx, tx, cmd.AccountID)
-		if err == repository.ErrNotFound {
+		prevRecord, err := repository.FindAccountByID(ctx, tx, cmd.AccountID, domain.AccountQueryOpts{})
+		if errors.Is(err, repository.ErrNotFound) {
 			return domain.FieldError{
 				Field: "accountId",
 				Code:  domain.ErrorCodeNotExists,

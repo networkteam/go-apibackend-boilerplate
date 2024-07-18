@@ -24,6 +24,9 @@ enum Role {
 extend type Query {
   "Get the current login status"
   loginStatus: Boolean! @bypassAuthentication
+
+  "Get the current account"
+  currentAccount: Account!
 }
 
 #
@@ -48,6 +51,8 @@ input LoginCredentials {
   emailAddress: String!
   "Password of the account"
   password: String!
+  "Enable longer session"
+  keepMeLoggedIn: Boolean
 }
 
 #

@@ -39,6 +39,7 @@ type AuthContext struct {
 	Role                      domain.Role
 	Secret                    []byte
 	IssuedAt                  time.Time
+	Expiry                    time.Time
 }
 
 func (authCtx AuthContext) Fields() log.Fields {
@@ -58,4 +59,24 @@ func AuthContextWithError(err error) AuthContext {
 	return AuthContext{
 		Error: err,
 	}
+}
+
+func (authCtx AuthContext) OrganisationIDorNil() uuid.UUID {
+	if authCtx.OrganisationID == nil {
+		return uuid.Nil
+	}
+
+	return *authCtx.OrganisationID
+}
+
+func (authCtx AuthContext) HasExtendedExpiry() bool {
+	if !authCtx.Authenticated {
+		return false
+	}
+
+	return authCtx.Expiry.Sub(authCtx.IssuedAt) >= AuthTokenExpiryExtended
+}
+
+func (authCtx AuthContext) IsOrganisation() bool {
+	return authCtx.OrganisationID != nil
 }

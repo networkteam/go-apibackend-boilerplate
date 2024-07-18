@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"myvendor.mytld/myproject/backend/api"
+	"myvendor.mytld/myproject/backend/domain"
 	"myvendor.mytld/myproject/backend/persistence/repository"
 	"myvendor.mytld/myproject/backend/test"
 	test_auth "myvendor.mytld/myproject/backend/test/auth"
@@ -54,7 +55,7 @@ func TestMutationResolver_DeleteOrganisation(t *testing.T) {
 				test_graphql.RequireNoErrors(t, res.GraphqlErrors)
 
 				require.NotNil(t, res.Data.Result)
-				_, err := repository.FindOrganisationByID(context.Background(), db, res.Data.Result.ID)
+				_, err := repository.FindOrganisationByID(context.Background(), db, res.Data.Result.ID, domain.OrganisationQueryOpts{})
 				require.ErrorIs(t, err, repository.ErrNotFound)
 			},
 		},

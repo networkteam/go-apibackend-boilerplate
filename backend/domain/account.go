@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
+	"github.com/networkteam/construct/v2"
 
 	security_helper "myvendor.mytld/myproject/backend/security/helper"
 )
@@ -11,6 +12,8 @@ import (
 const accountSecretLength = 16
 
 type Account struct {
+	construct.Table `table_name:"accounts"`
+
 	ID             uuid.UUID     `read_col:"accounts.account_id" write_col:"account_id"`
 	EmailAddress   string        `read_col:"accounts.email_address,sortable" write_col:"email_address"`
 	Secret         []byte        `read_col:"accounts.secret" write_col:"secret"`
@@ -22,8 +25,8 @@ type Account struct {
 	CreatedAt time.Time `read_col:"accounts.created_at,sortable"`
 	UpdatedAt time.Time `read_col:"accounts.updated_at,sortable"`
 
-	// Side-loaded from referenced organisation
-	OrganisationName string `read_col:"organisations.name"`
+	// Organisation that the account is assigned to (if not system administrator), is side-loaded
+	Organisation *Organisation
 }
 
 // Methods to implement authentication.AuthTokenDataProvider:
@@ -46,6 +49,11 @@ func (a Account) GetOrganisationID() uuid.NullUUID {
 // GetRoleIdentifier implements authentication.RoleIdentifierProvider
 func (a Account) GetRoleIdentifier() string {
 	return string(a.Role)
+}
+
+// GetPasswordHash implements LoginDataProvider
+func (a Account) GetPasswordHash() []byte {
+	return a.PasswordHash
 }
 
 func newAccountSecret() ([]byte, error) {

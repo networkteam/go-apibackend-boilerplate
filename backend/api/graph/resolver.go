@@ -6,5 +6,5 @@ import (
 
 type Resolver struct {
 	api.ResolverDependencies
+	api.ResolverConfig
 }
-

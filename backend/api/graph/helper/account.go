@@ -1,6 +1,8 @@
 package helper
 
 import (
+	"context"
+
 	"myvendor.mytld/myproject/backend/api/graph/model"
 	"myvendor.mytld/myproject/backend/domain"
 )
@@ -31,7 +33,15 @@ func MapToAccountsQuery(filter *model.AccountFilter) domain.AccountsQuery {
 	}
 	return domain.AccountsQuery{
 		IDs:            filter.Ids,
-		Q:              filter.Q,
+		SearchTerm:     ToVal(filter.Q),
 		OrganisationID: filter.OrganisationID,
+	}
+}
+
+func AccountQueryOptsFromSelection(ctx context.Context, accountSelectPath ...string) domain.AccountQueryOpts {
+	selectedFields := SelectedFields(ctx)
+	return domain.AccountQueryOpts{
+		IncludeOrganisation:   selectedFields.PathSelected(append(accountSelectPath, "organisation")...),
+		OrganisationQueryOpts: OrganisationQueryOptsFromSelection(ctx, append(accountSelectPath, "organisation")...),
 	}
 }

@@ -5,3 +5,6 @@ import "github.com/gofrs/uuid"
 type OrganisationQuery struct {
 	OrganisationID uuid.UUID
 }
+
+type OrganisationQueryOpts struct {
+}

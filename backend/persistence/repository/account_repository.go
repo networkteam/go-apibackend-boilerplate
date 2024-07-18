@@ -2,146 +2,138 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
-	"github.com/Masterminds/squirrel"
 	"github.com/friendsofgo/errors"
 	"github.com/gofrs/uuid"
-	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/networkteam/construct/v2/constructsql"
+	. "github.com/networkteam/qrb"
+	"github.com/networkteam/qrb/builder"
+	"github.com/networkteam/qrb/fn"
+	"github.com/networkteam/qrb/qrbsql"
 
 	"myvendor.mytld/myproject/backend/domain"
 )
 
-func accountBuildFindQuery(query squirrel.SelectBuilder) squirrel.SelectBuilder {
-	query = query.
-		From("accounts").
-		LeftJoin("organisations ON organisations.organisation_id = accounts.organisation_id")
-	return query
+type AccountsFilter struct {
+	Opts           domain.AccountQueryOpts
+	OrganisationID *uuid.UUID
+	IDs            []uuid.UUID
+	// SearchTerm filters accounts by text fields (email address or organisation name)
+	SearchTerm string
+	// Roles filters account to have one of the given roles
+	Roles []domain.Role
 }
 
-func FindAccountByID(ctx context.Context, runner squirrel.BaseRunner, id uuid.UUID) (domain.Account, error) {
-	query := queryBuilder(runner).
-		Select(buildAccountJSON())
-	query = accountBuildFindQuery(query)
-
-	row := query.
-		Where(squirrel.Eq{account_id: id}).
-		QueryRowContext(ctx)
-	return accountScanJsonRow(row)
+func accountBuildFindQuery(opts domain.AccountQueryOpts) builder.SelectBuilder {
+	return Select(buildAccountJSON(opts)).
+		From(account).
+		ApplyIf(opts.IncludeOrganisation, func(q builder.SelectBuilder) builder.SelectBuilder {
+			return q.LeftJoin(organisation).On(organisation.ID.Eq(account.OrganisationID))
+		})
 }
 
-func FindAllAccounts(ctx context.Context, runner squirrel.BaseRunner, paging Paging, filter domain.AccountsQuery) (result []domain.Account, err error) {
-	query := queryBuilder(runner).
-		Select(buildAccountJSON())
-	query = accountBuildFindQuery(query)
+func FindAccountByID(ctx context.Context, executor qrbsql.Executor, id uuid.UUID, opts domain.AccountQueryOpts) (domain.Account, error) {
+	query := accountBuildFindQuery(opts).
+		Where(account.ID.Eq(Arg(id)))
 
-	query, err = applyPaging(query, paging, accountSortFields)
+	return constructsql.ScanRow[domain.Account](
+		qrbsql.Build(query).WithExecutor(executor).QueryRow(ctx),
+	)
+}
+
+func FindAccountByEmailAddress(ctx context.Context, executor qrbsql.Executor, emailAddress string, opts domain.AccountQueryOpts) (domain.Account, error) {
+	query := accountBuildFindQuery(opts).
+		Where(fn.Lower(account.EmailAddress).Eq(Arg(strings.ToLower(emailAddress))))
+
+	return constructsql.ScanRow[domain.Account](
+		qrbsql.Build(query).WithExecutor(executor).QueryRow(ctx),
+	)
+}
+
+func applyAccountFilter(filter AccountsFilter) func(q builder.SelectBuilder) builder.SelectBuilder {
+	return func(q builder.SelectBuilder) builder.SelectBuilder {
+		return q.
+			ApplyIf(len(filter.IDs) > 0, func(q builder.SelectBuilder) builder.SelectBuilder {
+				// TODO Check: Add test for this
+				return q.Where(account.ID.Eq(Any(Arg(filter.IDs))))
+			}).
+			ApplyIf(filter.SearchTerm != "", func(q builder.SelectBuilder) builder.SelectBuilder {
+				var incOrg builder.Exp
+				if filter.Opts.IncludeOrganisation {
+					incOrg = organisation.Name.ILike(Arg("%" + filter.SearchTerm + "%"))
+				}
+
+				return q.Where(Or(
+					account.EmailAddress.ILike(Arg("%"+filter.SearchTerm+"%")),
+					incOrg,
+				))
+			}).
+			ApplyIf(filter.OrganisationID != nil, func(q builder.SelectBuilder) builder.SelectBuilder {
+				return q.Where(account.OrganisationID.Eq(Arg(*filter.OrganisationID)))
+			}).
+			ApplyIf(len(filter.Roles) > 0, func(q builder.SelectBuilder) builder.SelectBuilder {
+				return q.Where(account.Role.Eq(Any(Args(filter.Roles))))
+			})
+	}
+}
+
+func FindAllAccounts(ctx context.Context, executor qrbsql.Executor, filter AccountsFilter, pagingOpts ...PagingOption) ([]domain.Account, error) {
+	query := accountBuildFindQuery(filter.Opts).
+		ApplyIf(true, applyAccountFilter(filter))
+
+	query, err := applyPagingOptions(query, pagingOpts, accountSortFields)
 	if err != nil {
-		return
+		return nil, err
 	}
-	query = applyAccountFilter(query, filter)
 
-	rows, err := query.QueryContext(ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "executing query")
-	}
-	defer rows.Close()
-	for rows.Next() {
-		record, err := accountScanJsonRow(rows)
-		if err != nil {
-			return nil, errors.Wrap(err, "scanning row")
-		}
-		result = append(result, record)
-	}
-	return
+	return constructsql.CollectRows[domain.Account](
+		qrbsql.Build(query).WithExecutor(executor).Query(ctx),
+	)
 }
 
-func applyAccountFilter(query squirrel.SelectBuilder, filter domain.AccountsQuery) squirrel.SelectBuilder {
-	if len(filter.IDs) > 0 {
-		query = query.Where(
-			squirrel.Eq{account_id: filter.IDs},
-		)
-	}
-	if filter.Q != nil {
-		query = query.Where(
-			squirrel.Or{
-				squirrel.ILike{account_emailAddress: "%" + *filter.Q + "%"},
-				squirrel.ILike{organisation_name: "%" + *filter.Q + "%"},
-			},
-		)
-	}
-	if filter.OrganisationID != nil {
-		query = query.Where(
-			squirrel.Eq{account_organisationID: *filter.OrganisationID},
-		)
-	}
-	if filter.ExcludeRole != nil {
-		query = query.Where(
-			squirrel.NotEq{account_role: *filter.ExcludeRole},
-		)
-	}
-	return query
+func CountAccounts(ctx context.Context, executor qrbsql.Executor, filter AccountsFilter) (count int, err error) {
+	query := Select(fn.Count(N("*"))).
+		From(account).
+		ApplyIf(true, applyAccountFilter(filter))
+
+	return constructsql.ScanRow[int](
+		qrbsql.Build(query).WithExecutor(executor).QueryRow(ctx),
+	)
 }
 
-func CountAllAccounts(ctx context.Context, runner squirrel.BaseRunner, filter domain.AccountsQuery) (count int, err error) {
-	query := queryBuilder(runner).
-		Select("COUNT(*)")
-	query = accountBuildFindQuery(query)
+func InsertAccount(ctx context.Context, executor qrbsql.Executor, changeSet AccountChangeSet) error {
+	query := InsertInto(account).
+		SetMap(changeSet.toMap())
 
-	query = applyAccountFilter(query, filter)
-
-	row := query.QueryRowContext(ctx)
-	err = row.Scan(&count)
-	return
-}
-
-func FindAccountByEmailAddress(ctx context.Context, runner squirrel.BaseRunner, emailAddress string) (domain.Account, error) {
-	query := queryBuilder(runner).
-		Select(buildAccountJSON())
-	query = accountBuildFindQuery(query).
-		Where(squirrel.Eq{fmt.Sprintf("LOWER(%s)", account_emailAddress): strings.ToLower(emailAddress)})
-
-	row := query.QueryRowContext(ctx)
-	return accountScanJsonRow(row)
-}
-
-func InsertAccount(ctx context.Context, runner squirrel.BaseRunner, changeSet AccountChangeSet) error {
-	_, err := queryBuilder(runner).
-		Insert("accounts").
-		SetMap(changeSet.toMap()).
-		ExecContext(ctx)
+	_, err := qrbsql.Build(query).WithExecutor(executor).Exec(ctx)
 	return err
 }
 
-func UpdateAccount(ctx context.Context, runner squirrel.BaseRunner, id uuid.UUID, changeSet AccountChangeSet) error {
-	res, err := queryBuilder(runner).
-		Update("accounts").
-		Where(squirrel.Eq{account_id: id}).
+func UpdateAccount(ctx context.Context, executor qrbsql.Executor, id uuid.UUID, changeSet AccountChangeSet) error {
+	query := Update(account).
 		SetMap(changeSet.toMap()).
-		ExecContext(ctx)
-	if err != nil {
-		return errors.Wrap(err, "executing update")
-	}
-	return assertRowsAffected(res, "update")
+		Where(account.ID.Eq(Arg(id)))
+
+	return constructsql.AssertRowsAffected("update", 1)(
+		qrbsql.Build(query).WithExecutor(executor).Exec(ctx),
+	)
 }
 
-func DeleteAccount(ctx context.Context, runner squirrel.BaseRunner, id uuid.UUID) error {
-	res, err := queryBuilder(runner).
-		Delete("accounts").
-		Where(squirrel.Eq{account_id: id}).
-		ExecContext(ctx)
-	if err != nil {
-		return errors.Wrap(err, "executing delete")
-	}
-	return assertRowsAffected(res, "delete")
+func DeleteAccount(ctx context.Context, executor qrbsql.Executor, id uuid.UUID) error {
+	query := DeleteFrom(account).
+		Where(account.ID.Eq(Arg(id)))
+
+	return constructsql.AssertRowsAffected("delete", 1)(
+		qrbsql.Build(query).WithExecutor(executor).Exec(ctx),
+	)
 }
 
 func AccountConstraintErr(err error) error {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
-		switch {
-		case pgErr.Code == pgErrCode_unique_violation && pgErr.ConstraintName == "accounts_email_address_idx":
+		if pgErr.Code == pgErrCode_unique_violation && pgErr.ConstraintName == "accounts_email_address_idx" {
 			return domain.FieldError{
 				Field: "emailAddress",
 				Code:  domain.ErrorCodeAlreadyExists,
@@ -151,7 +143,12 @@ func AccountConstraintErr(err error) error {
 	return nil
 }
 
-func buildAccountJSON() string {
-	return accountDefaultSelectJson.
-		ToSql()
+func buildAccountJSON(opts domain.AccountQueryOpts) builder.JsonBuildObjectBuilder {
+	return accountDefaultJson.
+		PropIf(
+			opts.IncludeOrganisation,
+			"Organisation",
+			Select(buildOrganisationJSON(opts.OrganisationQueryOpts)).
+				From(organisation).
+				Where(organisation.ID.Eq(account.OrganisationID)))
 }

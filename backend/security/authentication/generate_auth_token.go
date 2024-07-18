@@ -4,21 +4,28 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
-	"gopkg.in/square/go-jose.v2"
-	"gopkg.in/square/go-jose.v2/jwt"
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 
 	"myvendor.mytld/myproject/backend/domain"
 )
 
-const AuthTokenExpiryDefault = 6 * time.Hour
+const (
+	AuthTokenExpiryDefault  = 6 * time.Hour
+	AuthTokenExpiryExtended = 30 * 24 * time.Hour
+)
 
 type TokenOpts struct {
 	Expiry time.Duration
 }
 
 // TokenOptsForAccount will return the token options (expiry) based on the role of an account
-func TokenOptsForAccount(account RoleIdentifierProvider) TokenOpts {
+func TokenOptsForAccount(_ RoleIdentifierProvider, extendedExpiry bool) TokenOpts {
 	expiry := AuthTokenExpiryDefault
+
+	if extendedExpiry {
+		expiry = AuthTokenExpiryExtended
+	}
 
 	return TokenOpts{
 		Expiry: expiry,
@@ -52,7 +59,7 @@ func GenerateAuthToken(account AuthTokenDataProvider, timeSource domain.TimeSour
 		OrganisationID: organisationIDValue,
 	}
 
-	raw, err := jwt.Signed(sig).Claims(cl).Claims(privateCl).CompactSerialize()
+	raw, err := jwt.Signed(sig).Claims(cl).Claims(privateCl).Serialize()
 	if err != nil {
 		return "", errors.Wrap(err, "signing and serializing JWT")
 	}

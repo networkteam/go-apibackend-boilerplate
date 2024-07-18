@@ -16,20 +16,24 @@ func (f *Finder) QueryOrganisation(ctx context.Context, query domain.Organisatio
 		return domain.Organisation{}, err
 	}
 
-	record, err := repository.FindOrganisationByID(ctx, f.db, query.OrganisationID)
+	record, err := repository.FindOrganisationByID(ctx, f.db, query.OrganisationID, domain.OrganisationQueryOpts{})
 	if err != nil {
 		return record, err
 	}
 	return record, nil
 }
 
-func (f *Finder) QueryOrganisations(ctx context.Context, query domain.OrganisationsQuery, paging repository.Paging) ([]domain.Organisation, error) {
+func (f *Finder) QueryOrganisations(ctx context.Context, query domain.OrganisationsQuery, paging Paging) ([]domain.Organisation, error) {
 	authorizer := authorization.NewAuthorizer(authentication.GetAuthContext(ctx))
 	err := authorizer.AllowsAndFilterAllOrganisationsQuery(&query)
 	if err != nil {
 		return nil, err
 	}
-	return repository.FindAllOrganisations(ctx, f.db, paging, query)
+	return repository.FindAllOrganisations(ctx, f.db, repository.OrganisationsFilter{
+		Opts:       domain.OrganisationQueryOpts{},
+		IDs:        query.IDs,
+		SearchTerm: query.SearchTerm,
+	}, paging.options()...)
 }
 
 func (f *Finder) CountOrganisations(ctx context.Context, query domain.OrganisationsQuery) (int, error) {
@@ -39,5 +43,8 @@ func (f *Finder) CountOrganisations(ctx context.Context, query domain.Organisati
 		return 0, err
 	}
 
-	return repository.CountAllOrganisations(ctx, f.db, query)
+	return repository.CountOrganisations(ctx, f.db, repository.OrganisationsFilter{
+		IDs:        query.IDs,
+		SearchTerm: query.SearchTerm,
+	})
 }

@@ -1,6 +1,8 @@
 package helper
 
 import (
+	"context"
+
 	"myvendor.mytld/myproject/backend/api/graph/model"
 	"myvendor.mytld/myproject/backend/domain"
 )
@@ -27,7 +29,11 @@ func MapToOrganisationsQuery(filter *model.OrganisationFilter) domain.Organisati
 		return domain.OrganisationsQuery{}
 	}
 	return domain.OrganisationsQuery{
-		IDs: filter.Ids,
-		Q:   filter.Q,
+		IDs:        filter.Ids,
+		SearchTerm: ToVal(filter.Q),
 	}
+}
+
+func OrganisationQueryOptsFromSelection(ctx context.Context, organisationSelectPath ...string) domain.OrganisationQueryOpts {
+	return domain.OrganisationQueryOpts{}
 }

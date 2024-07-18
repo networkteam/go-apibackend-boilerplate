@@ -2,25 +2,31 @@
 package repository
 
 import (
-	"database/sql"
-	"encoding/json"
 	uuid "github.com/gofrs/uuid"
-	construct "github.com/networkteam/construct"
-	cjson "github.com/networkteam/construct/json"
+	qrb "github.com/networkteam/qrb"
+	builder "github.com/networkteam/qrb/builder"
+	fn "github.com/networkteam/qrb/fn"
 	domain "myvendor.mytld/myproject/backend/domain"
 )
 
-const (
-	organisation_id        = "organisations.organisation_id"
-	organisation_name      = "organisations.name"
-	organisation_createdAt = "organisations.created_at"
-	organisation_updatedAt = "organisations.updated_at"
-)
+var organisation = struct {
+	builder.Identer
+	ID        builder.IdentExp
+	Name      builder.IdentExp
+	CreatedAt builder.IdentExp
+	UpdatedAt builder.IdentExp
+}{
+	CreatedAt: qrb.N("organisations.created_at"),
+	ID:        qrb.N("organisations.organisation_id"),
+	Identer:   qrb.N("organisations"),
+	Name:      qrb.N("organisations.name"),
+	UpdatedAt: qrb.N("organisations.updated_at"),
+}
 
-var organisationSortFields = map[string]string{
-	"createdat": organisation_createdAt,
-	"name":      organisation_name,
-	"updatedat": organisation_updatedAt,
+var organisationSortFields = map[string]builder.IdentExp{
+	"createdat": organisation.CreatedAt,
+	"name":      organisation.Name,
+	"updatedat": organisation.UpdatedAt,
 }
 
 type OrganisationChangeSet struct {
@@ -47,19 +53,8 @@ func OrganisationToChangeSet(r domain.Organisation) (c OrganisationChangeSet) {
 	return
 }
 
-var organisationDefaultSelectJson = cjson.JsonBuildObject().
-	Set("ID", cjson.Exp("organisations.organisation_id")).
-	Set("Name", cjson.Exp("organisations.name")).
-	Set("CreatedAt", cjson.Exp("organisations.created_at")).
-	Set("UpdatedAt", cjson.Exp("organisations.updated_at"))
-
-func organisationScanJsonRow(row construct.RowScanner) (result domain.Organisation, err error) {
-	var data []byte
-	if err := row.Scan(&data); err != nil {
-		if err == sql.ErrNoRows {
-			return result, construct.ErrNotFound
-		}
-		return result, err
-	}
-	return result, json.Unmarshal(data, &result)
-}
+var organisationDefaultJson = fn.JsonBuildObject().
+	Prop("ID", organisation.ID).
+	Prop("Name", organisation.Name).
+	Prop("CreatedAt", organisation.CreatedAt).
+	Prop("UpdatedAt", organisation.UpdatedAt)

@@ -33,14 +33,14 @@ func (h *Handler) AccountDelete(ctx context.Context, cmd domain.AccountDeleteCmd
 		role           domain.Role
 	)
 	err := repository.Transactional(ctx, h.db, func(tx *sql.Tx) error {
-		record, err := repository.FindAccountByID(ctx, tx, cmd.AccountID)
-		if err == repository.ErrNotFound {
+		record, err := repository.FindAccountByID(ctx, tx, cmd.AccountID, domain.AccountQueryOpts{})
+		if errors.Is(err, repository.ErrNotFound) {
 			return domain.FieldError{
 				Field: "accountId",
 				Code:  domain.ErrorCodeNotExists,
 			}
 		} else if err != nil {
-			return errors.Wrap(err, "finding account")
+			return errors.Wrap(err, "fetching account")
 		}
 
 		// For logging
@@ -57,7 +57,7 @@ func (h *Handler) AccountDelete(ctx context.Context, cmd domain.AccountDeleteCmd
 		return nil
 	})
 	if err != nil {
-		return errors.Wrap(err, "running transaction")
+		return err
 	}
 
 	log.

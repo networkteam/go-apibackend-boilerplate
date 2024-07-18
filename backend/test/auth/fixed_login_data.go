@@ -53,7 +53,9 @@ func ApplyFixedAuthValuesSystemAdministrator(t *testing.T, timeSource domain.Tim
 var _ ApplyAuthValuesFunc = ApplyFixedAuthValuesSystemAdministrator
 
 func addTokenToRequest(t *testing.T, timeSource domain.TimeSource, req *http.Request, authTokenData FixedAuthTokenData) {
-	tokenOpts := authentication.TokenOptsForAccount(authTokenData)
+	t.Helper()
+
+	tokenOpts := authentication.TokenOptsForAccount(authTokenData, false)
 	authToken, err := authentication.GenerateAuthToken(authTokenData, timeSource, tokenOpts)
 	if err != nil {
 		t.Fatalf("failed to generate auth token: %v", err)

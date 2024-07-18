@@ -1,17 +1,25 @@
 package helper
 
 import (
+	"errors"
+
 	"github.com/gofrs/uuid"
 
 	"myvendor.mytld/myproject/backend/domain"
-	"myvendor.mytld/myproject/backend/persistence/repository"
-	"myvendor.mytld/myproject/backend/persistence/types"
+	"myvendor.mytld/myproject/backend/finder"
 )
 
-func MapToPaging(page *int, perPage *int, sortField *string, sortOrder *string) repository.Paging {
-	paging := repository.Paging{
-		// Always apply a default per page for API listings (max is checked by repository)
-		PerPage:   intPtr(repository.DefaultPerPage),
+const (
+	defaultPerPage = 50
+	maxPerPage     = 1000
+)
+
+var ErrMaxPerPageExceeded = errors.New("perPage exceeds maximum")
+
+func MapToPaging(page *int, perPage *int, sortField *string, sortOrder *string) (finder.Paging, error) {
+	paging := finder.Paging{
+		// Always apply a default per page for API listings
+		PerPage:   ToPtr(defaultPerPage),
 		SortField: sortField,
 		SortOrder: sortOrder,
 	}
@@ -21,28 +29,23 @@ func MapToPaging(page *int, perPage *int, sortField *string, sortOrder *string) 
 	if perPage != nil {
 		paging.PerPage = perPage
 	}
-
-	return paging
-}
-
-func intPtr(v int) *int {
-	return &v
-}
-
-func intPtrOrNil(v types.NullInt64) *int {
-	if !v.Valid {
-		return nil
+	if paging.PerPage != nil && *paging.PerPage > maxPerPage {
+		return paging, ErrMaxPerPageExceeded
 	}
-	i := int(v.Int64)
-	return &i
+
+	return paging, nil
 }
 
-func IntPtrToNullInt64(v *int) (result types.NullInt64) {
-	if v != nil {
-		result.Valid = true
-		result.Int64 = int64(*v)
+func ToPtr[T any](value T) *T {
+	return &value
+}
+
+func ToVal[T any](ptr *T) T {
+	if ptr == nil {
+		var value T
+		return value
 	}
-	return result
+	return *ptr
 }
 
 func uuidOrNil(id uuid.NullUUID) *uuid.UUID {
@@ -52,32 +55,11 @@ func uuidOrNil(id uuid.NullUUID) *uuid.UUID {
 	return nil
 }
 
-func StrVal(str *string) string {
-	if str == nil {
-		return ""
-	}
-	return *str
-}
-
-func BoolVal(b *bool) bool {
-	if b == nil {
-		return false
-	}
-	return *b
-}
-
 func NullUUIDVal(id *uuid.UUID) uuid.NullUUID {
 	if id == nil {
 		return uuid.NullUUID{Valid: false}
 	}
 	return uuid.NullUUID{UUID: *id, Valid: true}
-}
-
-func dateOrNil(date domain.NullDate) *domain.Date {
-	if date.Valid {
-		return &date.Date
-	}
-	return nil
 }
 
 func NullDateVal(date *domain.Date) domain.NullDate {

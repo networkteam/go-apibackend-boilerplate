@@ -1,4 +1,4 @@
-package graph_test
+package authentication_test
 
 import (
 	"testing"
@@ -13,7 +13,7 @@ import (
 	test_graphql "myvendor.mytld/myproject/backend/test/graphql"
 )
 
-const loginGql = `
+const loginGQL = `
 	mutation Login($emailAddress: String!, $password: String!) {
 		result: login(
 			credentials: {
@@ -62,7 +62,7 @@ func TestMutationResolver_Login_WithSystemAdministrator_Valid(t *testing.T) {
 	test_db.ExecFixtures(t, db, "base")
 
 	query := test_graphql.GraphqlQuery{
-		Query: loginGql,
+		Query: loginGQL,
 		Variables: map[string]interface{}{
 			"emailAddress": "admin@example.com",
 			"password":     "myRandomPassword",
@@ -114,7 +114,7 @@ func TestMutationResolver_Login_WithSystemAdministrator_InvalidPassword(t *testi
 	test_db.ExecFixtures(t, db, "base")
 
 	query := test_graphql.GraphqlQuery{
-		Query: loginGql,
+		Query: loginGQL,
 		Variables: map[string]interface{}{
 			"emailAddress": "admin@example.com",
 			"password":     "not-my-password",
@@ -138,7 +138,7 @@ func TestMutationResolver_Login_WithOrganisationAdministrator_Valid(t *testing.T
 	test_db.ExecFixtures(t, db, "base")
 
 	query := test_graphql.GraphqlQuery{
-		Query: loginGql,
+		Query: loginGQL,
 		Variables: map[string]interface{}{
 			"emailAddress": "admin+acmeinc@example.com",
 			"password":     "myRandomPassword",

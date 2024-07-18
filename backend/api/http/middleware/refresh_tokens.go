@@ -41,22 +41,25 @@ func RefreshTokensMiddleware(db *sql.DB, timeSource domain.TimeSource, next http
 }
 
 func refreshTokens(w http.ResponseWriter, r *http.Request, authCtx authentication.AuthContext, db *sql.DB, timeSource domain.TimeSource) error {
-	account, err := repository.FindAccountByID(r.Context(), db, authCtx.AccountID)
-
+	account, err := repository.FindAccountByID(r.Context(), db, authCtx.AccountID, domain.AccountQueryOpts{})
 	if err != nil {
 		return errors.Wrap(err, "could not find account")
 	}
-	tokenOpts := authentication.TokenOptsForAccount(account)
+
+	tokenOpts := authentication.TokenOptsForAccount(account, authCtx.HasExtendedExpiry())
 	authToken, err := authentication.GenerateAuthToken(account, timeSource, tokenOpts)
 	if err != nil {
 		return errors.Wrap(err, "could not generate auth token")
 	}
+
 	csrfToken, err := authentication.GenerateCsrfToken(account, timeSource, tokenOpts)
 	if err != nil {
 		return errors.Wrap(err, "could not generate CSRF token")
 	}
+
 	authentication.SetRefreshCsrfTokenHeader(w, csrfToken)
 	authentication.SetRefreshAuthTokenHeader(w, authToken)
 	authentication.SetAuthTokenCookie(w, r, authToken)
+
 	return nil
 }

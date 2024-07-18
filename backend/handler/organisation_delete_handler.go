@@ -29,8 +29,8 @@ func (h *Handler) OrganisationDelete(ctx context.Context, cmd domain.Organisatio
 
 	var organisationName string
 	err := repository.Transactional(ctx, h.db, func(tx *sql.Tx) error {
-		prevRecord, err := repository.FindOrganisationByID(ctx, tx, cmd.OrganisationID)
-		if err == repository.ErrNotFound {
+		prevRecord, err := repository.FindOrganisationByID(ctx, tx, cmd.OrganisationID, domain.OrganisationQueryOpts{})
+		if errors.Is(err, repository.ErrNotFound) {
 			return domain.FieldError{
 				Field: "organisationId",
 				Code:  domain.ErrorCodeNotExists,

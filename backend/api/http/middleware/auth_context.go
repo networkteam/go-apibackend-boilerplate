@@ -7,8 +7,9 @@ import (
 
 	logger "github.com/apex/log"
 	"github.com/friendsofgo/errors"
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/gofrs/uuid"
-	"gopkg.in/square/go-jose.v2/jwt"
 
 	"myvendor.mytld/myproject/backend/api"
 	"myvendor.mytld/myproject/backend/domain"
@@ -52,7 +53,7 @@ func AuthContextMiddleware(db *sql.DB, timeSource domain.TimeSource, next http.H
 func authCtxFromToken(ctx context.Context, db *sql.DB, authTokenValue string, timeSource domain.TimeSource) (authCtx authentication.AuthContext) {
 	log := logger.FromContext(ctx)
 
-	authToken, err := jwt.ParseSigned(authTokenValue)
+	authToken, err := jwt.ParseSigned(authTokenValue, []jose.SignatureAlgorithm{jose.HS256})
 	if err != nil {
 		log.
 			WithError(errors.WithStack(err)).
@@ -75,7 +76,7 @@ func authCtxFromToken(ctx context.Context, db *sql.DB, authTokenValue string, ti
 		return authentication.AuthContextWithError(api.ErrAuthTokenInvalid)
 	}
 
-	account, err := repository.FindAccountByID(ctx, db, accountID)
+	account, err := repository.FindAccountByID(ctx, db, accountID, domain.AccountQueryOpts{})
 	if err != nil {
 		log.
 			WithError(errors.WithStack(err)).
@@ -99,7 +100,7 @@ func authCtxFromToken(ctx context.Context, db *sql.DB, authTokenValue string, ti
 			WithError(errors.WithStack(err)).
 			WithField("accountID", accountID).
 			Warn("could not validate claims in auth token")
-		if err == jwt.ErrExpired {
+		if errors.Is(err, jwt.ErrExpired) {
 			return authentication.AuthContextWithError(api.ErrAuthTokenExpired)
 		}
 		return authentication.AuthContextWithError(api.ErrAuthTokenInvalid)
@@ -110,7 +111,12 @@ func authCtxFromToken(ctx context.Context, db *sql.DB, authTokenValue string, ti
 	if account.OrganisationID.Valid {
 		authCtx.OrganisationID = &account.OrganisationID.UUID
 	}
-	authCtx.IssuedAt = verifiedClaims.IssuedAt.Time()
+	if verifiedClaims.IssuedAt != nil {
+		authCtx.IssuedAt = verifiedClaims.IssuedAt.Time()
+	}
+	if verifiedClaims.Expiry != nil {
+		authCtx.Expiry = verifiedClaims.Expiry.Time()
+	}
 	authCtx.Secret = account.Secret
 	authCtx.Role = account.Role
 	if !authCtx.Role.IsValid() {
@@ -120,7 +126,7 @@ func authCtxFromToken(ctx context.Context, db *sql.DB, authTokenValue string, ti
 		return authentication.AuthContextWithError(api.ErrAuthTokenInvalid)
 	}
 
-	return
+	return authCtx
 }
 
 func checkCsrfToken(ctx context.Context, authCtx authentication.AuthContext, csrfTokenValue string, timeSource domain.TimeSource) error {
@@ -130,7 +136,7 @@ func checkCsrfToken(ctx context.Context, authCtx authentication.AuthContext, csr
 		return api.ErrCsrfTokenMissing
 	}
 
-	csrfToken, err := jwt.ParseSigned(csrfTokenValue)
+	csrfToken, err := jwt.ParseSigned(csrfTokenValue, []jose.SignatureAlgorithm{jose.HS256})
 	if err != nil {
 		log.
 			WithError(errors.WithStack(err)).

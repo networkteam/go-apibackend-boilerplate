@@ -2,8 +2,8 @@ package authentication
 
 import (
 	"github.com/friendsofgo/errors"
-	"gopkg.in/square/go-jose.v2"
-	"gopkg.in/square/go-jose.v2/jwt"
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 
 	"myvendor.mytld/myproject/backend/domain"
 )
@@ -20,7 +20,7 @@ func GenerateCsrfToken(account TokenSecretProvider, timeSource domain.TimeSource
 	cl := jwt.Claims{
 		Expiry: jwt.NewNumericDate(now.Add(opts.Expiry)),
 	}
-	raw, err := jwt.Signed(sig).Claims(cl).CompactSerialize()
+	raw, err := jwt.Signed(sig).Claims(cl).Serialize()
 	if err != nil {
 		return "", errors.Wrap(err, "signing and serializing JWT")
 	}

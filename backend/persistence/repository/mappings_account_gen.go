@@ -2,34 +2,44 @@
 package repository
 
 import (
-	"database/sql"
-	"encoding/json"
 	uuid "github.com/gofrs/uuid"
-	construct "github.com/networkteam/construct"
-	cjson "github.com/networkteam/construct/json"
+	qrb "github.com/networkteam/qrb"
+	builder "github.com/networkteam/qrb/builder"
+	fn "github.com/networkteam/qrb/fn"
 	domain "myvendor.mytld/myproject/backend/domain"
 	"time"
 )
 
-const (
-	account_id               = "accounts.account_id"
-	account_emailAddress     = "accounts.email_address"
-	account_secret           = "accounts.secret"
-	account_passwordHash     = "accounts.password_hash"
-	account_role             = "accounts.role_identifier"
-	account_lastLogin        = "accounts.last_login"
-	account_organisationID   = "accounts.organisation_id"
-	account_createdAt        = "accounts.created_at"
-	account_updatedAt        = "accounts.updated_at"
-	account_organisationName = "organisations.name"
-)
+var account = struct {
+	builder.Identer
+	ID             builder.IdentExp
+	EmailAddress   builder.IdentExp
+	Secret         builder.IdentExp
+	PasswordHash   builder.IdentExp
+	Role           builder.IdentExp
+	LastLogin      builder.IdentExp
+	OrganisationID builder.IdentExp
+	CreatedAt      builder.IdentExp
+	UpdatedAt      builder.IdentExp
+}{
+	CreatedAt:      qrb.N("accounts.created_at"),
+	EmailAddress:   qrb.N("accounts.email_address"),
+	ID:             qrb.N("accounts.account_id"),
+	Identer:        qrb.N("accounts"),
+	LastLogin:      qrb.N("accounts.last_login"),
+	OrganisationID: qrb.N("accounts.organisation_id"),
+	PasswordHash:   qrb.N("accounts.password_hash"),
+	Role:           qrb.N("accounts.role_identifier"),
+	Secret:         qrb.N("accounts.secret"),
+	UpdatedAt:      qrb.N("accounts.updated_at"),
+}
 
-var accountSortFields = map[string]string{
-	"createdat":    account_createdAt,
-	"emailaddress": account_emailAddress,
-	"lastlogin":    account_lastLogin,
-	"role":         account_role,
-	"updatedat":    account_updatedAt,
+var accountSortFields = map[string]builder.IdentExp{
+	"createdat":    account.CreatedAt,
+	"emailaddress": account.EmailAddress,
+	"lastlogin":    account.LastLogin,
+	"role":         account.Role,
+	"updatedat":    account.UpdatedAt,
 }
 
 type AccountChangeSet struct {
@@ -81,25 +91,13 @@ func AccountToChangeSet(r domain.Account) (c AccountChangeSet) {
 	return
 }
 
-var accountDefaultSelectJson = cjson.JsonBuildObject().
-	Set("ID", cjson.Exp("accounts.account_id")).
-	Set("EmailAddress", cjson.Exp("accounts.email_address")).
-	Set("Secret", cjson.Exp("ENCODE(accounts.secret,'BASE64')")).
-	Set("PasswordHash", cjson.Exp("ENCODE(accounts.password_hash,'BASE64')")).
-	Set("Role", cjson.Exp("accounts.role_identifier")).
-	Set("LastLogin", cjson.Exp("accounts.last_login")).
-	Set("OrganisationID", cjson.Exp("accounts.organisation_id")).
-	Set("CreatedAt", cjson.Exp("accounts.created_at")).
-	Set("UpdatedAt", cjson.Exp("accounts.updated_at")).
-	Set("OrganisationName", cjson.Exp("organisations.name"))
-
-func accountScanJsonRow(row construct.RowScanner) (result domain.Account, err error) {
-	var data []byte
-	if err := row.Scan(&data); err != nil {
-		if err == sql.ErrNoRows {
-			return result, construct.ErrNotFound
-		}
-		return result, err
-	}
-	return result, json.Unmarshal(data, &result)
-}
+var accountDefaultJson = fn.JsonBuildObject().
+	Prop("ID", account.ID).
+	Prop("EmailAddress", account.EmailAddress).
+	Prop("Secret", qrb.Func("ENCODE", account.Secret, qrb.String("BASE64"))).
+	Prop("PasswordHash", qrb.Func("ENCODE", account.PasswordHash, qrb.String("BASE64"))).
+	Prop("Role", account.Role).
+	Prop("LastLogin", account.LastLogin).
+	Prop("OrganisationID", account.OrganisationID).
+	Prop("CreatedAt", account.CreatedAt).
+	Prop("UpdatedAt", account.UpdatedAt)

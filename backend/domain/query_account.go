@@ -1,18 +1,32 @@
 package domain
 
-import "github.com/gofrs/uuid"
+import (
+	"github.com/gofrs/uuid"
+)
 
 type AccountQuery struct {
+	Opts      AccountQueryOpts
 	AccountID uuid.UUID
+}
+
+type AccountQueryNotAuthorized struct {
+	Opts              AccountQueryOpts
+	AccountID         *uuid.UUID
+	EmailAddress      *string
+	ConfirmationToken *string
 }
 
 type AccountsQuery struct {
 	IDs            []uuid.UUID
-	Q              *string
+	SearchTerm     string
 	OrganisationID *uuid.UUID
-	ExcludeRole    *Role
 }
 
 func (f *AccountsQuery) SetOrganisationID(organisationID *uuid.UUID) {
 	f.OrganisationID = organisationID
+}
+
+type AccountQueryOpts struct {
+	IncludeOrganisation   bool
+	OrganisationQueryOpts OrganisationQueryOpts
 }

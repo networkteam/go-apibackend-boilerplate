@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"myvendor.mytld/myproject/backend/api"
+	"myvendor.mytld/myproject/backend/domain"
 	"myvendor.mytld/myproject/backend/persistence/repository"
 	"myvendor.mytld/myproject/backend/test"
 	test_auth "myvendor.mytld/myproject/backend/test/auth"
@@ -61,7 +62,7 @@ func TestMutationResolver_UpdateAccount(t *testing.T) {
 			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
 				test_graphql.RequireNoErrors(t, res.GraphqlErrors)
 
-				account, err := repository.FindAccountByID(context.Background(), db, uuid.Must(uuid.FromString("d7037ad0-d4bb-4dcc-8759-d82fbb3354e8")))
+				account, err := repository.FindAccountByID(context.Background(), db, uuid.Must(uuid.FromString("d7037ad0-d4bb-4dcc-8759-d82fbb3354e8")), domain.AccountQueryOpts{})
 				require.NoError(t, err)
 
 				assert.Equal(t, "test@acme.com", account.EmailAddress)
@@ -81,7 +82,7 @@ func TestMutationResolver_UpdateAccount(t *testing.T) {
 			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
 				test_graphql.RequireNoErrors(t, res.GraphqlErrors)
 
-				account, err := repository.FindAccountByID(context.Background(), db, uuid.Must(uuid.FromString("3ad082c7-cbda-49e1-a707-c53e1962be65")))
+				account, err := repository.FindAccountByID(context.Background(), db, uuid.Must(uuid.FromString("3ad082c7-cbda-49e1-a707-c53e1962be65")), domain.AccountQueryOpts{})
 				require.NoError(t, err)
 
 				assert.Equal(t, "test@acme.com", account.EmailAddress)

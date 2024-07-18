@@ -10,9 +10,10 @@ import (
 
 	"github.com/apex/log"
 	"github.com/friendsofgo/errors"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/stdlib"
-	apexlogutils_pgx "github.com/networkteam/apexlogutils/pgx"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/stdlib"
+	"github.com/jackc/pgx/v5/tracelog"
+	apexlogutils_pgx "github.com/networkteam/apexlogutils/pgx/v5"
 	"github.com/pressly/goose/v3"
 
 	_ "myvendor.mytld/myproject/backend/persistence/migrations"
@@ -35,11 +36,11 @@ func PrepareTestDatabase() error {
 	if err != nil {
 		return errors.Wrap(err, "parsing PostgreSQL connection string")
 	}
-	connConfig.Logger = apexlogutils_pgx.NewLogger(log.Log)
-
-	// Increase to LogLevelTrace to see all queries
-	connConfig.LogLevel = pgx.LogLevelDebug
-
+	connConfig.Tracer = &tracelog.TraceLog{
+		Logger: apexlogutils_pgx.NewLogger(log.Log),
+		// Increase to LogLevelTrace to see all queries
+		LogLevel: tracelog.LogLevelDebug,
+	}
 	connStr := stdlib.RegisterConnConfig(connConfig)
 	db, err := sql.Open("pgx", connStr)
 	if err != nil {
@@ -69,13 +70,13 @@ func CreateTestDatabase(t *testing.T) *sql.DB {
 	if err != nil {
 		t.Fatalf("Failed to parse PostgreSQL connection string: %v", err)
 	}
-	connConfig.Logger = apexlogutils_pgx.NewLogger(log.Log, apexlogutils_pgx.WithIgnoreErrors(func(err error) bool {
-		return err.Error() == "ERROR: relation \"goose_db_version\" does not exist (SQLSTATE 42P01)"
-	}))
-
-	// Increase to LogLevelTrace to see all queries
-	connConfig.LogLevel = pgx.LogLevelDebug
-
+	connConfig.Tracer = &tracelog.TraceLog{
+		Logger: apexlogutils_pgx.NewLogger(log.Log, apexlogutils_pgx.WithIgnoreErrors(func(err error) bool {
+			return err.Error() == "ERROR: relation \"goose_db_version\" does not exist (SQLSTATE 42P01)"
+		})),
+		// Increase to LogLevelTrace to see all queries
+		LogLevel: tracelog.LogLevelDebug,
+	}
 	connStr := stdlib.RegisterConnConfig(connConfig)
 	db, err := sql.Open("pgx", connStr)
 	if err != nil {
