@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/gofrs/uuid"
+
 	"myvendor.mytld/myproject/backend/api/graph/generated"
 	"myvendor.mytld/myproject/backend/api/graph/helper"
 	"myvendor.mytld/myproject/backend/api/graph/model"
@@ -24,7 +25,7 @@ func (r *mutationResolver) CreateAccount(ctx context.Context, role domain_model.
 
 	// Only set OrganisationID if the role fits (work around an issue with selecting an organisation and then changing the role in the admin UI)
 	if domain_model.Role(role) != domain_model.RoleSystemAdministrator {
-		cmd.OrganisationID = helper.NullUUIDVal(organisationID)
+		cmd.OrganisationID = helper.ToNullUUID(organisationID)
 	}
 	err = r.Handler().AccountCreate(ctx, cmd)
 	if err != nil {
@@ -56,7 +57,7 @@ func (r *mutationResolver) UpdateAccount(ctx context.Context, id uuid.UUID, role
 	}
 	// Only set NewOrganisationID if the role fits (work around an issue with selecting an organisation and then changing the role in the admin UI)
 	if domain_model.Role(role) != domain_model.RoleSystemAdministrator {
-		cmd.NewOrganisationID = helper.NullUUIDVal(organisationID)
+		cmd.NewOrganisationID = helper.ToNullUUID(organisationID)
 	}
 	err = r.Handler().AccountUpdate(ctx, cmd)
 	if err != nil {
@@ -160,7 +161,7 @@ func (r *queryResolver) Account(ctx context.Context, id uuid.UUID) (*model.Accou
 
 // AllAccounts is the resolver for the allAccounts field.
 func (r *queryResolver) AllAccounts(ctx context.Context, page *int, perPage *int, sortField *string, sortOrder *string, filter *model.AccountFilter) ([]*model.Account, error) {
-	query := helper.MapToAccountsQuery(filter)
+	query := helper.MapFromAccountFilter(filter)
 
 	paging, err := helper.MapToPaging(page, perPage, sortField, sortOrder)
 	if err != nil {
@@ -175,7 +176,7 @@ func (r *queryResolver) AllAccounts(ctx context.Context, page *int, perPage *int
 
 // AllAccountsMeta is the resolver for the _allAccountsMeta field.
 func (r *queryResolver) AllAccountsMeta(ctx context.Context, page *int, perPage *int, sortField *string, sortOrder *string, filter *model.AccountFilter) (*model.ListMetadata, error) {
-	query := helper.MapToAccountsQuery(filter)
+	query := helper.MapFromAccountFilter(filter)
 	count, err := r.Finder().CountAccounts(ctx, query)
 	if err != nil {
 		return nil, err

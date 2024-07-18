@@ -27,7 +27,7 @@ func MapToAccounts(records []domain.Account) []*model.Account {
 	return result
 }
 
-func MapToAccountsQuery(filter *model.AccountFilter) domain.AccountsQuery {
+func MapFromAccountFilter(filter *model.AccountFilter) domain.AccountsQuery {
 	if filter == nil {
 		return domain.AccountsQuery{}
 	}

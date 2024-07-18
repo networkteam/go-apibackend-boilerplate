@@ -2,7 +2,7 @@ package db
 
 import (
 	"database/sql"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/friendsofgo/errors"
@@ -15,10 +15,11 @@ func ExecMigrations(db *sql.DB, sqlGlob string) error {
 	}
 
 	for _, file := range files {
-		data, err := ioutil.ReadFile(file)
+		data, err := os.ReadFile(file)
 		if err != nil {
 			return errors.Wrapf(err, "could not read migration %s", file)
 		}
+
 		_, err = db.Exec(string(data))
 		if err != nil {
 			return errors.Wrapf(err, "could not execute migration %s", file)

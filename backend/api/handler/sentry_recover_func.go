@@ -8,7 +8,7 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
-func sentryRecoverFunc(ctx context.Context, err interface{}) error {
+func sentryRecoverFunc(ctx context.Context, err any) error {
 	var newErr error
 	if realErr, ok := err.(error); ok {
 		newErr = realErr

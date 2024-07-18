@@ -5,7 +5,7 @@
     # Adjust GOPATH to enable caching of downloaded modules
     GOPATH: "$CI_PROJECT_DIR/.cache/go"
     # The Go image to use
-    GOLANG_IMAGE: golang:1.18-rc
+    GOLANG_IMAGE: golang:1.22
   before_script:
     - !reference [.docker-build-default, before_script]
     - cd backend

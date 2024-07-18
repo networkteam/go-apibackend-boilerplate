@@ -14,16 +14,16 @@ type Handler struct {
 	config     domain.Config
 }
 
-func NewHandler(
-	db *sql.DB,
-	timeSource domain.TimeSource,
-	mailer *mail.Mailer,
-	config domain.Config,
-) *Handler {
+type Deps struct {
+	TimeSource domain.TimeSource
+	Mailer     *mail.Mailer
+}
+
+func NewHandler(db *sql.DB, config domain.Config, deps Deps) *Handler {
 	return &Handler{
 		db:         db,
-		timeSource: timeSource,
-		mailer:     mailer,
 		config:     config,
+		timeSource: deps.TimeSource,
+		mailer:     deps.Mailer,
 	}
 }

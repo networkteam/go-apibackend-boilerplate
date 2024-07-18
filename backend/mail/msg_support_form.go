@@ -4,7 +4,7 @@ import (
 	"io"
 
 	"github.com/friendsofgo/errors"
-	"gopkg.in/gomail.v2"
+	gomail "github.com/wneessen/go-mail"
 )
 
 type SupportFormMsg struct {
@@ -14,11 +14,10 @@ type SupportFormMsg struct {
 	Subject            string
 	Message            string
 	FileName           string
-	FileSize           int64
 	AttachedFile       io.Reader
 }
 
-func (m SupportFormMsg) ToMessage(config Config) (*gomail.Message, error) {
+func (m SupportFormMsg) ToMessage(config Config) (*gomail.Msg, error) {
 	sender := m.SenderEmailAddress
 	recipient := config.DefaultFrom
 
@@ -27,17 +26,23 @@ func (m SupportFormMsg) ToMessage(config Config) (*gomail.Message, error) {
 		return nil, errors.Wrap(err, "executing template")
 	}
 
-	msg := gomail.NewMessage()
-	msg.SetHeader("To", recipient)
-	msg.SetHeader("From", sender)
-	msg.SetHeader("Subject", subject)
-	msg.SetBody("text/plain", body)
+	msg := gomail.NewMsg()
+	err = msg.To(recipient)
+	if err != nil {
+		return nil, errors.Wrap(err, "setting to")
+	}
+	err = msg.From(sender)
+	if err != nil {
+		return nil, errors.Wrap(err, "setting from")
+	}
+	msg.Subject(subject)
+	msg.SetBodyString("text/plain", body)
 
 	if m.AttachedFile != nil {
-		msg.Attach(m.FileName, gomail.SetCopyFunc(func(w io.Writer) error {
-			_, err := io.Copy(w, m.AttachedFile)
-			return err
-		}))
+		err = msg.AttachReader(m.FileName, m.AttachedFile)
+		if err != nil {
+			return nil, errors.Wrap(err, "attaching file")
+		}
 	}
 
 	return msg, nil

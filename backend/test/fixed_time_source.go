@@ -18,6 +18,12 @@ func (fts FixedTimeSource) Add(d time.Duration) FixedTimeSource {
 	return FixedTimeSource(t.Add(d))
 }
 
+// AddDate adds the given year, month and day to the fixed time
+func (fts FixedTimeSource) AddDate(y int, m int, d int) FixedTimeSource {
+	t := (time.Time)(fts)
+	return FixedTimeSource(t.AddDate(y, m, d))
+}
+
 func MustFixedTimeSource(isoTime string) FixedTimeSource {
 	t, err := time.Parse(time.RFC3339, isoTime)
 	if err != nil {

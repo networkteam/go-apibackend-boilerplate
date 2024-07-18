@@ -10,7 +10,7 @@ import (
 	"myvendor.mytld/myproject/backend/api"
 )
 
-func LoggerFieldMiddleware(ctx context.Context, next graphql.Resolver) (res interface{}, err error) {
+func LoggerFieldMiddleware(ctx context.Context, next graphql.Resolver) (res any, err error) {
 	fieldCtx := graphql.GetFieldContext(ctx)
 
 	shouldLogResolver := (fieldCtx.Parent == nil || fieldCtx.Parent.Parent == nil) && fieldCtx.Field.Name != "__schema"
@@ -23,28 +23,28 @@ func LoggerFieldMiddleware(ctx context.Context, next graphql.Resolver) (res inte
 		log := logger.FromContext(ctx).
 			WithField("component", "graphql")
 
-		e := log.WithField("field", fieldCtx.Field.Name).
+		logEntry := log.WithField("field", fieldCtx.Field.Name).
 			WithField("type", fieldCtx.Object).
 			WithDuration(time.Since(start))
 
-		f := e.Debugf
+		logFunc := logEntry.Debugf
 		// Log mutations with info level
 		if fieldCtx.Object == "Mutation" {
-			f = e.Infof
+			logFunc = logEntry.Infof
 		}
 
 		if err != nil {
-			e = e.WithError(err)
+			logEntry = logEntry.WithError(err)
 			// Only warn if this is a expected domain error
 			if fieldsErr := api.FieldsErrorFromErr(err); fieldsErr != nil {
-				f = e.Warnf
+				logFunc = logEntry.Warnf
 			} else {
-				f = e.Errorf
+				logFunc = logEntry.Errorf
 			}
 		}
 
-		f("%s %s", fieldCtx.Object, fieldCtx.Field.Name)
+		logFunc("%s %s", fieldCtx.Object, fieldCtx.Field.Name)
 	}
 
-	return
+	return res, err
 }

@@ -8,8 +8,9 @@ scalar UUID
 scalar Date
 scalar DateTime
 scalar ByteSize
+scalar Upload
 
-## TODO Add domain types for your general schema here
+## boilderplate: Add domain types for your general schema here
 
 #
 # Queries

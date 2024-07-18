@@ -18,7 +18,7 @@
       ],
       "backend:fixtures": [
         "cd backend",
-        "go run ./cli/ctl fixtures import --confirm"
+        "go run ./cli/ctl fixtures import"
       ],
       "docs:setup": [
         "cd docs",

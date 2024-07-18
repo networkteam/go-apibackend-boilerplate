@@ -12,7 +12,7 @@ import (
 	"myvendor.mytld/myproject/backend/domain"
 )
 
-func SentryGraphqlMiddleware(ctx context.Context, next graphql.Resolver) (res interface{}, err error) {
+func SentryGraphqlMiddleware(ctx context.Context, next graphql.Resolver) (res any, err error) {
 	fieldCtx := graphql.GetFieldContext(ctx)
 
 	res, err = next(ctx)
@@ -20,7 +20,17 @@ func SentryGraphqlMiddleware(ctx context.Context, next graphql.Resolver) (res in
 		// Skip field resolvable errors, since these are expected to occur
 		var fieldErr domain.FieldResolvableError
 		if errors.As(err, &fieldErr) {
-			return res, err
+			return nil, err
+		}
+
+		// Skip error if ctx is cancelled
+		if errors.Is(err, context.Canceled) {
+			// Check if ctx was cancelled to avoid ignoring errors that were cancelled inside the resolver
+			select {
+			case <-ctx.Done():
+				return nil, err
+			default:
+			}
 		}
 
 		log := logger.FromContext(ctx)
@@ -32,7 +42,7 @@ func SentryGraphqlMiddleware(ctx context.Context, next graphql.Resolver) (res in
 
 		hub.WithScope(func(scope *sentry.Scope) {
 			scope.SetTag("section", "graphql")
-			scope.SetExtras(map[string]interface{}{
+			scope.SetExtras(map[string]any{
 				"Field":      fieldCtx.Field.Name,
 				"Type":       fieldCtx.Object,
 				"Request ID": apexlogutils_middleware.GetReqID(ctx),

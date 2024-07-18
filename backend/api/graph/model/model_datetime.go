@@ -11,11 +11,11 @@ import (
 
 func MarshalDateTimeScalar(value time.Time) graphql.Marshaler {
 	return graphql.WriterFunc(func(w io.Writer) {
-		_, _ = w.Write([]byte(strconv.Quote(value.Format(time.RFC3339))))
+		_, _ = w.Write([]byte(strconv.Quote(value.Format(time.RFC3339)))) //nolint:errcheck
 	})
 }
 
-func UnmarshalDateTimeScalar(v interface{}) (time.Time, error) {
+func UnmarshalDateTimeScalar(v any) (time.Time, error) {
 	switch v := v.(type) {
 	case string:
 		return time.Parse(time.RFC3339, v)

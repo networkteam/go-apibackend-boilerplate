@@ -21,3 +21,14 @@ func TestGenerateRandomString(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, s, 24)
 }
+
+func TestGenerateRandomCode(t *testing.T) {
+	_, err := helper.GenerateRandomCode(0)
+	require.Error(t, err, "zero length not supported")
+
+	for i := 0; i < 10; i++ {
+		s, err := helper.GenerateRandomCode(6)
+		require.NoError(t, err)
+		assert.Len(t, s, 6)
+	}
+}

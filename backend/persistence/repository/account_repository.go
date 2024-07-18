@@ -56,7 +56,6 @@ func applyAccountFilter(filter AccountsFilter) func(q builder.SelectBuilder) bui
 	return func(q builder.SelectBuilder) builder.SelectBuilder {
 		return q.
 			ApplyIf(len(filter.IDs) > 0, func(q builder.SelectBuilder) builder.SelectBuilder {
-				// TODO Check: Add test for this
 				return q.Where(account.ID.Eq(Any(Arg(filter.IDs))))
 			}).
 			ApplyIf(filter.SearchTerm != "", func(q builder.SelectBuilder) builder.SelectBuilder {

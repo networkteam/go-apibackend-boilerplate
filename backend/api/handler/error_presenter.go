@@ -11,7 +11,7 @@ import (
 )
 
 type extendedError interface {
-	Extensions() map[string]interface{}
+	Extensions() map[string]any
 }
 
 func ErrorPresenter(ctx context.Context, err error) *gqlerror.Error {

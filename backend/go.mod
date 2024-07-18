@@ -10,25 +10,30 @@ require (
 	github.com/go-jose/go-jose/v4 v4.0.3
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/gorilla/handlers v1.5.2
+	github.com/gorilla/websocket v1.5.3
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jackc/pgx/v5 v5.6.0
+	github.com/joho/godotenv v1.5.1
+	github.com/korylprince/go-graphql-ws v0.3.6
 	github.com/mattn/go-isatty v0.0.20
 	github.com/networkteam/apexlogutils v0.3.0
 	github.com/networkteam/construct/v2 v2.0.1
 	github.com/networkteam/qrb v0.8.0
-	// Bundled tool for automatic build and restart of server during development
-	github.com/networkteam/refresh v1.15.0
 	github.com/pressly/goose/v3 v3.21.1
 	github.com/robfig/cron v1.2.0
 	github.com/stretchr/testify v1.9.0
 	github.com/urfave/cli/v2 v2.27.2
 	github.com/vektah/gqlparser/v2 v2.5.16
+	github.com/wneessen/go-mail v0.4.2
 	golang.org/x/crypto v0.25.0
 	golang.org/x/term v0.22.0
-	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
-	// Bundled tool for JUnit xml reports of tests in CI
-	gotest.tools/gotestsum v1.12.0
 )
+
+// Bundled tool for JUnit xml reports of tests in CI
+require gotest.tools/gotestsum v1.12.0
+
+// Bundled tool for automatic build and restart of server during development
+require github.com/networkteam/refresh v1.15.0
 
 require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
@@ -46,7 +51,6 @@ require (
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
@@ -81,7 +85,6 @@ require (
 	golang.org/x/text v0.16.0 // indirect
 	golang.org/x/tools v0.23.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240716161551-93cc26a95ae9 // indirect
-	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/cenkalti/backoff.v1 v1.1.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

@@ -13,13 +13,13 @@ type DBPinger interface {
 	Ping() error
 }
 
-func NewHealthzHandler(db DBPinger) http.HandlerFunc {
+func NewHealthzHandler(dbPinger DBPinger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.FromContext(r.Context())
 
 		ignoreErrors := r.URL.Query().Get("ignore_errors") == "1"
 
-		if err := db.Ping(); err != nil {
+		if err := dbPinger.Ping(); err != nil {
 			log.
 				WithError(errors.WithStack(err)).
 				WithField("handler", "healthz").

@@ -14,7 +14,7 @@ const (
 	schemaQuery                       = "__schema"
 )
 
-func RequireAuthenticationFieldMiddleware(ctx context.Context, next graphql.Resolver) (res interface{}, err error) {
+func RequireAuthenticationFieldMiddleware(ctx context.Context, next graphql.Resolver) (res any, err error) {
 	authCtx := authentication.GetAuthContext(ctx)
 
 	resolverCtx := graphql.GetFieldContext(ctx)
@@ -35,14 +35,16 @@ func RequireAuthenticationFieldMiddleware(ctx context.Context, next graphql.Reso
 		}
 	}
 
+	// Proceed if auth context is authenticated or the bypass directive was present
 	if authCtx.Authenticated || authCtx.IgnoreAuthenticationState {
-		// Proceed if auth context is authenticated or the bypass directive was present
 		return next(ctx)
-	} else if authCtx.Error != nil {
-		// If specific error is set in auth context, return it
-		return nil, authCtx.Error
-	} else {
-		// Otherwise authentication is required
-		return nil, api.ErrAuthenticationRequired
 	}
+
+	// If specific error is set in auth context, return it
+	if authCtx.Error != nil {
+		return nil, authCtx.Error
+	}
+
+	// Otherwise authentication is required
+	return nil, api.ErrAuthenticationRequired
 }

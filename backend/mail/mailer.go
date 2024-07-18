@@ -1,8 +1,10 @@
 package mail
 
 import (
+	"context"
+
 	"github.com/friendsofgo/errors"
-	"gopkg.in/gomail.v2"
+	gomail "github.com/wneessen/go-mail"
 )
 
 type Mailer struct {
@@ -18,17 +20,19 @@ func NewMailer(sender Sender, config Config) *Mailer {
 }
 
 type MessageProvider interface {
-	ToMessage(Config) (*gomail.Message, error)
+	ToMessage(Config) (*gomail.Msg, error)
 }
 
-func (m *Mailer) Send(msg MessageProvider) error {
+func (m *Mailer) Send(ctx context.Context, msg MessageProvider) error {
 	message, err := msg.ToMessage(m.config)
 	if err != nil {
 		return errors.Wrap(err, "building message")
 	}
-	err = m.sender.Send(message)
+
+	err = m.sender.Send(ctx, message)
 	if err != nil {
 		return errors.Wrap(err, "sending message")
 	}
+
 	return nil
 }

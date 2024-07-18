@@ -2,7 +2,7 @@ package db
 
 import (
 	"database/sql"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -13,7 +13,7 @@ func ExecFixtures(t *testing.T, db *sql.DB, fixtureFilenames ...string) {
 
 	for _, file := range fixtureFilenames {
 		fixtureSource := FixtureSourcePath()
-		data, err := ioutil.ReadFile(fixtureSource + "/" + file + ".sql")
+		data, err := os.ReadFile(fixtureSource + "/" + file + ".sql")
 		if err != nil {
 			t.Fatalf("could not read fixture %s: %v", file, err)
 		}

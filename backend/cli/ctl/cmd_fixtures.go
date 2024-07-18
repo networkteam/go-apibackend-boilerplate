@@ -9,6 +9,7 @@ import (
 	"github.com/friendsofgo/errors"
 	"github.com/urfave/cli/v2"
 
+	"myvendor.mytld/myproject/backend/persistence/repository"
 	"myvendor.mytld/myproject/backend/test/fixtures"
 )
 
@@ -16,51 +17,69 @@ func newFixturesCmd() *cli.Command {
 	return &cli.Command{
 		Name:  "fixtures",
 		Usage: "Set up fixtures",
-		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:     "confirm",
-				Required: true,
+
+		Subcommands: []*cli.Command{
+			{
+				Name:  "import",
+				Usage: "Set up fixtures from static files for testing, will truncate the DB",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:  "force",
+						Usage: "Force truncating and re-import of fixture data. Otherwise the import will be skipped if data (any account) already exists.",
+					},
+				},
+				Action: fixturesImportAction,
 			},
 		},
-
-		Action: func(c *cli.Context) error {
-			if !c.Bool("confirm") {
-				return cli.Exit("must pass --confirm to truncate database and import data", 1)
-			}
-
-			db, err := connectDatabase(c)
-			if err != nil {
-				return err
-			}
-
-			err = truncateDB(db)
-			if err != nil {
-				return err
-			}
-
-			log.Info("Creating fixture data")
-
-			// Load the following SQL fixtures
-			fixtureFilenames := []string{
-				"base",
-			}
-
-			for _, file := range fixtureFilenames {
-				log.Infof("Importing %q", file)
-
-				data, err := fixtures.FS.ReadFile(fmt.Sprintf("%s.sql", file))
-				if err != nil {
-					return errors.Wrapf(err, "could not read fixture %q", file)
-				}
-				_, err = db.Exec(string(data))
-				if err != nil {
-					return errors.Wrapf(err, "could not execute fixture %s", file)
-				}
-			}
-
-			return nil
-		},
 	}
+}
+
+func fixturesImportAction(c *cli.Context) error {
+	force := c.Bool("force")
+
+	db, err := connectDatabase(c)
+	if err != nil {
+		return err
+	}
+
+	accountCount, err := repository.CountAccounts(c.Context, db, repository.AccountsFilter{})
+	if err != nil {
+		return errors.Wrap(err, "counting accounts")
+	}
+	if accountCount > 0 && !force {
+		log.Info("Skipping fixtures import because there are already accounts in the database and --force was not set")
+		return nil
+	}
+
+	if force {
+		err = truncateDB(db)
+		if err != nil {
+			return err
+		}
+	}
+
+	log.Info("Creating fixture data")
+
+	// Load the following SQL fixtures
+	fixtureSQLFilenames := []string{
+		"base",
+	}
+
+	for _, file := range fixtureSQLFilenames {
+		log.Infof("Importing SQL %q", file)
+
+		data, err := fixtures.FS.ReadFile(fmt.Sprintf("%s.sql", file))
+		if err != nil {
+			return errors.Wrapf(err, "could not read fixture %q", file)
+		}
+
+		_, err = db.Exec(string(data))
+		if err != nil {
+			return errors.Wrapf(err, "could not execute fixture %s", file)
+		}
+	}
+
+	return nil
 }
 
 func truncateDB(db *sql.DB) error {

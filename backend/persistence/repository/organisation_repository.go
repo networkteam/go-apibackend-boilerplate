@@ -38,7 +38,6 @@ func applyOrganisationFilter(filter OrganisationsFilter) func(q builder.SelectBu
 	return func(q builder.SelectBuilder) builder.SelectBuilder {
 		return q.
 			ApplyIf(len(filter.IDs) > 0, func(q builder.SelectBuilder) builder.SelectBuilder {
-				// TODO Check: Add test for this
 				return q.Where(organisation.ID.Eq(Any(Arg(filter.IDs))))
 			}).
 			ApplyIf(filter.SearchTerm != "", func(q builder.SelectBuilder) builder.SelectBuilder {

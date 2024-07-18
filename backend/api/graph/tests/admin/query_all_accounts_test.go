@@ -77,6 +77,33 @@ func TestQueryResolver_AllAccounts(t *testing.T) {
 			},
 		},
 		{
+			name:          "with SystemAdministrator and ids filter",
+			applyAuthFunc: test_auth.ApplyFixedAuthValuesSystemAdministrator,
+			fixtures:      []string{"base"},
+			variables: map[string]interface{}{
+				"filter": map[string]interface{}{
+					"ids": []any{
+						"3ad082c7-cbda-49e1-a707-c53e1962be65",
+						"f045e5d1-cdad-4964-a7e2-139c8a87346c",
+					},
+				},
+			},
+			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
+				test_graphql.RequireNoErrors(t, res.GraphqlErrors)
+
+				assert.Len(t, res.Data.Result, 2, "result")
+
+				for _, entry := range res.Data.Result {
+					assert.Contains(t, []uuid.UUID{
+						uuid.FromStringOrNil("3ad082c7-cbda-49e1-a707-c53e1962be65"),
+						uuid.FromStringOrNil("f045e5d1-cdad-4964-a7e2-139c8a87346c"),
+					}, entry.ID)
+				}
+
+				assert.Equal(t, 2, res.Data.Meta.Count, "meta.count")
+			},
+		},
+		{
 			name:          "with OrganisationAdministrator and no filter",
 			applyAuthFunc: test_auth.ApplyFixedAuthValuesOrganisationAdministrator,
 			fixtures:      []string{"base"},

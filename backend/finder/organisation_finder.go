@@ -16,7 +16,7 @@ func (f *Finder) QueryOrganisation(ctx context.Context, query domain.Organisatio
 		return domain.Organisation{}, err
 	}
 
-	record, err := repository.FindOrganisationByID(ctx, f.db, query.OrganisationID, domain.OrganisationQueryOpts{})
+	record, err := repository.FindOrganisationByID(ctx, f.executor, query.OrganisationID, domain.OrganisationQueryOpts{})
 	if err != nil {
 		return record, err
 	}
@@ -29,7 +29,7 @@ func (f *Finder) QueryOrganisations(ctx context.Context, query domain.Organisati
 	if err != nil {
 		return nil, err
 	}
-	return repository.FindAllOrganisations(ctx, f.db, repository.OrganisationsFilter{
+	return repository.FindAllOrganisations(ctx, f.executor, repository.OrganisationsFilter{
 		Opts:       domain.OrganisationQueryOpts{},
 		IDs:        query.IDs,
 		SearchTerm: query.SearchTerm,
@@ -43,7 +43,7 @@ func (f *Finder) CountOrganisations(ctx context.Context, query domain.Organisati
 		return 0, err
 	}
 
-	return repository.CountOrganisations(ctx, f.db, repository.OrganisationsFilter{
+	return repository.CountOrganisations(ctx, f.executor, repository.OrganisationsFilter{
 		IDs:        query.IDs,
 		SearchTerm: query.SearchTerm,
 	})

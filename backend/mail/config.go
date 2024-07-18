@@ -11,11 +11,8 @@ type Config struct {
 }
 
 func DefaultConfig(c domain.Config) Config {
-	config := Config{
-		Config: c,
+	return Config{
+		Config:      c,
+		DefaultFrom: "app@example.com",
 	}
-
-	config.DefaultFrom = "app@myproject.mytld"
-
-	return config
 }

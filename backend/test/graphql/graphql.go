@@ -3,11 +3,13 @@ package graphql
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"strings"
 	"testing"
 
 	"golang.org/x/crypto/bcrypt"
@@ -29,6 +31,7 @@ func NewRequest(t *testing.T, query GraphqlQuery) *http.Request {
 		t.Fatalf("could not marshal GraphQL query: %v", err)
 	}
 
+	//nolint:noctx
 	req, err := http.NewRequest(http.MethodPost, "http://localhost/query", bytes.NewReader(data))
 	if err != nil {
 		t.Fatalf("could not build GraphQL request: %v", err)
@@ -37,15 +40,15 @@ func NewRequest(t *testing.T, query GraphqlQuery) *http.Request {
 	return req
 }
 
-func Handle(t *testing.T, deps api.ResolverDependencies, req *http.Request, dst interface{}) *httptest.ResponseRecorder {
+func SetTestDependencies(t *testing.T, deps *api.ResolverDependencies) {
 	t.Helper()
 
 	// Use default config if config is zero value
 	if deps.Config == (domain.Config{}) {
 		deps.Config = domain.DefaultConfig()
-		// Use a reduced hash cost
-		deps.Config.HashCost = bcrypt.MinCost
 	}
+	// Always use a reduced hash cost for tests
+	deps.Config.HashCost = bcrypt.MinCost
 
 	if deps.TimeSource == nil {
 		deps.TimeSource = test.FixedTime()
@@ -55,50 +58,50 @@ func Handle(t *testing.T, deps api.ResolverDependencies, req *http.Request, dst 
 		sender := fixture.NewSender()
 		deps.Mailer = mail.NewMailer(sender, mail.DefaultConfig(domain.DefaultConfig()))
 	}
+}
 
-	graphqlHandler := api_handler.NewGraphqlHandler(deps, api_handler.HandlerConfig{
+func Handle(t *testing.T, deps api.ResolverDependencies, req *http.Request, dst interface{}) *httptest.ResponseRecorder {
+	t.Helper()
+
+	SetTestDependencies(t, &deps)
+
+	graphqlHandler := api_handler.NewGraphqlHandler(deps, api_handler.Config{
 		DisableRecover: true,
 	})
-	srv := http_api.MiddlewareStack(deps, graphqlHandler)
+	srv := http_api.MiddlewareStackWithAuth(deps, graphqlHandler)
 
-	w := httptest.NewRecorder()
-	srv.ServeHTTP(w, req)
-	body, err := ioutil.ReadAll(w.Body)
-	if err != nil {
-		t.Fatalf("could not read response body: %v", err)
-	}
+	rec := httptest.NewRecorder()
+	srv.ServeHTTP(rec, req)
 
-	err = json.Unmarshal(body, dst)
+	err := json.Unmarshal(rec.Body.Bytes(), dst)
 	if err != nil {
 		t.Fatalf("could not decode response JSON: %v", err)
 	}
 
-	return w
+	return rec
 }
 
 func NewMultipartRequest(t *testing.T, body bytes.Buffer, query GraphqlQuery, files map[string]MultipartFileInfo) *http.Request {
 	t.Helper()
 
-	mw := multipart.NewWriter(&body)
+	multipartWriter := multipart.NewWriter(&body)
 
 	// Add operations from query
-
-	fw, err := mw.CreateFormField("operations")
+	formField, err := multipartWriter.CreateFormField("operations")
 	if err != nil {
 		t.Fatalf("could not create multipart form field: %v", err)
 	}
-	enc := json.NewEncoder(fw)
+	enc := json.NewEncoder(formField)
 	if err = enc.Encode(query); err != nil {
 		t.Fatalf("could not marshal GraphQL operations: %v", err)
 	}
 
 	// Add map from files to variables
-
-	fw, err = mw.CreateFormField("map")
+	formField, err = multipartWriter.CreateFormField("map")
 	if err != nil {
 		t.Fatalf("could not create multipart form field: %v", err)
 	}
-	enc = json.NewEncoder(fw)
+	enc = json.NewEncoder(formField)
 
 	fileMap := make(map[string][]string)
 	for name, fileInfo := range files {
@@ -110,27 +113,43 @@ func NewMultipartRequest(t *testing.T, body bytes.Buffer, query GraphqlQuery, fi
 	}
 
 	// Add form files
-
 	for name, fileInfo := range files {
-		fw, err = mw.CreateFormFile(name, fileInfo.Name)
+		formField, err = multipartWriter.CreateFormFile(name, fileInfo.Name)
 		if err != nil {
 			t.Fatalf("could not create multipart form file: %v", err)
 		}
 
-		if _, err = io.Copy(fw, fileInfo.Reader); err != nil {
-			t.Fatalf("could not read fixture file into multipart request: %v", err)
+		if fileInfo.Filename != "" {
+			func() {
+				data, err := os.ReadFile(fileInfo.Filename)
+				if err != nil {
+					t.Fatalf("could not read fixture file: %v", err)
+				}
+				_, err = formField.Write(data)
+				if err != nil {
+					t.Fatalf("could not write fixture file into multipart request: %v", err)
+				}
+			}()
+		} else if fileInfo.Reader != nil {
+			_, err = io.Copy(formField, fileInfo.Reader)
+			if err != nil {
+				t.Fatalf("could not read fixture file into multipart request: %v", err)
+			}
+		} else {
+			t.Fatalf("no reader or filename given for multipart file %q", name)
 		}
 	}
 
-	if err = mw.Close(); err != nil {
+	if err = multipartWriter.Close(); err != nil {
 		t.Fatalf("could not close multipart writer: %v", err)
 	}
 
+	//nolint:noctx
 	req, err := http.NewRequest(http.MethodPost, "http://localhost/query", &body)
 	if err != nil {
 		t.Fatalf("could not build GraphQL request: %v", err)
 	}
-	req.Header.Set("Content-Type", mw.FormDataContentType())
+	req.Header.Set("Content-Type", multipartWriter.FormDataContentType())
 
 	return req
 }
@@ -139,21 +158,79 @@ type MultipartFileInfo struct {
 	Name      string
 	Variables []string
 	Reader    io.Reader
+	Filename  string
 }
 
+//nolint:revive // Better readability if we repeat Graphql
 type GraphqlQuery struct {
-	Query     string                 `json:"query"`
-	Variables map[string]interface{} `json:"variables"`
+	Query     string         `json:"query"`
+	Variables map[string]any `json:"variables"`
 }
 
+//nolint:revive // Better readability if we repeat Graphql
 type GraphqlErrors struct {
+	Errors []GraphqlError `json:"errors"`
+}
+
+func (e GraphqlErrors) String() string {
+	var sb strings.Builder
+	for i, err := range e.Errors {
+		err.writeTo(&sb)
+		if i < len(e.Errors)-1 {
+			sb.WriteRune('\n')
+		}
+	}
+	return sb.String()
+}
+
+//nolint:revive // Better readability if we repeat Graphql
+type GraphqlError struct {
+	Message    string                 `json:"message"`
+	Path       []any                  `json:"path"`
+	Extensions GraphqlErrorExtensions `json:"extensions"`
+}
+
+func (e GraphqlError) String() string {
+	var b strings.Builder
+	e.writeTo(&b)
+	return b.String()
+}
+
+func (e GraphqlError) writeTo(w io.Writer) {
+	if len(e.Path) > 0 {
+		_, _ = fmt.Fprintf(w, "%v", e.Path)
+	} else {
+		_, _ = fmt.Fprint(w, "<empty path>")
+	}
+	if e.Message != "" {
+		_, _ = fmt.Fprintf(w, " %s", e.Message)
+	}
+	var extensions []string
+	if e.Extensions.Field != "" {
+		extensions = append(extensions, fmt.Sprintf("field: %q", e.Extensions.Field))
+	}
+	if e.Extensions.Type != "" {
+		extensions = append(extensions, fmt.Sprintf("type: %q", e.Extensions.Type))
+	}
+	if e.Extensions.Code != "" {
+		extensions = append(extensions, fmt.Sprintf("code: %q", e.Extensions.Code))
+	}
+	if len(extensions) > 0 {
+		_, _ = fmt.Fprintf(w, " (%s)", strings.Join(extensions, ", "))
+	}
+}
+
+//nolint:revive // Better readability if we repeat Graphql
+type GraphqlErrorExtensions struct {
+	Field string `json:"field"`
+	Type  string `json:"type"`
+	Code  string `json:"code"`
+}
+
+type FieldsError struct {
 	Errors []struct {
-		Message    string        `json:"message"`
-		Path       []interface{} `json:"path"`
-		Extensions struct {
-			Field string `json:"field"`
-			Type  string `json:"type"`
-			Code  string `json:"code"`
-		} `json:"extensions"`
-	} `json:"errors"`
+		Path      []string
+		Code      string
+		Arguments []string
+	}
 }

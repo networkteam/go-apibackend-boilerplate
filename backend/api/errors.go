@@ -7,7 +7,6 @@ import (
 	"myvendor.mytld/myproject/backend/domain"
 )
 
-var ErrInvalidCredentials = TypedError{"invalidCredentials", "invalid credentials"}
 var ErrAuthTokenInvalid = TypedError{"authTokenInvalid", "auth token invalid"}
 var ErrAuthTokenExpired = TypedError{"authTokenExpired", "auth token expired"}
 var ErrAuthenticationRequired = TypedError{"authenticationRequired", "authentication required"}

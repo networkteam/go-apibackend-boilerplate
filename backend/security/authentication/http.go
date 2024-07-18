@@ -28,7 +28,7 @@ func SetAuthTokenCookie(w http.ResponseWriter, r *http.Request, authToken string
 		Value:    authToken,
 		HttpOnly: true,
 		Secure:   r.URL.Scheme == "https",
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 	})
 }
 
@@ -58,6 +58,7 @@ func getAuthTokenFromCookie(r *http.Request) string {
 	if cookie, err := r.Cookie(authTokenCookieName); err == nil {
 		return cookie.Value
 	}
+
 	return ""
 }
 

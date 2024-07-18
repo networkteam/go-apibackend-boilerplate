@@ -7,7 +7,7 @@ set -e
 
 if [ ${CREATE_FIXTURES} -eq 1 ]
 then
-    ./myproject-ctl fixtures --confirm
+    ./myproject-ctl fixtures import
 fi
 
 exec ./myproject-ctl server "$@"

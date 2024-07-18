@@ -36,12 +36,12 @@ func newAccountCmd() *cli.Command {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					fmt.Print("Enter password:")
+					fmt.Print("Enter password:") //nolint:forbidigo
 					line, err := term.ReadPassword(syscall.Stdin)
 					if err != nil {
 						return err
 					}
-					fmt.Println()
+					fmt.Println() //nolint:forbidigo
 					password := strings.TrimSpace(string(line))
 
 					cmd, err := domain.NewAccountCreateCmd(c.String("email"), domain.Role(c.String("role")), password)
@@ -68,7 +68,14 @@ func newAccountCmd() *cli.Command {
 						return err
 					}
 
-					h := handler.NewHandler(db, timeSource, nil, getConfig(c))
+					config, err := getConfig(c)
+					if err != nil {
+						return err
+					}
+
+					h := handler.NewHandler(db, config, handler.Deps{
+						TimeSource: timeSource,
+					})
 					err = h.AccountCreate(c.Context, cmd)
 					if err != nil {
 						return err
@@ -77,6 +84,7 @@ func newAccountCmd() *cli.Command {
 					return nil
 				},
 			},
+			newAccountListCmd(),
 		},
 	}
 }

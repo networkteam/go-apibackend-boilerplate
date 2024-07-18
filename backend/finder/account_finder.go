@@ -11,7 +11,7 @@ import (
 )
 
 func (f *Finder) QueryAccount(ctx context.Context, query domain.AccountQuery) (domain.Account, error) {
-	record, err := repository.FindAccountByID(ctx, f.db, query.AccountID, query.Opts)
+	record, err := repository.FindAccountByID(ctx, f.executor, query.AccountID, query.Opts)
 	if err != nil {
 		return record, err
 	}
@@ -24,11 +24,11 @@ func (f *Finder) QueryAccount(ctx context.Context, query domain.AccountQuery) (d
 
 func (f *Finder) QueryAccountNotAuthorized(ctx context.Context, query domain.AccountQueryNotAuthorized) (domain.Account, error) {
 	if query.AccountID != nil {
-		return repository.FindAccountByID(ctx, f.db, *query.AccountID, query.Opts)
+		return repository.FindAccountByID(ctx, f.executor, *query.AccountID, query.Opts)
 	}
 
 	if query.EmailAddress != nil {
-		return repository.FindAccountByEmailAddress(ctx, f.db, *query.EmailAddress, query.Opts)
+		return repository.FindAccountByEmailAddress(ctx, f.executor, *query.EmailAddress, query.Opts)
 	}
 
 	return domain.Account{}, errors.New("invalid query")
@@ -41,7 +41,7 @@ func (f *Finder) QueryAccounts(ctx context.Context, query domain.AccountsQuery, 
 		return nil, err
 	}
 
-	return repository.FindAllAccounts(ctx, f.db, repository.AccountsFilter{
+	return repository.FindAllAccounts(ctx, f.executor, repository.AccountsFilter{
 		Opts:           domain.AccountQueryOpts{},
 		OrganisationID: query.OrganisationID,
 		IDs:            query.IDs,
@@ -56,7 +56,7 @@ func (f *Finder) CountAccounts(ctx context.Context, query domain.AccountsQuery) 
 		return 0, err
 	}
 
-	return repository.CountAccounts(ctx, f.db, repository.AccountsFilter{
+	return repository.CountAccounts(ctx, f.executor, repository.AccountsFilter{
 		OrganisationID: query.OrganisationID,
 		IDs:            query.IDs,
 		SearchTerm:     query.SearchTerm,

@@ -12,6 +12,11 @@ type Role string
 const RoleSystemAdministrator = Role("SystemAdministrator")
 const RoleOrganisationAdministrator = Role("OrganisationAdministrator")
 
+//nolint:gochecknoglobals
+var OrganisationRoles = []Role{
+	RoleOrganisationAdministrator,
+}
+
 var ErrUnknownRole = errors.New("unknown role")
 
 func RoleByIdentifier(roleIdentifier string) (Role, error) {

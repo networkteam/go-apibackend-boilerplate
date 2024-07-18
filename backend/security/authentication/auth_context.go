@@ -25,6 +25,7 @@ func GetAuthContext(ctx context.Context) AuthContext {
 	if authCtx, ok := ctx.Value(authContextKey).(AuthContext); ok {
 		return authCtx
 	}
+
 	panic("no AuthContext given in context")
 }
 
@@ -43,7 +44,7 @@ type AuthContext struct {
 }
 
 func (authCtx AuthContext) Fields() log.Fields {
-	return map[string]interface{}{
+	return map[string]any{
 		"authenticated":             authCtx.Authenticated,
 		"role":                      authCtx.Role,
 		"ignoreAuthenticationState": authCtx.IgnoreAuthenticationState,

@@ -55,14 +55,14 @@ func uuidOrNil(id uuid.NullUUID) *uuid.UUID {
 	return nil
 }
 
-func NullUUIDVal(id *uuid.UUID) uuid.NullUUID {
+func ToNullUUID(id *uuid.UUID) uuid.NullUUID {
 	if id == nil {
 		return uuid.NullUUID{Valid: false}
 	}
 	return uuid.NullUUID{UUID: *id, Valid: true}
 }
 
-func NullDateVal(date *domain.Date) domain.NullDate {
+func ToNullDate(date *domain.Date) domain.NullDate {
 	if date == nil {
 		return domain.NullDate{Valid: false}
 	}

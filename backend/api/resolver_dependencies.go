@@ -15,12 +15,13 @@ type ResolverDependencies struct {
 	TimeSource domain.TimeSource
 	Mailer     *mail.Mailer
 	Config     domain.Config
-
-	// Filestore   filestore.Filestore
 }
 
 func (r ResolverDependencies) Handler() *handler.Handler {
-	return handler.NewHandler(r.DB, r.TimeSource, r.Mailer, r.Config)
+	return handler.NewHandler(r.DB, r.Config, handler.Deps{
+		TimeSource: r.TimeSource,
+		Mailer:     r.Mailer,
+	})
 }
 
 func (r ResolverDependencies) Finder() *finder.Finder {

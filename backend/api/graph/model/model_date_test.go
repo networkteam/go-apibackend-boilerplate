@@ -14,7 +14,7 @@ import (
 func TestUnmarshalDateScalar(t *testing.T) {
 	tests := []struct {
 		name    string
-		v       interface{}
+		v       any
 		want    domain.Date
 		wantErr bool
 	}{

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/friendsofgo/errors"
+	"github.com/hashicorp/go-multierror"
 	"github.com/networkteam/qrb/builder"
 )
 
@@ -55,7 +56,29 @@ func Transactional(ctx context.Context, proxy TxBeginner, f func(tx *sql.Tx) err
 	return nil
 }
 
-// --- New paging
+func TransactionalWithOpts(ctx context.Context, proxy TxBeginner, opts *sql.TxOptions, f func(tx *sql.Tx) error) (err error) {
+	tx, err := proxy.BeginTx(ctx, opts)
+	if err != nil {
+		return errors.Wrap(err, "opening transaction")
+	}
+
+	if err = f(tx); err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			return multierror.Append(err, errors.Wrap(rollbackErr, "rolling back transaction after error"))
+		}
+
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return errors.Wrap(err, "committing transaction")
+	}
+
+	return nil
+}
+
+// --- Paging options
 
 type PagingOption func(query builder.SelectBuilder, sortFieldMapping map[string]builder.IdentExp) (builder.SelectBuilder, error)
 

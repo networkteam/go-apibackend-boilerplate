@@ -40,6 +40,11 @@ func newServerCmd() *cli.Command {
 				EnvVars: []string{"BACKEND_ADDRESS"},
 				Value:   "0.0.0.0:8080",
 			},
+			&cli.StringFlag{
+				Name:    "websocket-allow-origin",
+				Usage:   "Allow websocket connections from this origin, if empty only the origin matching the host of the request is allowed",
+				EnvVars: []string{"BACKEND_WEBSOCKET_ALLOW_ORIGIN"},
+			},
 			&cli.BoolFlag{
 				Name:  "playground",
 				Usage: "Enable GraphQL playground",
@@ -49,6 +54,12 @@ func newServerCmd() *cli.Command {
 				Name:    "disable-ansi",
 				Usage:   "Force disable ANSI log output and output log in logfmt format",
 				EnvVars: []string{"BACKEND_DISABLE_ANSI"},
+				Value:   false,
+			},
+			&cli.BoolFlag{
+				Name:    "force-ansi",
+				Usage:   "Force enable ANSI log output",
+				EnvVars: []string{"BACKEND_FORCE_ANSI"},
 				Value:   false,
 			},
 
@@ -68,92 +79,111 @@ func newServerCmd() *cli.Command {
 				Usage:   "Release version for Sentry",
 				EnvVars: []string{"SENTRY_RELEASE"},
 			},
+
+			&cli.DurationFlag{
+				Name:    "sensitive-operation-constant-time",
+				Usage:   "Constant time duration to wait for sensitive operations (e.g. login / request password reset / perform password reset / registration), to prevent timing attacks",
+				EnvVars: []string{"SENSITIVE_OPERATION_CONSTANT_TIME"},
+				Value:   700 * time.Millisecond,
+			},
 		},
 		Before: func(c *cli.Context) error {
 			setServerLogHandler(c)
 
 			return nil
 		},
-		Action: func(c *cli.Context) error {
-			// This action is where the server is set up and dependencies are wired
-			// -- make sure to keep it clean and with clear intention what is done here
-
-			log := logger.FromContext(c.Context)
-
-			// Initialize sentry
-			defer sentry.Recover()
-			err := initializeSentry(c, "backend")
-			if err != nil {
-				return err
-			}
-
-			db, err := connectDatabase(c)
-			if err != nil {
-				return err
-			}
-
-			err = db.Ping()
-			if err != nil {
-				return errors.Wrap(err, "pinging database")
-			}
-
-			mailer := buildMailer(c)
-
-			timeSource, err := newCurrentTimeSource(c)
-			if err != nil {
-				return err
-			}
-
-			// Set up signal handling, should be called before starting background processing
-			setupCancelOnSignal(c)
-
-			shutdownCronJobs, err := startCronJobs(c, db)
-			if err != nil {
-				return err
-			}
-
-			mux := http.NewServeMux()
-
-			deps := api.ResolverDependencies{
-				DB:         db,
-				TimeSource: timeSource,
-				Mailer:     mailer,
-				Config:     getConfig(c),
-			}
-			graphqlHandler := api_handler.NewGraphqlHandler(deps, api_handler.HandlerConfig{
-				EnableTracing:  false,
-				EnableLogging:  true,
-				DisableRecover: false,
-			})
-
-			playgroundEnabled := c.Bool("playground")
-			if playgroundEnabled {
-				mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
-			}
-
-			mux.Handle("/query", http_api.MiddlewareStack(deps, graphqlHandler))
-			mux.HandleFunc("/healthz", api_handler.NewHealthzHandler(db))
-
-			rootHandler := apexlogutils_middleware.RequestID(
-				httplog.New(
-					mux,
-					// Do not log health checks, it would be too verbose
-					httplog.ExcludePathPrefix("/healthz"),
-				),
-			)
-
-			address := c.String("address")
-			log.Infof("Serving GraphQL endpoint at http://%s/query", address)
-			if playgroundEnabled {
-				log.Infof("Connects to http://%s/ for GraphQL playground", address)
-			}
-
-			return serve(c, rootHandler, func(c *cli.Context) error {
-				shutdownCronJobs()
-				return nil
-			})
-		},
+		Action: serverAction,
 	}
+}
+
+func serverAction(c *cli.Context) error {
+	// This action is where the server is set up and dependencies are wired
+	// -- make sure to keep it clean and with clear intention what is done here
+
+	log := logger.FromContext(c.Context)
+
+	// Initialize sentry
+	defer sentry.Recover()
+	err := initializeSentry(c, "backend")
+	if err != nil {
+		return err
+	}
+
+	db, err := connectDatabase(c)
+	if err != nil {
+		return err
+	}
+
+	err = db.Ping()
+	if err != nil {
+		return errors.Wrap(err, "pinging database")
+	}
+
+	mailer, err := buildMailer(c)
+	if err != nil {
+		return err
+	}
+
+	timeSource, err := newCurrentTimeSource(c)
+	if err != nil {
+		return err
+	}
+
+	// Set up signal handling, should be called before starting background processing
+	setupCancelOnSignal(c)
+
+	shutdownCronJobs, err := startCronJobs(c, db)
+	if err != nil {
+		return err
+	}
+
+	mux := http.NewServeMux()
+
+	config, err := getConfig(c)
+	if err != nil {
+		return err
+	}
+
+	deps := api.ResolverDependencies{
+		DB:         db,
+		TimeSource: timeSource,
+		Mailer:     mailer,
+		Config:     config,
+	}
+	graphqlHandler := api_handler.NewGraphqlHandler(deps, api_handler.Config{
+		EnableTracing:                  false,
+		EnableLogging:                  true,
+		DisableRecover:                 false,
+		WebsocketAllowOrigin:           c.String("websocket-allow-origin"),
+		SensitiveOperationConstantTime: c.Duration("sensitive-operation-constant-time"),
+	})
+
+	playgroundEnabled := c.Bool("playground")
+	if playgroundEnabled {
+		mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	}
+
+	mux.Handle("/query", http_api.MiddlewareStackWithAuth(deps, graphqlHandler))
+	mux.HandleFunc("/healthz", api_handler.NewHealthzHandler(db))
+
+	rootHandler := apexlogutils_middleware.RequestID(
+		httplog.New(
+			mux,
+			// Do not log health checks, it would be too verbose
+			httplog.ExcludePathPrefix("/healthz"),
+		),
+	)
+
+	address := c.String("address")
+	log.Infof("Serving GraphQL endpoint at http://%s/query", address)
+	if playgroundEnabled {
+		log.Infof("Connects to http://%s/ for GraphQL playground", address)
+	}
+
+	return serve(c, rootHandler, func(c *cli.Context) error {
+		shutdownCronJobs()
+		return nil
+	})
 }
 
 func serve(c *cli.Context, handler http.Handler, onShutdown func(c *cli.Context) error) (err error) {
@@ -161,12 +191,13 @@ func serve(c *cli.Context, handler http.Handler, onShutdown func(c *cli.Context)
 
 	address := c.String("address")
 	srv := &http.Server{
-		Addr:    address,
-		Handler: handler,
+		Addr:              address,
+		Handler:           handler,
+		ReadHeaderTimeout: 60 * time.Second,
 	}
 
 	go func() {
-		if err = srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err = srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			// Fatal will exit the program if the server failed to listen
 			log.
 				WithError(err).
@@ -189,7 +220,7 @@ func serve(c *cli.Context, handler http.Handler, onShutdown func(c *cli.Context)
 
 	log.Debugf("Server exited properly")
 
-	if err == http.ErrServerClosed {
+	if errors.Is(err, http.ErrServerClosed) {
 		err = nil
 	}
 
@@ -197,7 +228,7 @@ func serve(c *cli.Context, handler http.Handler, onShutdown func(c *cli.Context)
 		err = multierror.Append(err, shutdownErr)
 	}
 
-	log.Infof("Everything shut down, goodbye")
+	log.Info("Everything shut down, goodbye")
 
 	return err
 }
@@ -227,6 +258,8 @@ func startCronJobs(c *cli.Context, db *sql.DB) (func(), error) {
 
 	cronJobs := cron.New()
 
+	// boilerplate: Register your cronjobs here with cronJobs.AddJob
+
 	cronJobs.Start()
 
 	return func() {
@@ -254,6 +287,7 @@ func initializeSentry(c *cli.Context, component string) error {
 		Environment: sentryEnvironment,
 		Release:     sentryRelease,
 		DebugWriter: os.Stderr,
+		Debug:       sentryEnvironment != "production",
 	}
 
 	log.
@@ -261,10 +295,6 @@ func initializeSentry(c *cli.Context, component string) error {
 		WithField("environment", sentryEnvironment).
 		WithField("release", sentryRelease).
 		Info("Initializing Sentry")
-
-	if sentryEnvironment != "production" {
-		sentryOptions.Debug = true
-	}
 
 	sentry.ConfigureScope(func(scope *sentry.Scope) {
 		scope.SetTags(map[string]string{"component": component})
@@ -279,7 +309,7 @@ func initializeSentry(c *cli.Context, component string) error {
 }
 
 func setServerLogHandler(c *cli.Context) {
-	if isatty.IsTerminal(os.Stdout.Fd()) && !c.Bool("disable-ansi") {
+	if !c.Bool("disable-ansi") && (isatty.IsTerminal(os.Stdout.Fd()) || c.Bool("force-ansi")) {
 		logger.SetHandler(apexlogutils.NewComponentTextHandler(os.Stderr))
 	} else {
 		logger.SetHandler(logfmt.New(os.Stderr))

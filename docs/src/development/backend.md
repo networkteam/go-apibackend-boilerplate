@@ -259,12 +259,13 @@ See also [CLI](#cli) for a reference of all commands and flags for the backend.
         Fixed data (fixtures) can be imported into the database for development:
 
         ```shell
-        go run ./cli/ctl fixtures --confirm
+        go run ./cli/ctl fixtures import
         ```
 
-        !!! warning
+        !!! note "Use the force"
 
-            All existing data in the database will be deleted by the command.
+            When using `--force` you can delete all existing data in the database before importing fixtures.
+            Otherwise the import will be skipped if data (i.e. any account) already exists.
 
     6. Start the server
 

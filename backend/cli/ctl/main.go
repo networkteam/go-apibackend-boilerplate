@@ -2,7 +2,9 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
+	"strings"
 
 	"github.com/apex/log"
 	cli_handler "github.com/apex/log/handlers/cli"
@@ -10,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/jackc/pgx/v5/tracelog"
+	"github.com/joho/godotenv"
 	"github.com/networkteam/apexlogutils"
 	apexlogutils_pgx "github.com/networkteam/apexlogutils/pgx/v5"
 	"github.com/urfave/cli/v2"
@@ -21,6 +24,9 @@ import (
 )
 
 func main() {
+	loadDotenv()
+
+	defaultConfig := domain.DefaultConfig()
 	app := &cli.App{
 		Name:  "ctl",
 		Usage: "App CLI control",
@@ -38,12 +44,21 @@ func main() {
 				Value:   "dbname=myproject-dev sslmode=disable",
 				EnvVars: []string{"BACKEND_POSTGRES_DSN"},
 			},
+
+			&cli.IntFlag{
+				Name:    "hash-cost",
+				Usage:   "Hash cost for password hashing with bcrypt (between 4 and 31, higher is slower)",
+				Value:   defaultConfig.HashCost,
+				EnvVars: []string{"BACKEND_HASH_COST"},
+			},
+
 			&cli.StringFlag{
 				Name:    "app-base-url",
 				Usage:   "Application base URL",
 				Value:   "http://localhost:3000/",
 				EnvVars: []string{"BACKEND_APP_BASE_URL"},
 			},
+
 			&cli.StringFlag{
 				Name:    "smtp-host",
 				Usage:   "Host of SMTP for outgoing mails",
@@ -65,6 +80,18 @@ func main() {
 				Name:    "smtp-password",
 				Usage:   "SMTP Password for outgoing mails",
 				EnvVars: []string{"BACKEND_SMTP_PASSWORD"},
+			},
+			&cli.StringFlag{
+				Name:    "smtp-tls-policy",
+				Usage:   "TLS policy for outgoing mails (Values: opportunistic, mandatory, non)",
+				EnvVars: []string{"BACKEND_SMTP_TLS_POLICY"},
+				Value:   "non",
+			},
+			&cli.StringFlag{
+				Name:    "mail-default-from",
+				Usage:   "Default sender address for outgoing mails",
+				EnvVars: []string{"MAIL_DEFAULT_FROM"},
+				Value:   "app@example.com",
 			},
 		},
 		Before: func(c *cli.Context) error {
@@ -98,6 +125,39 @@ func main() {
 	}
 }
 
+func loadDotenv() {
+	backendEnv := os.Getenv("BACKEND_ENV")
+	if backendEnv == "" {
+		backendEnv = "production"
+	}
+
+	// We load _all_ existing files for the app environment (development or production).
+	// So we can override and set additional variables in *.local env files.
+
+	filenames := []string{".env.local", ".env"}
+	filenames = append([]string{fmt.Sprintf(".env.%s.local", backendEnv), fmt.Sprintf(".env.%s", backendEnv)}, filenames...)
+
+	log.
+		WithField("component", "cli").
+		Infof("Trying to load env from %v", strings.Join(filenames, ", "))
+
+	for _, filename := range filenames {
+		err := godotenv.Load(filename)
+		if os.IsNotExist(err) {
+			continue
+		}
+		if err != nil {
+			log.
+				WithField("component", "cli").
+				WithError(err).
+				Fatalf("Error loading envs from %s", filename)
+		}
+		log.
+			WithField("component", "cli").
+			Infof("Loaded env from %s", filename)
+	}
+}
+
 func connectDatabase(c *cli.Context) (*sql.DB, error) {
 	postgresDSN := c.String("postgres-dsn")
 	log.
@@ -122,20 +182,31 @@ func connectDatabase(c *cli.Context) (*sql.DB, error) {
 	return db, nil
 }
 
-func buildMailer(c *cli.Context) *mail.Mailer {
-	sender := smtp.NewSender(
+func buildMailer(c *cli.Context) (*mail.Mailer, error) {
+	sender, err := smtp.NewSender(
 		c.String("smtp-host"),
 		c.Int("smtp-port"),
 		c.String("smtp-user"),
 		c.String("smtp-password"),
+		c.String("smtp-tls-policy"),
 	)
-	config := mail.DefaultConfig(getConfig(c))
+	if err != nil {
+		return nil, err
+	}
+	defaultConfig, err := getConfig(c)
+	if err != nil {
+		return nil, err
+	}
+	config := mail.DefaultConfig(defaultConfig)
+	config.DefaultFrom = c.String("mail-default-from")
 	mailer := mail.NewMailer(sender, config)
-	return mailer
+	return mailer, nil
 }
 
-func getConfig(c *cli.Context) domain.Config {
+func getConfig(c *cli.Context) (domain.Config, error) {
 	config := domain.DefaultConfig()
 	config.AppBaseUrl = c.String("app-base-url")
-	return config
+	config.HashCost = c.Int("hash-cost")
+	// Add more config options here (parsing these could return an error)
+	return config, nil
 }

@@ -49,7 +49,7 @@ func PrepareTestDatabase() error {
 
 	_, err = db.Exec("CREATE EXTENSION IF NOT EXISTS btree_gist")
 	if err != nil {
-		return errors.Wrap(err, "create extension btree_gist")
+		return errors.Wrap(err, "creating extensions")
 	}
 
 	return nil
@@ -88,15 +88,6 @@ func CreateTestDatabase(t *testing.T) *sql.DB {
 		t.Fatalf("Failed to create schema: %v", err)
 	}
 
-	_, filename, _, _ := runtime.Caller(0)
-	migrationSource := filepath.Dir(filename + "/../../../persistence/migrations/")
-
-	goose.SetLogger(testGooseLogger{t})
-	err = goose.Up(db, migrationSource)
-	if err != nil {
-		t.Fatalf("Failed to execute migrations: %v", err)
-	}
-
 	t.Cleanup(func() {
 		_, err := db.Exec("DROP SCHEMA \"" + schemaName + "\" CASCADE")
 		if err != nil {
@@ -108,6 +99,15 @@ func CreateTestDatabase(t *testing.T) *sql.DB {
 		}
 		stdlib.UnregisterConnConfig(connStr)
 	})
+
+	_, filename, _, _ := runtime.Caller(0)
+	migrationSource := filepath.Dir(filename + "/../../../persistence/migrations/")
+
+	goose.SetLogger(testGooseLogger{t})
+	err = goose.Up(db, migrationSource)
+	if err != nil {
+		t.Fatalf("Failed to execute migrations: %v", err)
+	}
 
 	return db
 }

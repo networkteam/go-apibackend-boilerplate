@@ -1,7 +1,11 @@
 package mail
 
-import "gopkg.in/gomail.v2"
+import (
+	"context"
+
+	gomail "github.com/wneessen/go-mail"
+)
 
 type Sender interface {
-	Send(message *gomail.Message) error
+	Send(ctx context.Context, message *gomail.Msg) error
 }

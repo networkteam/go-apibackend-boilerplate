@@ -8,6 +8,7 @@ import (
 
 	"myvendor.mytld/myproject/backend/domain"
 	"myvendor.mytld/myproject/backend/mail"
+	test_mail "myvendor.mytld/myproject/backend/test/mail"
 )
 
 func TestSupportFormMsg_ToMessage(t *testing.T) {
@@ -29,7 +30,7 @@ func TestSupportFormMsg_ToMessage(t *testing.T) {
 			},
 			config: mail.DefaultConfig(domain.DefaultConfig()),
 			expectedHeaders: map[string]string{
-				"To":      "app@myproject.mytld",
+				"To":      "<app@example.com>",
 				"Subject": "Neue Kontaktanfrage von Max Mustermann (Acme Inc.)",
 			},
 		},
@@ -41,13 +42,12 @@ func TestSupportFormMsg_ToMessage(t *testing.T) {
 				OrganisationName:   "Acme Inc.",
 				Subject:            "Testnachricht",
 				Message:            "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod",
-				FileName:           "my-screenshot.png",
-				FileSize:           482923723,
+				FileName:           "test/my-screenshot.png",
 				AttachedFile:       strings.NewReader("not actually an image..."),
 			},
 			config: mail.DefaultConfig(domain.DefaultConfig()),
 			expectedHeaders: map[string]string{
-				"To":      "app@myproject.mytld",
+				"To":      "<app@example.com>",
 				"Subject": "Neue Kontaktanfrage von Max Mustermann (Acme Inc.)",
 			},
 			expectedFileAttachment: "my-screenshot.png",
@@ -59,19 +59,14 @@ func TestSupportFormMsg_ToMessage(t *testing.T) {
 			mailMsg, err := tc.msg.ToMessage(tc.config)
 			require.NoError(t, err)
 
-			parsedMsg := requireParseGomailMessage(t, err, mailMsg)
+			parsedMsg := requireParseGomailMessage(t, mailMsg)
 
 			for headerName, headerValue := range tc.expectedHeaders {
-				assertMailMessageHeaderEquals(
-					t,
-					parsedMsg,
-					headerName,
-					headerValue,
-				)
+				test_mail.AssertMailMessageHeaderEquals(t, parsedMsg, headerName, headerValue)
 			}
 
 			if tc.expectedFileAttachment != "" {
-				assertMailMessageHasFileAttachment(t, parsedMsg, tc.expectedFileAttachment)
+				test_mail.AssertMailMessageHasFileAttachment(t, parsedMsg, tc.expectedFileAttachment)
 			}
 		})
 	}
