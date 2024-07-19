@@ -16,6 +16,7 @@ import (
 	apexlogutils_pgx "github.com/networkteam/apexlogutils/pgx/v5"
 	"github.com/pressly/goose/v3"
 
+	// Import migrations with side-effect
 	_ "myvendor.mytld/myproject/backend/persistence/migrations"
 	"myvendor.mytld/myproject/backend/security/helper"
 )
@@ -124,11 +125,11 @@ func (t testGooseLogger) Fatalf(format string, v ...interface{}) {
 	t.t.Fatalf(format, v...)
 }
 
-func (t testGooseLogger) Print(v ...interface{}) {
+func (t testGooseLogger) Print(_ ...interface{}) {
 }
 
-func (t testGooseLogger) Println(v ...interface{}) {
+func (t testGooseLogger) Println(_ ...interface{}) {
 }
 
-func (t testGooseLogger) Printf(format string, v ...interface{}) {
+func (t testGooseLogger) Printf(_ string, _ ...interface{}) {
 }

@@ -59,7 +59,6 @@ backend:lint:
   dependencies: []
   image: registry.networkteam.com/networkteam/docker/golangci-lint:1.55.2
   script:
-    - cd backend
     # Write the code coverage report to gl-code-quality-report.json
     # and print linting issues to stdout in the format: path/to/file:line description.
     - golangci-lint run --out-format code-climate | tee gl-code-quality-report.json | jq -r '.[] | "\(.severity)\t\(.location.path):\(.location.lines.begin) \(.description)"'

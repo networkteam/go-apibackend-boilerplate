@@ -20,6 +20,7 @@ type QueryRowerContext interface {
 	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
 }
 
+//nolint:revive // Better readability with underscores
 const (
 	pgErrCode_integrity_constraint_violation = "23000"
 	pgErrCode_restrict_violation             = "23001"
