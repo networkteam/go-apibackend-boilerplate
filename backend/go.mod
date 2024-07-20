@@ -93,6 +93,4 @@ require (
 // As noted on https://github.com/darccio/mergo this should fix an issue with a new vanity URL
 replace github.com/imdario/mergo => github.com/imdario/mergo v0.3.16
 
-go 1.22
-
-toolchain go1.22.5
+go 1.21
