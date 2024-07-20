@@ -71,27 +71,6 @@ backend:lint:
       - backend/gl-code-quality-report.json
   interruptible: true
 
-backend:gosec-sast:
-  extends: .backend-job
-  stage: test
-  needs: []
-  dependencies: []
-  variables:
-    ANALYZER_TARGET_DIR: $CI_PROJECT_DIR/backend
-    SAST_EXCLUDED_PATHS: test
-    SEARCH_MAX_DEPTH: 4
-    SAST_ANALYZER_IMAGE_TAG: 3
-    SAST_ANALYZER_IMAGE: "$SECURE_ANALYZERS_PREFIX/gosec:$SAST_ANALYZER_IMAGE_TAG"
-  image:
-    name: "$SAST_ANALYZER_IMAGE"
-  script:
-    - "/analyzer run"
-  allow_failure: true
-  artifacts:
-    reports:
-      sast:
-        - backend/gl-sast-report.json
-
 backend:semgrep-sast:
   extends: .backend-job
   stage: test
@@ -100,18 +79,19 @@ backend:semgrep-sast:
   variables:
     ANALYZER_TARGET_DIR: $CI_PROJECT_DIR/backend
     SAST_EXCLUDED_PATHS: test
-    SEARCH_MAX_DEPTH: 4
-    SAST_ANALYZER_IMAGE_TAG: 2
-    SAST_ANALYZER_IMAGE: "$SECURE_ANALYZERS_PREFIX/semgrep:$SAST_ANALYZER_IMAGE_TAG"
+    SEARCH_MAX_DEPTH: 20
+    SAST_ANALYZER_IMAGE_TAG: 4
+    SAST_ANALYZER_IMAGE: "$SECURE_ANALYZERS_PREFIX/semgrep:$SAST_ANALYZER_IMAGE_TAG$SAST_IMAGE_SUFFIX"
   image:
     name: "$SAST_ANALYZER_IMAGE"
   script:
     - "/analyzer run"
   allow_failure: true
   artifacts:
+    access: developer
     reports:
       sast:
-        - backend/gl-sast-report.json
+      - gl-sast-report.json
 
 # Build docker image for backend
 backend:docker:
