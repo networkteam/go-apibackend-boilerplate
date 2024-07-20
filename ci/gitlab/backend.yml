@@ -91,7 +91,7 @@ backend:semgrep-sast:
     access: developer
     reports:
       sast:
-      - gl-sast-report.json
+      - backend/gl-sast-report.json
 
 # Build docker image for backend
 backend:docker:
