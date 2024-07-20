@@ -49,14 +49,14 @@ func (a *Authorizer) AllowsAccountDeleteCmd(cmd domain.AccountDeleteCmd) error {
 	return a.requireOrganisationAdministrator(uuidOrNil(cmd.OrganisationID))
 }
 
-func (a *Authorizer) AllowsOrganisationCreateCmd(cmd domain.OrganisationCreateCmd) error {
+func (a *Authorizer) AllowsOrganisationCreateCmd(domain.OrganisationCreateCmd) error {
 	return a.requireRole(domain.RoleSystemAdministrator)
 }
 
-func (a *Authorizer) AllowsOrganisationUpdateCmd(cmd domain.OrganisationUpdateCmd) error {
+func (a *Authorizer) AllowsOrganisationUpdateCmd(domain.OrganisationUpdateCmd) error {
 	return a.requireRole(domain.RoleSystemAdministrator)
 }
 
-func (a *Authorizer) AllowsOrganisationDeleteCmd(cmd domain.OrganisationDeleteCmd) error {
+func (a *Authorizer) AllowsOrganisationDeleteCmd(domain.OrganisationDeleteCmd) error {
 	return a.requireRole(domain.RoleSystemAdministrator)
 }

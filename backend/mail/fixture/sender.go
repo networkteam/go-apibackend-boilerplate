@@ -3,6 +3,7 @@ package fixture
 import (
 	"bytes"
 	"context"
+	std_errors "errors"
 
 	"github.com/apex/log"
 	"github.com/friendsofgo/errors"
@@ -23,6 +24,11 @@ func NewSender() *Sender {
 
 var _ mail.Sender = &Sender{}
 
+var (
+	errNoSenderSet    = std_errors.New("no sender set")
+	errNoRecipientSet = std_errors.New("no recipient set")
+)
+
 func (m *Sender) Send(_ context.Context, message *gomail.Msg) error {
 	if m.SendCallback != nil {
 		defer m.SendCallback(message)
@@ -30,12 +36,12 @@ func (m *Sender) Send(_ context.Context, message *gomail.Msg) error {
 
 	fromHeaders := message.GetFromString()
 	if len(fromHeaders) == 0 {
-		return errors.New("no sender set")
+		return errors.WithStack(errNoSenderSet)
 	}
 
 	toHeaders := message.GetToString()
 	if len(toHeaders) == 0 {
-		return errors.New("no recipient(s) set")
+		return errors.WithStack(errNoRecipientSet)
 	}
 
 	var buf = new(bytes.Buffer)

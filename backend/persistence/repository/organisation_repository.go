@@ -97,10 +97,10 @@ func DeleteOrganisation(ctx context.Context, executor qrbsql.Executor, id uuid.U
 	)
 }
 
-func OrganisationConstraintErr(err error) error {
+func OrganisationConstraintErr(error) error {
 	return nil
 }
 
-func buildOrganisationJSON(opts domain.OrganisationQueryOpts) builder.JsonBuildObjectBuilder {
+func buildOrganisationJSON(domain.OrganisationQueryOpts) builder.JsonBuildObjectBuilder {
 	return organisationDefaultJson
 }

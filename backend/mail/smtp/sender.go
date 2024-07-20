@@ -2,6 +2,7 @@ package smtp
 
 import (
 	"context"
+	std_errors "errors"
 
 	"github.com/friendsofgo/errors"
 	gomail "github.com/wneessen/go-mail"
@@ -18,7 +19,7 @@ var _ mail.Sender = new(sender)
 func NewSender(host string, port int, username, password, tlsPolicy string) (mail.Sender, error) {
 	policy, err := getTLSPolicy(tlsPolicy)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	client, err := gomail.NewClient(
@@ -50,6 +51,8 @@ func (m *sender) Send(ctx context.Context, message *gomail.Msg) error {
 	return nil
 }
 
+var errInvalidTLSPolicy = std_errors.New("invalid TLS policy")
+
 func getTLSPolicy(tlsPolicy string) (gomail.TLSPolicy, error) {
 	switch tlsPolicy {
 	case "opportunistic":
@@ -59,5 +62,5 @@ func getTLSPolicy(tlsPolicy string) (gomail.TLSPolicy, error) {
 	case "non":
 		return gomail.NoTLS, nil
 	}
-	return -1, errors.New("invalid TLS policy")
+	return -1, errInvalidTLSPolicy
 }

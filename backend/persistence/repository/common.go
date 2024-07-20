@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	std_errors "errors"
 	"strings"
 
 	"github.com/friendsofgo/errors"
@@ -81,13 +81,15 @@ func TransactionalWithOpts(ctx context.Context, proxy TxBeginner, opts *sql.TxOp
 
 // --- Paging options
 
+var ErrInvalidSortField = std_errors.New("invalid sort field")
+
 type PagingOption func(query builder.SelectBuilder, sortFieldMapping map[string]builder.IdentExp) (builder.SelectBuilder, error)
 
 func WithSort(field, order string) PagingOption {
 	return func(query builder.SelectBuilder, sortFieldMapping map[string]builder.IdentExp) (builder.SelectBuilder, error) {
 		col, ok := sortFieldMapping[strings.ToLower(field)]
 		if !ok {
-			return query, fmt.Errorf("invalid sort field: %s", field)
+			return query, errors.Wrap(ErrInvalidSortField, field)
 		}
 
 		orderByBuilder := query.OrderBy(col)

@@ -51,6 +51,7 @@ func (a *Authorizer) requireRole(anyOfRoles ...domain.Role) error {
 	return authorizationError{fmt.Sprintf("requires role in %s", strings.Join(roleIdentifiers, ","))}
 }
 
+//nolint:unused // Prepared for future use
 func (a *Authorizer) requireSameAccount(accountID *uuid.UUID) error {
 	if !a.isSameAccount(accountID) {
 		return authorizationError{"requires to be same account"}
@@ -59,6 +60,7 @@ func (a *Authorizer) requireSameAccount(accountID *uuid.UUID) error {
 	return nil
 }
 
+//nolint:unused // Prepared for future use
 func (a *Authorizer) isSameAccount(accountID *uuid.UUID) bool {
 	if a.authCtx.AccountID == uuid.Nil {
 		return false
@@ -103,6 +105,7 @@ func (a *Authorizer) requireOrganisationAdministrator(organisationID *uuid.UUID)
 	return a.requireSameOrganisation(organisationID)
 }
 
+//nolint:unused // Prepared for future use
 func (a *Authorizer) requireOrganisationRole(organisationID *uuid.UUID) error {
 	if err := a.requireRole(domain.OrganisationRoles...); err != nil {
 		return err

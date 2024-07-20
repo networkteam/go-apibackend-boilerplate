@@ -3,6 +3,7 @@ package finder
 import (
 	"context"
 	"database/sql"
+	std_errors "errors"
 
 	"github.com/friendsofgo/errors"
 	"github.com/networkteam/qrb/qrbsql"
@@ -25,10 +26,12 @@ func NewFinder(db *sql.DB, timeSource domain.TimeSource) *Finder {
 	}
 }
 
+var errTransactionalNoSQLDB = std_errors.New("finder: executor for Transactional must be a *sql.DB")
+
 func (f *Finder) Transactional(ctx context.Context, isolationLevel sql.IsolationLevel, callback func(txFinder *Finder) error) error {
 	db, ok := f.executor.(*sql.DB)
 	if !ok {
-		return errors.New("finder: executor for Transactional must be a *sql.DB")
+		return errors.WithStack(errTransactionalNoSQLDB)
 	}
 
 	return repository.TransactionalWithOpts(ctx, db, &sql.TxOptions{

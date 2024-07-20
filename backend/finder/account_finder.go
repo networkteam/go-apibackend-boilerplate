@@ -2,7 +2,8 @@ package finder
 
 import (
 	"context"
-	"errors"
+
+	"github.com/friendsofgo/errors"
 
 	"myvendor.mytld/myproject/backend/domain"
 	"myvendor.mytld/myproject/backend/persistence/repository"
@@ -31,7 +32,7 @@ func (f *Finder) QueryAccountNotAuthorized(ctx context.Context, query domain.Acc
 		return repository.FindAccountByEmailAddress(ctx, f.executor, *query.EmailAddress, query.Opts)
 	}
 
-	return domain.Account{}, errors.New("invalid query")
+	return domain.Account{}, errors.Wrap(ErrInvalidQuery, "AccountID or EmailAddress must be set")
 }
 
 func (f *Finder) QueryAccounts(ctx context.Context, query domain.AccountsQuery, paging Paging) ([]domain.Account, error) {
