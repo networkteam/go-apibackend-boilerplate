@@ -1,4 +1,4 @@
-#!/bin/bash
+#!env bash
 
 set -e
 
@@ -17,14 +17,13 @@ myproject=$4
 echo "Copy $DIR to $target"
 
 mkdir -p $target
-rsync -av $DIR/ $target/ --exclude backend/api/graph/generated --exclude .idea --exclude .git
+rsync -av $DIR/ $target/ --exclude backend/api/graph/generated --exclude .idea --exclude .git --exclude .devbox --exclude .github --exclude docs/site --exclude backend/tmp/refresh-build
 
 cd $target
 
 echo "Replacing placeholders"
 
-find . \( -type d -name .git -prune \) -o -type f -print0 | LC_ALL=C xargs -0 sed -i '' \
-  "s/mytld/$mytld/g; s/myvendor/$myvendor/g; s/myproject/$myproject/g"
+find . \( -type d -name .git -prune \) -o -type f -print0 | LC_ALL=C xargs -0 sed -i "s/mytld/$mytld/g; s/myvendor/$myvendor/g; s/myproject/$myproject/g"
 
 pushd backend
 
@@ -48,9 +47,7 @@ See [./docs](docs) for more information.
 
 With Devbox:
 
-```sh
-devbox services up
-```
+    devbox services up
 
 ### Requirements
 
