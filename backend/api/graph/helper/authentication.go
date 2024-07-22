@@ -10,21 +10,21 @@ import (
 	"myvendor.mytld/myproject/backend/security/authentication"
 )
 
-func SetAuthTokenCookieForAccount(ctx context.Context, account authentication.AuthTokenDataProvider, timeSource domain.TimeSource, extendedExpiry bool) (csrfToken string, err error) {
+func SetAuthTokenCookieForAccount(ctx context.Context, account authentication.AuthTokenDataProvider, timeSource domain.TimeSource, extendedExpiry bool) (authToken string, csrfToken string, err error) {
 	tokenOpts := authentication.TokenOptsForAccount(account, extendedExpiry)
-	authToken, err := authentication.GenerateAuthToken(account, timeSource, tokenOpts)
+	authToken, err = authentication.GenerateAuthToken(account, timeSource, tokenOpts)
 	if err != nil {
-		return "", fog_errors.Wrap(err, "generating auth token")
+		return "", "", fog_errors.Wrap(err, "generating auth token")
 	}
 
 	csrfToken, err = authentication.GenerateCsrfToken(account, timeSource, tokenOpts)
 	if err != nil {
-		return "", fog_errors.Wrap(err, "generating CSRF token")
+		return "", "", fog_errors.Wrap(err, "generating CSRF token")
 	}
 
 	req := api.GetHTTPRequest(ctx)
 	w := api.GetHTTPResponse(ctx)
 	authentication.SetAuthTokenCookie(w, req, authToken)
 
-	return csrfToken, nil
+	return authToken, csrfToken, nil
 }

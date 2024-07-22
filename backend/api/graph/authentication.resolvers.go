@@ -9,6 +9,7 @@ import (
 
 	logger "github.com/apex/log"
 	fog_errors "github.com/friendsofgo/errors"
+
 	"myvendor.mytld/myproject/backend/api"
 	"myvendor.mytld/myproject/backend/api/graph/helper"
 	"myvendor.mytld/myproject/backend/api/graph/model"
@@ -53,13 +54,14 @@ func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCre
 		return nil, err
 	}
 
-	csrfToken, err := helper.SetAuthTokenCookieForAccount(ctx, account, r.TimeSource, cmd.ExtendedExpiry)
+	authToken, csrfToken, err := helper.SetAuthTokenCookieForAccount(ctx, account, r.TimeSource, cmd.ExtendedExpiry)
 	if err != nil {
 		return nil, err
 	}
 
 	return &model.LoginResult{
 		Account:   helper.MapToAccount(account),
+		AuthToken: authToken,
 		CsrfToken: csrfToken,
 	}, nil
 }

@@ -36,7 +36,8 @@
         "cd docs",
         ". $VENV_DIR/bin/activate",
         "mkdocs serve"
-      ]
+      ],
+      "goland:setup": "sed -i 's#\\(<component name=\"GOROOT\" url=\\)\"[^\"]*\"#\\1\"file://\\$PROJECT_DIR\\$/.devbox/nix/profile/default/share/go\"#' .idea/workspace.xml"
     }
   },
   "env": {
