@@ -6,6 +6,7 @@ import (
 
 	logger "github.com/apex/log"
 	fog_errors "github.com/friendsofgo/errors"
+	"go.opentelemetry.io/otel/metric"
 
 	"myvendor.mytld/myproject/backend/domain"
 	"myvendor.mytld/myproject/backend/persistence/repository"
@@ -13,6 +14,20 @@ import (
 )
 
 var ErrLoginInvalidCredentials = std_errors.New("invalid credentials")
+
+//nolint:gochecknoglobals
+var (
+	loginSuccessCounter = mustInstrument(meter.Int64Counter(
+		"login.success.counter",
+		metric.WithDescription("Number of successful logins."),
+		metric.WithUnit("{call}"),
+	))
+	loginFailedCounter = mustInstrument(meter.Int64Counter(
+		"login.failed.counter",
+		metric.WithDescription("Number of failed logins."),
+		metric.WithUnit("{call}"),
+	))
+)
 
 func (h *Handler) Login(ctx context.Context, cmd domain.LoginCmd) (err error) {
 	log := logger.
@@ -47,6 +62,8 @@ func (h *Handler) Login(ctx context.Context, cmd domain.LoginCmd) (err error) {
 				Warn("Login failed, invalid password")
 		}
 
+		loginFailedCounter.Add(ctx, 1)
+
 		return ErrLoginInvalidCredentials
 	}
 
@@ -56,6 +73,8 @@ func (h *Handler) Login(ctx context.Context, cmd domain.LoginCmd) (err error) {
 	if err != nil {
 		return fog_errors.Wrap(err, "updating account last login")
 	}
+
+	loginSuccessCounter.Add(ctx, 1)
 
 	log.
 		WithField("emailAddress", cmd.EmailAddress).
