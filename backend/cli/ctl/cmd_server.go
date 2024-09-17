@@ -24,6 +24,7 @@ import (
 	"github.com/robfig/cron"
 	"github.com/urfave/cli/v2"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
 
 	"myvendor.mytld/myproject/backend/api"
 	api_handler "myvendor.mytld/myproject/backend/api/handler"
@@ -146,7 +147,7 @@ func serverAction(c *cli.Context) (err error) {
 		return err
 	}
 
-	// Set up OpenTelemetry
+	// Set up OpenTelemetry with global providers
 	otelShutdown, err := setupOTelSDK(c, config)
 	if err != nil {
 		return err
@@ -163,10 +164,11 @@ func serverAction(c *cli.Context) (err error) {
 	mux := http.NewServeMux()
 
 	deps := api.ResolverDependencies{
-		DB:         db,
-		TimeSource: timeSource,
-		Mailer:     mailer,
-		Config:     config,
+		DB:            db,
+		TimeSource:    timeSource,
+		Config:        config,
+		Mailer:        mailer,
+		MeterProvider: otel.GetMeterProvider(),
 	}
 	graphqlHandler := api_handler.NewGraphqlHandler(deps, api_handler.Config{
 		EnableTracing:                  false,

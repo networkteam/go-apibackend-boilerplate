@@ -28,7 +28,7 @@ func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCre
 		cmd.ExtendedExpiry = true
 	}
 
-	account, err := r.Finder().QueryAccountNotAuthorized(ctx, domain.AccountQueryNotAuthorized{
+	account, err := r.finder.QueryAccountNotAuthorized(ctx, domain.AccountQueryNotAuthorized{
 		Opts:         helper.AccountQueryOptsFromSelection(ctx, "account"),
 		EmailAddress: &cmd.EmailAddress,
 	})
@@ -41,7 +41,7 @@ func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCre
 		cmd.Account = account
 	}
 
-	err = r.Handler().Login(ctx, cmd)
+	err = r.handler.Login(ctx, cmd)
 	if err != nil {
 		if fog_errors.Is(err, handler.ErrLoginInvalidCredentials) {
 			return &model.LoginResult{
@@ -91,7 +91,7 @@ func (r *queryResolver) LoginStatus(ctx context.Context) (bool, error) {
 // CurrentAccount is the resolver for the currentAccount field.
 func (r *queryResolver) CurrentAccount(ctx context.Context) (*model.Account, error) {
 	authCtx := authentication.GetAuthContext(ctx)
-	account, err := r.Finder().QueryAccount(ctx, domain.AccountQuery{
+	account, err := r.finder.QueryAccount(ctx, domain.AccountQuery{
 		AccountID: authCtx.AccountID,
 		Opts:      helper.AccountQueryOptsFromSelection(ctx),
 	})

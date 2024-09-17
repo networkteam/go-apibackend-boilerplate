@@ -5,6 +5,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/apex/log v1.9.0
 	github.com/boumenot/gocover-cobertura v1.2.0
+	github.com/davecgh/go-spew v1.1.1
 	github.com/friendsofgo/errors v0.9.2
 	github.com/getsentry/sentry-go v0.28.1
 	github.com/go-jose/go-jose/v4 v4.0.3
@@ -21,6 +22,7 @@ require (
 	github.com/networkteam/qrb v0.8.0
 	github.com/pressly/goose/v3 v3.21.1
 	github.com/prometheus/client_golang v1.20.3
+	github.com/ravilushqa/otelgqlgen v0.17.0
 	github.com/robfig/cron v1.2.0
 	github.com/stretchr/testify v1.9.0
 	github.com/urfave/cli/v2 v2.27.2
@@ -32,6 +34,7 @@ require (
 	go.opentelemetry.io/otel/exporters/stdout/stdoutlog v0.5.0
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.29.0
 	go.opentelemetry.io/otel/log v0.5.0
+	go.opentelemetry.io/otel/metric v1.29.0
 	go.opentelemetry.io/otel/sdk v1.29.0
 	go.opentelemetry.io/otel/sdk/log v0.5.0
 	go.opentelemetry.io/otel/sdk/metric v1.29.0
@@ -54,7 +57,6 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
 	github.com/dave/jennifer v1.7.0 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dnephin/pflag v1.0.7 // indirect
 	github.com/fatih/color v1.17.0 // indirect
 	github.com/fatih/structtag v1.2.0 // indirect
@@ -86,7 +88,6 @@ require (
 	github.com/prometheus/common v0.59.1 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/r3labs/sse/v2 v2.10.0 // indirect
-	github.com/ravilushqa/otelgqlgen v0.17.0 // indirect
 	github.com/rjeczalik/notify v0.9.3 // indirect
 	github.com/rs/cors v1.10.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
@@ -98,7 +99,6 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	go.opentelemetry.io/contrib v1.29.0 // indirect
-	go.opentelemetry.io/otel/metric v1.29.0 // indirect
 	go.opentelemetry.io/otel/trace v1.29.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/mod v0.19.0 // indirect

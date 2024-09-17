@@ -1,16 +1,20 @@
 package authentication_test
 
 import (
+	"context"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 
 	"myvendor.mytld/myproject/backend/api"
 	"myvendor.mytld/myproject/backend/test"
 	test_db "myvendor.mytld/myproject/backend/test/db"
 	test_graphql "myvendor.mytld/myproject/backend/test/graphql"
+	test_telemetry "myvendor.mytld/myproject/backend/test/telemetry"
 )
 
 const loginGQL = `
@@ -71,8 +75,10 @@ func TestMutationResolver_Login_WithSystemAdministrator_Valid(t *testing.T) {
 
 	var result loginResult
 
+	metricsReader, meterProvider := test_telemetry.SetupTestMeter(t)
+
 	req := test_graphql.NewRequest(t, query)
-	resp := test_graphql.Handle(t, api.ResolverDependencies{DB: db, TimeSource: timeSource}, req, &result)
+	resp := test_graphql.Handle(t, api.ResolverDependencies{DB: db, TimeSource: timeSource, MeterProvider: meterProvider}, req, &result)
 	test_graphql.RequireNoErrors(t, result.GraphqlErrors)
 
 	require.Nil(t, result.Data.Result.Error)
@@ -84,6 +90,13 @@ func TestMutationResolver_Login_WithSystemAdministrator_Valid(t *testing.T) {
 
 	setCookieHeader := resp.Header().Get("Set-Cookie")
 	assert.NotEmpty(t, setCookieHeader, "Set-Cookie header is set")
+
+	{
+		metricsData := metricdata.ResourceMetrics{}
+		err := metricsReader.Collect(context.Background(), &metricsData)
+		require.NoError(t, err)
+		spew.Dump(metricsData)
+	}
 
 	// Test we can use a restricted field after authentication
 
@@ -123,12 +136,23 @@ func TestMutationResolver_Login_WithSystemAdministrator_InvalidPassword(t *testi
 
 	var result loginResult
 
+	metricsReader, meterProvider := test_telemetry.SetupTestMeter(t)
+
 	req := test_graphql.NewRequest(t, query)
-	test_graphql.Handle(t, api.ResolverDependencies{DB: db, TimeSource: timeSource}, req, &result)
+	test_graphql.Handle(t, api.ResolverDependencies{DB: db, TimeSource: timeSource, MeterProvider: meterProvider}, req, &result)
 	test_graphql.RequireNoErrors(t, result.GraphqlErrors)
 
 	require.NotNil(t, result.Data.Result.Error, "result.error")
 	assert.Equal(t, "invalidCredentials", result.Data.Result.Error.Code, "result.error.code")
+
+	test_telemetry.AssertMeterCounter(t, metricsReader, "authentication", "login.invalid_credentials", 1)
+
+	{
+		metricsData := metricdata.ResourceMetrics{}
+		err := metricsReader.Collect(context.Background(), &metricsData)
+		require.NoError(t, err)
+		spew.Dump(metricsData)
+	}
 }
 
 func TestMutationResolver_Login_WithOrganisationAdministrator_Valid(t *testing.T) {

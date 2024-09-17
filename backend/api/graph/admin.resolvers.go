@@ -24,15 +24,15 @@ func (r *mutationResolver) CreateAccount(ctx context.Context, role domain_model.
 	}
 
 	// Only set OrganisationID if the role fits (work around an issue with selecting an organisation and then changing the role in the admin UI)
-	if domain_model.Role(role) != domain_model.RoleSystemAdministrator {
+	if role != domain_model.RoleSystemAdministrator {
 		cmd.OrganisationID = helper.ToNullUUID(organisationID)
 	}
-	err = r.Handler().AccountCreate(ctx, cmd)
+	err = r.handler.AccountCreate(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	record, err := r.Finder().QueryAccount(ctx, domain_model.AccountQuery{
+	record, err := r.finder.QueryAccount(ctx, domain_model.AccountQuery{
 		AccountID: cmd.AccountID,
 	})
 	if err != nil {
@@ -44,7 +44,7 @@ func (r *mutationResolver) CreateAccount(ctx context.Context, role domain_model.
 // UpdateAccount is the resolver for the updateAccount field.
 func (r *mutationResolver) UpdateAccount(ctx context.Context, id uuid.UUID, role domain_model.Role, emailAddress string, password *string, organisationID *uuid.UUID) (*model.Account, error) {
 	// Fetch previous record to get organisation id
-	prevRecord, err := r.Finder().QueryAccount(ctx, domain_model.AccountQuery{
+	prevRecord, err := r.finder.QueryAccount(ctx, domain_model.AccountQuery{
 		AccountID: id,
 	})
 	if err != nil {
@@ -56,15 +56,15 @@ func (r *mutationResolver) UpdateAccount(ctx context.Context, id uuid.UUID, role
 		return nil, err
 	}
 	// Only set NewOrganisationID if the role fits (work around an issue with selecting an organisation and then changing the role in the admin UI)
-	if domain_model.Role(role) != domain_model.RoleSystemAdministrator {
+	if role != domain_model.RoleSystemAdministrator {
 		cmd.NewOrganisationID = helper.ToNullUUID(organisationID)
 	}
-	err = r.Handler().AccountUpdate(ctx, cmd)
+	err = r.handler.AccountUpdate(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	record, err := r.Finder().QueryAccount(ctx, domain_model.AccountQuery{
+	record, err := r.finder.QueryAccount(ctx, domain_model.AccountQuery{
 		AccountID: id,
 	})
 	if err != nil {
@@ -75,7 +75,7 @@ func (r *mutationResolver) UpdateAccount(ctx context.Context, id uuid.UUID, role
 
 // DeleteAccount is the resolver for the deleteAccount field.
 func (r *mutationResolver) DeleteAccount(ctx context.Context, id uuid.UUID) (*model.Account, error) {
-	record, err := r.Finder().QueryAccount(ctx, domain_model.AccountQuery{
+	record, err := r.finder.QueryAccount(ctx, domain_model.AccountQuery{
 		AccountID: id,
 	})
 	if err != nil {
@@ -83,7 +83,7 @@ func (r *mutationResolver) DeleteAccount(ctx context.Context, id uuid.UUID) (*mo
 	}
 
 	cmd := domain_model.NewAccountDeleteCmd(id, record.OrganisationID)
-	err = r.Handler().AccountDelete(ctx, cmd)
+	err = r.handler.AccountDelete(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -97,11 +97,11 @@ func (r *mutationResolver) CreateOrganisation(ctx context.Context, name string) 
 		return nil, err
 	}
 	cmd.Name = name
-	err = r.Handler().OrganisationCreate(ctx, cmd)
+	err = r.handler.OrganisationCreate(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
-	record, err := r.Finder().QueryOrganisation(ctx, domain_model.OrganisationQuery{
+	record, err := r.finder.QueryOrganisation(ctx, domain_model.OrganisationQuery{
 		OrganisationID: cmd.OrganisationID,
 	})
 	if err != nil {
@@ -116,11 +116,11 @@ func (r *mutationResolver) UpdateOrganisation(ctx context.Context, id uuid.UUID,
 		OrganisationID: id,
 		Name:           name,
 	}
-	err := r.Handler().OrganisationUpdate(ctx, cmd)
+	err := r.handler.OrganisationUpdate(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
-	record, err := r.Finder().QueryOrganisation(ctx, domain_model.OrganisationQuery{
+	record, err := r.finder.QueryOrganisation(ctx, domain_model.OrganisationQuery{
 		OrganisationID: id,
 	})
 	if err != nil {
@@ -131,7 +131,7 @@ func (r *mutationResolver) UpdateOrganisation(ctx context.Context, id uuid.UUID,
 
 // DeleteOrganisation is the resolver for the deleteOrganisation field.
 func (r *mutationResolver) DeleteOrganisation(ctx context.Context, id uuid.UUID) (*model.Organisation, error) {
-	record, err := r.Finder().QueryOrganisation(ctx, domain_model.OrganisationQuery{
+	record, err := r.finder.QueryOrganisation(ctx, domain_model.OrganisationQuery{
 		OrganisationID: id,
 	})
 	if err != nil {
@@ -139,7 +139,7 @@ func (r *mutationResolver) DeleteOrganisation(ctx context.Context, id uuid.UUID)
 	}
 
 	cmd := domain_model.NewOrganisationDeleteCmd(id)
-	err = r.Handler().OrganisationDelete(ctx, cmd)
+	err = r.handler.OrganisationDelete(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +148,7 @@ func (r *mutationResolver) DeleteOrganisation(ctx context.Context, id uuid.UUID)
 
 // Account is the resolver for the Account field.
 func (r *queryResolver) Account(ctx context.Context, id uuid.UUID) (*model.Account, error) {
-	record, err := r.Finder().QueryAccount(ctx, domain_model.AccountQuery{
+	record, err := r.finder.QueryAccount(ctx, domain_model.AccountQuery{
 		AccountID: id,
 	})
 	if err == repository.ErrNotFound {
@@ -167,7 +167,7 @@ func (r *queryResolver) AllAccounts(ctx context.Context, page *int, perPage *int
 	if err != nil {
 		return nil, err
 	}
-	records, err := r.Finder().QueryAccounts(ctx, query, paging)
+	records, err := r.finder.QueryAccounts(ctx, query, paging)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +177,7 @@ func (r *queryResolver) AllAccounts(ctx context.Context, page *int, perPage *int
 // AllAccountsMeta is the resolver for the _allAccountsMeta field.
 func (r *queryResolver) AllAccountsMeta(ctx context.Context, page *int, perPage *int, sortField *string, sortOrder *string, filter *model.AccountFilter) (*model.ListMetadata, error) {
 	query := helper.MapFromAccountFilter(filter)
-	count, err := r.Finder().CountAccounts(ctx, query)
+	count, err := r.finder.CountAccounts(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +188,7 @@ func (r *queryResolver) AllAccountsMeta(ctx context.Context, page *int, perPage 
 
 // Organisation is the resolver for the Organisation field.
 func (r *queryResolver) Organisation(ctx context.Context, id uuid.UUID) (*model.Organisation, error) {
-	record, err := r.Finder().QueryOrganisation(ctx, domain_model.OrganisationQuery{
+	record, err := r.finder.QueryOrganisation(ctx, domain_model.OrganisationQuery{
 		OrganisationID: id,
 	})
 	if err == repository.ErrNotFound {
@@ -207,7 +207,7 @@ func (r *queryResolver) AllOrganisations(ctx context.Context, page *int, perPage
 	if err != nil {
 		return nil, err
 	}
-	records, err := r.Finder().QueryOrganisations(ctx, query, paging)
+	records, err := r.finder.QueryOrganisations(ctx, query, paging)
 	if err != nil {
 		return nil, err
 	}
@@ -218,7 +218,7 @@ func (r *queryResolver) AllOrganisations(ctx context.Context, page *int, perPage
 func (r *queryResolver) AllOrganisationsMeta(ctx context.Context, page *int, perPage *int, sortField *string, sortOrder *string, filter *model.OrganisationFilter) (*model.ListMetadata, error) {
 	query := helper.MapToOrganisationsQuery(filter)
 
-	count, err := r.Finder().CountOrganisations(ctx, query)
+	count, err := r.finder.CountOrganisations(ctx, query)
 	if err != nil {
 		return nil, err
 	}

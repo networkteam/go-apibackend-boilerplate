@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"go.opentelemetry.io/otel/metric/noop"
 	"golang.org/x/crypto/bcrypt"
 
 	"myvendor.mytld/myproject/backend/api"
@@ -57,6 +58,10 @@ func SetTestDependencies(t *testing.T, deps *api.ResolverDependencies) {
 	if deps.Mailer == nil {
 		sender := fixture.NewSender()
 		deps.Mailer = mail.NewMailer(sender, mail.DefaultConfig(domain.DefaultConfig()))
+	}
+
+	if deps.MeterProvider == nil {
+		deps.MeterProvider = noop.NewMeterProvider()
 	}
 }
 

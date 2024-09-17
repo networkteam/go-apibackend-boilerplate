@@ -39,12 +39,9 @@ const (
 
 func NewGraphqlHandler(deps api.ResolverDependencies, handlerConfig Config) http.Handler {
 	config := generated.Config{
-		Resolvers: &graph.Resolver{
-			ResolverDependencies: deps,
-			ResolverConfig: api.ResolverConfig{
-				SensitiveOperationConstantTime: handlerConfig.SensitiveOperationConstantTime,
-			},
-		},
+		Resolvers: graph.NewResolver(deps, api.ResolverConfig{
+			SensitiveOperationConstantTime: handlerConfig.SensitiveOperationConstantTime,
+		}),
 		Directives: generated.DirectiveRoot{
 			// No op implementation, will be checked in middleware
 			BypassAuthentication: func(ctx context.Context, _ any, next graphql.Resolver) (res any, err error) {

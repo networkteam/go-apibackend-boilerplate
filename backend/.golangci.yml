@@ -6,7 +6,8 @@ run:
   tests: true
 
 output:
-  format: line-number
+  formats:
+    - format: line-number
 
 linters:
   # Disable all linters, so we enable linters explicitly

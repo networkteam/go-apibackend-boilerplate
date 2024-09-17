@@ -3,6 +3,8 @@ package handler
 import (
 	"database/sql"
 
+	"go.opentelemetry.io/otel/metric"
+
 	"myvendor.mytld/myproject/backend/domain"
 	"myvendor.mytld/myproject/backend/mail"
 )
@@ -12,18 +14,22 @@ type Handler struct {
 	timeSource domain.TimeSource
 	mailer     *mail.Mailer
 	config     domain.Config
+
+	instrumentation instrumentation
 }
 
 type Deps struct {
-	TimeSource domain.TimeSource
-	Mailer     *mail.Mailer
+	TimeSource    domain.TimeSource
+	Mailer        *mail.Mailer
+	MeterProvider metric.MeterProvider
 }
 
 func NewHandler(db *sql.DB, config domain.Config, deps Deps) *Handler {
 	return &Handler{
-		db:         db,
-		config:     config,
-		timeSource: deps.TimeSource,
-		mailer:     deps.Mailer,
+		db:              db,
+		config:          config,
+		timeSource:      deps.TimeSource,
+		mailer:          deps.Mailer,
+		instrumentation: initInstrumentation(deps.MeterProvider),
 	}
 }
