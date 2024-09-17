@@ -1,14 +1,11 @@
 package authentication_test
 
 import (
-	"context"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 
 	"myvendor.mytld/myproject/backend/api"
 	"myvendor.mytld/myproject/backend/test"
@@ -91,12 +88,7 @@ func TestMutationResolver_Login_WithSystemAdministrator_Valid(t *testing.T) {
 	setCookieHeader := resp.Header().Get("Set-Cookie")
 	assert.NotEmpty(t, setCookieHeader, "Set-Cookie header is set")
 
-	{
-		metricsData := metricdata.ResourceMetrics{}
-		err := metricsReader.Collect(context.Background(), &metricsData)
-		require.NoError(t, err)
-		spew.Dump(metricsData)
-	}
+	test_telemetry.AssertMeterCounter(t, metricsReader, "myvendor.mytld/myproject/backend/handler", "login.success.counter", 1)
 
 	// Test we can use a restricted field after authentication
 
@@ -145,14 +137,7 @@ func TestMutationResolver_Login_WithSystemAdministrator_InvalidPassword(t *testi
 	require.NotNil(t, result.Data.Result.Error, "result.error")
 	assert.Equal(t, "invalidCredentials", result.Data.Result.Error.Code, "result.error.code")
 
-	test_telemetry.AssertMeterCounter(t, metricsReader, "authentication", "login.invalid_credentials", 1)
-
-	{
-		metricsData := metricdata.ResourceMetrics{}
-		err := metricsReader.Collect(context.Background(), &metricsData)
-		require.NoError(t, err)
-		spew.Dump(metricsData)
-	}
+	test_telemetry.AssertMeterCounter(t, metricsReader, "myvendor.mytld/myproject/backend/handler", "login.failed.counter", 1)
 }
 
 func TestMutationResolver_Login_WithOrganisationAdministrator_Valid(t *testing.T) {

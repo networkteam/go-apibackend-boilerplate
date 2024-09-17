@@ -12,6 +12,8 @@ import (
 )
 
 func SetupTestMeter(t *testing.T) (*metric.ManualReader, metric2.MeterProvider) {
+	t.Helper()
+
 	reader := metric.NewManualReader()
 	provider := metric.NewMeterProvider(metric.WithReader(reader))
 
@@ -30,28 +32,21 @@ func AssertMeterCounter(t *testing.T, reader metric.Reader, scope, name string, 
 	err := reader.Collect(context.Background(), &metricsData)
 	require.NoError(t, err)
 
-	var scopeMetrics *metricdata.ScopeMetrics
-	for _, scopeMetrics = range metricsData.ScopeMetrics {
-		if scopeMetrics.Scope.Name == scope {
-			break
-		}
-	}
-	if scopeMetrics == nil {
+	scopeMetrics, found := find(metricsData.ScopeMetrics, func(m metricdata.ScopeMetrics) bool {
+		return m.Scope.Name == scope
+	})
+	if !found {
 		t.Fatalf("metrics for scope %q not found", scope)
 	}
-
-	var metrics *metricdata.Metrics
-	for _, metrics = range scopeMetrics.Metrics {
-		if metrics.Name == name {
-			break
-		}
-	}
-	if metrics == nil {
+	metrics, found := find(scopeMetrics.Metrics, func(m metricdata.Metrics) bool {
+		return m.Name == name
+	})
+	if !found {
 		t.Fatalf("metrics for name %q not found", name)
 	}
 
-	agg, ok := metrics.Data.(metricdata.Sum[int64])
-	if !ok {
+	agg, found := metrics.Data.(metricdata.Sum[int64])
+	if !found {
 		t.Fatalf("metrics for name %q is not a counter", name)
 	}
 	var sum int64
@@ -60,4 +55,14 @@ func AssertMeterCounter(t *testing.T, reader metric.Reader, scope, name string, 
 	}
 
 	assert.Equal(t, want, sum, "sum of metric %q in scope %q", name, scope)
+}
+
+func find[T any](slice []T, predicate func(T) bool) (T, bool) {
+	for _, item := range slice {
+		if predicate(item) {
+			return item, true
+		}
+	}
+	var zero T
+	return zero, false
 }
