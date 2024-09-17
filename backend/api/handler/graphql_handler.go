@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -12,6 +13,8 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/gorilla/websocket"
+	"github.com/ravilushqa/otelgqlgen"
+	"go.opentelemetry.io/otel/attribute"
 
 	"myvendor.mytld/myproject/backend/api"
 	"myvendor.mytld/myproject/backend/api/graph"
@@ -23,23 +26,25 @@ import (
 type Config struct {
 	EnableTracing        bool
 	EnableLogging        bool
+	EnableOpenTelemetry  bool
 	DisableRecover       bool
 	WebsocketAllowOrigin string
 	// Constant time duration for sensitive operations (e.g. login / request password reset / perform password reset / registration)
 	SensitiveOperationConstantTime time.Duration
 }
 
+const (
+	requestVariablesPrefix = "gql.request.variables"
+)
+
 func NewGraphqlHandler(deps api.ResolverDependencies, handlerConfig Config) http.Handler {
 	config := generated.Config{
-		Resolvers: &graph.Resolver{
-			ResolverDependencies: deps,
-			ResolverConfig: api.ResolverConfig{
-				SensitiveOperationConstantTime: handlerConfig.SensitiveOperationConstantTime,
-			},
-		},
+		Resolvers: graph.NewResolver(deps, api.ResolverConfig{
+			SensitiveOperationConstantTime: handlerConfig.SensitiveOperationConstantTime,
+		}),
 		Directives: generated.DirectiveRoot{
 			// No op implementation, will be checked in middleware
-			BypassAuthentication: func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error) {
+			BypassAuthentication: func(ctx context.Context, _ any, next graphql.Resolver) (res any, err error) {
 				return next(ctx)
 			},
 		},
@@ -47,6 +52,26 @@ func NewGraphqlHandler(deps api.ResolverDependencies, handlerConfig Config) http
 	exec := generated.NewExecutableSchema(config)
 	srv := newDefaultServer(exec, handlerConfig)
 	srv.SetErrorPresenter(ErrorPresenter)
+
+	if handlerConfig.EnableOpenTelemetry {
+		srv.Use(otelgqlgen.Middleware(
+			otelgqlgen.WithRequestVariablesAttributesBuilder(
+				func(requestVariables map[string]any) []attribute.KeyValue {
+					variables := make([]attribute.KeyValue, 0, len(requestVariables))
+					for k, v := range requestVariables {
+						switch k {
+						case "password":
+							v = "********"
+						}
+						variables = append(variables,
+							attribute.String(fmt.Sprintf("%s.%s", requestVariablesPrefix, k), fmt.Sprintf("%+v", v)),
+						)
+					}
+					return variables
+				},
+			),
+		))
+	}
 
 	if handlerConfig.EnableLogging {
 		srv.AroundFields(graphql_middleware.LoggerFieldMiddleware)

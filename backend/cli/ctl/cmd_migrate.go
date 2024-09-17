@@ -12,7 +12,7 @@ func newMigrateCmd() *cli.Command {
 	return &cli.Command{
 		Name:  "migrate",
 		Usage: "Manage database migrations",
-		Before: func(c *cli.Context) error {
+		Before: func(_ *cli.Context) error {
 			goose.SetBaseFS(migrations.FS)
 			return nil
 		},

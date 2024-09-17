@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	stderrors "errors"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,8 +20,11 @@ import (
 	"github.com/networkteam/apexlogutils"
 	"github.com/networkteam/apexlogutils/httplog"
 	apexlogutils_middleware "github.com/networkteam/apexlogutils/middleware"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/robfig/cron"
 	"github.com/urfave/cli/v2"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
 
 	"myvendor.mytld/myproject/backend/api"
 	api_handler "myvendor.mytld/myproject/backend/api/handler"
@@ -80,6 +84,12 @@ func newServerCmd() *cli.Command {
 				EnvVars: []string{"SENTRY_RELEASE"},
 			},
 
+			&cli.BoolFlag{
+				Name:    "open-telemetry-enabled",
+				Usage:   "Enable open telemetry",
+				EnvVars: []string{"OPEN_TELEMETRY_ENABLED"},
+			},
+
 			&cli.DurationFlag{
 				Name:    "sensitive-operation-constant-time",
 				Usage:   "Constant time duration to wait for sensitive operations (e.g. login / request password reset / perform password reset / registration), to prevent timing attacks",
@@ -96,7 +106,7 @@ func newServerCmd() *cli.Command {
 	}
 }
 
-func serverAction(c *cli.Context) error {
+func serverAction(c *cli.Context) (err error) {
 	// This action is where the server is set up and dependencies are wired
 	// -- make sure to keep it clean and with clear intention what is done here
 
@@ -104,7 +114,7 @@ func serverAction(c *cli.Context) error {
 
 	// Initialize sentry
 	defer sentry.Recover()
-	err := initializeSentry(c, "backend")
+	err = initializeSentry(c, "backend")
 	if err != nil {
 		return err
 	}
@@ -132,6 +142,20 @@ func serverAction(c *cli.Context) error {
 	// Set up signal handling, should be called before starting background processing
 	setupCancelOnSignal(c)
 
+	config, err := getConfig(c)
+	if err != nil {
+		return err
+	}
+
+	// Set up OpenTelemetry with global providers
+	otelShutdown, err := setupOTelSDK(c, config)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		err = stderrors.Join(err, otelShutdown(context.Background()))
+	}()
+
 	shutdownCronJobs, err := startCronJobs(c, db)
 	if err != nil {
 		return err
@@ -139,20 +163,17 @@ func serverAction(c *cli.Context) error {
 
 	mux := http.NewServeMux()
 
-	config, err := getConfig(c)
-	if err != nil {
-		return err
-	}
-
 	deps := api.ResolverDependencies{
-		DB:         db,
-		TimeSource: timeSource,
-		Mailer:     mailer,
-		Config:     config,
+		DB:            db,
+		TimeSource:    timeSource,
+		Config:        config,
+		Mailer:        mailer,
+		MeterProvider: otel.GetMeterProvider(),
 	}
 	graphqlHandler := api_handler.NewGraphqlHandler(deps, api_handler.Config{
 		EnableTracing:                  false,
 		EnableLogging:                  true,
+		EnableOpenTelemetry:            c.Bool("open-telemetry-enabled"),
 		DisableRecover:                 false,
 		WebsocketAllowOrigin:           c.String("websocket-allow-origin"),
 		SensitiveOperationConstantTime: c.Duration("sensitive-operation-constant-time"),
@@ -163,9 +184,15 @@ func serverAction(c *cli.Context) error {
 		mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	}
 
+	if c.Bool("open-telemetry-enabled") {
+		graphqlHandler = otelhttp.NewHandler(graphqlHandler, "/query")
+	}
+
 	mux.Handle("/query", http_api.MiddlewareStackWithAuth(deps, graphqlHandler))
 	mux.HandleFunc("/healthz", api_handler.NewHealthzHandler(db))
+	mux.Handle("/metrics", promhttp.Handler())
 
+	// FIXME RequestID should be replaced by OpenTelemetry (?)
 	rootHandler := apexlogutils_middleware.RequestID(
 		httplog.New(
 			mux,
@@ -180,10 +207,11 @@ func serverAction(c *cli.Context) error {
 		log.Infof("Connects to http://%s/ for GraphQL playground", address)
 	}
 
-	return serve(c, rootHandler, func(c *cli.Context) error {
+	err = serve(c, rootHandler, func(_ *cli.Context) error {
 		shutdownCronJobs()
 		return nil
 	})
+	return err
 }
 
 func serve(c *cli.Context, handler http.Handler, onShutdown func(c *cli.Context) error) (err error) {

@@ -103,13 +103,13 @@ func WithSort(field, order string) PagingOption {
 }
 
 func WithLimit(limit int) PagingOption {
-	return func(query builder.SelectBuilder, sortFieldMapping map[string]builder.IdentExp) (builder.SelectBuilder, error) {
+	return func(query builder.SelectBuilder, _ map[string]builder.IdentExp) (builder.SelectBuilder, error) {
 		return query.Limit(builder.Arg(limit)), nil
 	}
 }
 
 func WithOffset(offset int) PagingOption {
-	return func(query builder.SelectBuilder, sortFieldMapping map[string]builder.IdentExp) (builder.SelectBuilder, error) {
+	return func(query builder.SelectBuilder, _ map[string]builder.IdentExp) (builder.SelectBuilder, error) {
 		return query.Offset(builder.Arg(offset)), nil
 	}
 }

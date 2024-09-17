@@ -47,6 +47,8 @@ func (h *Handler) Login(ctx context.Context, cmd domain.LoginCmd) (err error) {
 				Warn("Login failed, invalid password")
 		}
 
+		h.instrumentation.loginFailedCounter.Add(ctx, 1)
+
 		return ErrLoginInvalidCredentials
 	}
 
@@ -56,6 +58,8 @@ func (h *Handler) Login(ctx context.Context, cmd domain.LoginCmd) (err error) {
 	if err != nil {
 		return fog_errors.Wrap(err, "updating account last login")
 	}
+
+	h.instrumentation.loginSuccessCounter.Add(ctx, 1)
 
 	log.
 		WithField("emailAddress", cmd.EmailAddress).
