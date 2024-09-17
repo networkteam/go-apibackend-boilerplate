@@ -5,13 +5,6 @@ import (
 	"go.opentelemetry.io/otel/metric/noop"
 )
 
-func mustInstrument[T any](instrument T, err error) T {
-	if err != nil {
-		panic(err)
-	}
-	return instrument
-}
-
 type instrumentation struct {
 	loginSuccessCounter metric.Int64Counter
 	loginFailedCounter  metric.Int64Counter
@@ -36,4 +29,11 @@ func initInstrumentation(provider metric.MeterProvider) instrumentation {
 			metric.WithUnit("{call}"),
 		)),
 	}
+}
+
+func mustInstrument[T any](instrument T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return instrument
 }

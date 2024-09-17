@@ -6,16 +6,16 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	metric2 "go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/metric"
+	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 )
 
-func SetupTestMeter(t *testing.T) (*metric.ManualReader, metric2.MeterProvider) {
+func SetupTestMeter(t *testing.T) (*sdkmetric.ManualReader, metric.MeterProvider) {
 	t.Helper()
 
-	reader := metric.NewManualReader()
-	provider := metric.NewMeterProvider(metric.WithReader(reader))
+	reader := sdkmetric.NewManualReader()
+	provider := sdkmetric.NewMeterProvider(sdkmetric.WithReader(reader))
 
 	t.Cleanup(func() {
 		err := provider.Shutdown(context.Background())
@@ -25,7 +25,7 @@ func SetupTestMeter(t *testing.T) (*metric.ManualReader, metric2.MeterProvider) 
 	return reader, provider
 }
 
-func AssertMeterCounter(t *testing.T, reader metric.Reader, scope, name string, want int64) {
+func AssertMeterCounter(t *testing.T, reader sdkmetric.Reader, scope, name string, want int64) {
 	t.Helper()
 
 	metricsData := metricdata.ResourceMetrics{}
