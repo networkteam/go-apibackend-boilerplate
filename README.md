@@ -16,6 +16,8 @@ That's why a boilerplate can be better shaped and has fewer abstractions than us
 * Database migrations with [pressly/goose](https://github.com/pressly/goose/)
 * Mail sending with templates
 * Fully testable with functional tests for API and database fixtures
+* HTTP server with graceful shutdown
+* OpenTelemetry instrumentation
 
 ## Usage
 
