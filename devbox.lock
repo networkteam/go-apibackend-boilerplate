@@ -320,28 +320,12 @@
       }
     },
     "python310Packages.pip": {
-      "plugin_version": "0.0.2",
       "resolved": "github:NixOS/nixpkgs/75a52265bda7fd25e06e3a67dee3f0354e73243c#python310Packages.pip",
-      "source": "nixpkg",
-      "systems": {
-        "aarch64-darwin": {
-          "outputs": [
-            {
-              "name": "man",
-              "path": "/nix/store/q6f3v1y0pnpfhwk218xyfxx6yvdngaz4-python3.10-pip-23.2.1-man",
-              "default": true
-            },
-            {
-              "path": "/nix/store/vyh7bsqnpg3v2y8fvw5h8x8dfm0r6bmf-python3.10-pip-23.2.1",
-              "default": true
-            }
-          ]
-        }
-      }
+      "source": "nixpkg"
     },
     "python@3.10": {
       "last_modified": "2024-07-07T07:43:47Z",
-      "plugin_version": "0.0.3",
+      "plugin_version": "0.0.4",
       "resolved": "github:NixOS/nixpkgs/b60793b86201040d9dee019a05089a9150d08b5b#python310",
       "source": "devbox-search",
       "version": "3.10.14",
