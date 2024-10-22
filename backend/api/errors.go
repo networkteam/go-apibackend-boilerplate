@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"myvendor.mytld/myproject/backend/api/graph/model"
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/types"
 )
 
 var ErrAuthTokenInvalid = TypedError{"authTokenInvalid", "auth token invalid"}
@@ -43,7 +43,7 @@ func ResultFromErr(err error) (*model.Result, error) {
 }
 
 func FieldsErrorFromErr(err error) *model.FieldsError {
-	var fieldErr domain.FieldResolvableError
+	var fieldErr types.FieldResolvableError
 	if errors.As(err, &fieldErr) {
 		return &model.FieldsError{
 			Errors: []*model.FieldError{

@@ -6,7 +6,10 @@ import (
 	qrb "github.com/networkteam/qrb"
 	builder "github.com/networkteam/qrb/builder"
 	fn "github.com/networkteam/qrb/fn"
-	domain "myvendor.mytld/myproject/backend/domain"
+
+	"myvendor.mytld/myproject/backend/domain/model"
+	domain "myvendor.mytld/myproject/backend/domain/types"
+
 	"time"
 )
 
@@ -78,7 +81,7 @@ func (c AccountChangeSet) toMap() map[string]interface{} {
 	return m
 }
 
-func AccountToChangeSet(r domain.Account) (c AccountChangeSet) {
+func AccountToChangeSet(r model.Account) (c AccountChangeSet) {
 	if r.ID != uuid.Nil {
 		c.ID = &r.ID
 	}

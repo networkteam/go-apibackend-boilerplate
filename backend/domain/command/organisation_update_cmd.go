@@ -1,7 +1,9 @@
-package domain
+package command
 
 import (
 	"github.com/gofrs/uuid"
+
+	"myvendor.mytld/myproject/backend/domain/types"
 )
 
 type OrganisationUpdateCmd struct {
@@ -10,10 +12,10 @@ type OrganisationUpdateCmd struct {
 }
 
 func (c OrganisationUpdateCmd) Validate() error {
-	if IsBlank(c.Name) {
-		return FieldError{
+	if isBlank(c.Name) {
+		return types.FieldError{
 			Field: "name",
-			Code:  ErrorCodeRequired,
+			Code:  types.ErrorCodeRequired,
 		}
 	}
 

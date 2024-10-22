@@ -6,17 +6,17 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/types"
 )
 
 type Account struct {
-	ID             uuid.UUID   `json:"id"`
-	EmailAddress   string      `json:"emailAddress"`
-	Role           domain.Role `json:"role"`
-	LastLogin      *time.Time  `json:"lastLogin,omitempty"`
-	OrganisationID *uuid.UUID  `json:"organisationId,omitempty"`
-	CreatedAt      time.Time   `json:"createdAt"`
-	UpdatedAt      time.Time   `json:"updatedAt"`
+	ID             uuid.UUID  `json:"id"`
+	EmailAddress   string     `json:"emailAddress"`
+	Role           types.Role `json:"role"`
+	LastLogin      *time.Time `json:"lastLogin,omitempty"`
+	OrganisationID *uuid.UUID `json:"organisationId,omitempty"`
+	CreatedAt      time.Time  `json:"createdAt"`
+	UpdatedAt      time.Time  `json:"updatedAt"`
 }
 
 type AccountFilter struct {

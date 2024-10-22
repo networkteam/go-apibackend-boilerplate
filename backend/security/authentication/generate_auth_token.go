@@ -7,7 +7,7 @@ import (
 	"github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
 
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/types"
 )
 
 const (
@@ -32,7 +32,7 @@ func TokenOptsForAccount(_ RoleIdentifierProvider, extendedExpiry bool) TokenOpt
 	}
 }
 
-func GenerateAuthToken(account AuthTokenDataProvider, timeSource domain.TimeSource, opts TokenOpts) (string, error) {
+func GenerateAuthToken(account AuthTokenDataProvider, timeSource types.TimeSource, opts TokenOpts) (string, error) {
 	key := account.GetTokenSecret()
 	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: key}, (&jose.SignerOptions{}).WithType("JWT"))
 	if err != nil {

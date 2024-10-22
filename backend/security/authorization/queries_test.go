@@ -6,7 +6,8 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/require"
 
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/model"
+	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/security/authentication"
 	"myvendor.mytld/myproject/backend/security/authorization"
 )
@@ -18,16 +19,16 @@ func TestAuthorizer_AllowsAccountView(t *testing.T) {
 	tests := []struct {
 		name    string
 		authCtx authentication.AuthContext
-		record  domain.Account
+		record  model.Account
 		wantErr bool
 	}{
 		{
 			name:    "unauthenticated",
 			authCtx: authentication.AuthContext{},
-			record: domain.Account{
+			record: model.Account{
 				ID:             fixtureAccountID,
 				OrganisationID: uuid.NullUUID{UUID: fixtureOrganisationID, Valid: true},
-				Role:           domain.RoleOrganisationAdministrator,
+				Role:           types.RoleOrganisationAdministrator,
 			},
 			wantErr: true,
 		},
@@ -37,12 +38,12 @@ func TestAuthorizer_AllowsAccountView(t *testing.T) {
 				Authenticated:  true,
 				AccountID:      fixtureAccountID,
 				OrganisationID: &fixtureOrganisationID,
-				Role:           domain.RoleOrganisationAdministrator,
+				Role:           types.RoleOrganisationAdministrator,
 			},
-			record: domain.Account{
+			record: model.Account{
 				ID:             uuid.Must(uuid.FromString("f49c01b7-15a6-48ad-8989-f2fd4e5fa5c1")),
 				OrganisationID: uuid.NullUUID{UUID: fixtureOrganisationID, Valid: true},
-				Role:           domain.RoleOrganisationAdministrator,
+				Role:           types.RoleOrganisationAdministrator,
 			},
 			wantErr: false,
 		},
@@ -52,12 +53,12 @@ func TestAuthorizer_AllowsAccountView(t *testing.T) {
 				Authenticated:  true,
 				AccountID:      fixtureAccountID,
 				OrganisationID: &fixtureOrganisationID,
-				Role:           domain.RoleOrganisationAdministrator,
+				Role:           types.RoleOrganisationAdministrator,
 			},
-			record: domain.Account{
+			record: model.Account{
 				ID:             uuid.Must(uuid.FromString("f49c01b7-15a6-48ad-8989-f2fd4e5fa5c1")),
 				OrganisationID: uuid.NullUUID{UUID: uuid.Must(uuid.FromString("f9e84475-45f9-47d1-a58c-e416f1c7f39d")), Valid: true},
-				Role:           domain.RoleOrganisationAdministrator,
+				Role:           types.RoleOrganisationAdministrator,
 			},
 			wantErr: true,
 		},
@@ -66,12 +67,12 @@ func TestAuthorizer_AllowsAccountView(t *testing.T) {
 			authCtx: authentication.AuthContext{
 				Authenticated: true,
 				AccountID:     fixtureAccountID,
-				Role:          domain.RoleSystemAdministrator,
+				Role:          types.RoleSystemAdministrator,
 			},
-			record: domain.Account{
+			record: model.Account{
 				ID:             uuid.Must(uuid.FromString("f49c01b7-15a6-48ad-8989-f2fd4e5fa5c1")),
 				OrganisationID: uuid.NullUUID{UUID: uuid.Must(uuid.FromString("f9e84475-45f9-47d1-a58c-e416f1c7f39d")), Valid: true},
-				Role:           domain.RoleOrganisationAdministrator,
+				Role:           types.RoleOrganisationAdministrator,
 			},
 			wantErr: false,
 		},

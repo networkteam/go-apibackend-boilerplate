@@ -4,10 +4,11 @@ import (
 	"context"
 
 	"myvendor.mytld/myproject/backend/api/graph/model"
-	"myvendor.mytld/myproject/backend/domain"
+	model2 "myvendor.mytld/myproject/backend/domain/model"
+	"myvendor.mytld/myproject/backend/domain/query"
 )
 
-func MapToOrganisation(record domain.Organisation) *model.Organisation {
+func MapToOrganisation(record model2.Organisation) *model.Organisation {
 	return &model.Organisation{
 		ID:        record.ID,
 		Name:      record.Name,
@@ -16,7 +17,7 @@ func MapToOrganisation(record domain.Organisation) *model.Organisation {
 	}
 }
 
-func MapToOrganisations(records []domain.Organisation) []*model.Organisation {
+func MapToOrganisations(records []model2.Organisation) []*model.Organisation {
 	result := make([]*model.Organisation, len(records))
 	for i, record := range records {
 		result[i] = MapToOrganisation(record)
@@ -24,16 +25,16 @@ func MapToOrganisations(records []domain.Organisation) []*model.Organisation {
 	return result
 }
 
-func MapToOrganisationsQuery(filter *model.OrganisationFilter) domain.OrganisationsQuery {
+func MapToOrganisationsQuery(filter *model.OrganisationFilter) query.OrganisationsQuery {
 	if filter == nil {
-		return domain.OrganisationsQuery{}
+		return query.OrganisationsQuery{}
 	}
-	return domain.OrganisationsQuery{
+	return query.OrganisationsQuery{
 		IDs:        filter.Ids,
 		SearchTerm: ToVal(filter.Q),
 	}
 }
 
-func OrganisationQueryOptsFromSelection(ctx context.Context, organisationSelectPath ...string) domain.OrganisationQueryOpts {
-	return domain.OrganisationQueryOpts{}
+func OrganisationQueryOptsFromSelection(ctx context.Context, organisationSelectPath ...string) *query.OrganisationQueryOpts {
+	return &query.OrganisationQueryOpts{}
 }

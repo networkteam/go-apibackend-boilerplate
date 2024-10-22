@@ -18,6 +18,7 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/mail"
 	"myvendor.mytld/myproject/backend/mail/smtp"
 	"myvendor.mytld/myproject/backend/security/authentication"
@@ -103,7 +104,7 @@ func main() {
 			// Pretend the CLI has a SystemAdministrator role (without setting an account)
 			c.Context = authentication.WithAuthContext(c.Context, authentication.AuthContext{
 				Authenticated: true,
-				Role:          domain.RoleSystemAdministrator,
+				Role:          types.RoleSystemAdministrator,
 			})
 
 			return nil

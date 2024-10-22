@@ -1,4 +1,4 @@
-package domain
+package model
 
 import (
 	"time"
@@ -15,17 +15,4 @@ type Organisation struct {
 
 	CreatedAt time.Time `read_col:"organisations.created_at,sortable"`
 	UpdatedAt time.Time `read_col:"organisations.updated_at,sortable"`
-}
-
-type OrganisationsQuery struct {
-	IDs        []uuid.UUID
-	SearchTerm string
-}
-
-func (f *OrganisationsQuery) SetOrganisationID(organisationID *uuid.UUID) {
-	if organisationID != nil {
-		f.IDs = []uuid.UUID{*organisationID}
-	} else {
-		f.IDs = nil
-	}
 }

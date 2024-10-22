@@ -7,14 +7,16 @@ import (
 	logger "github.com/apex/log"
 	fog_errors "github.com/friendsofgo/errors"
 
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/command"
+	"myvendor.mytld/myproject/backend/domain/model"
+	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/persistence/repository"
 	security_helper "myvendor.mytld/myproject/backend/security/helper"
 )
 
 var ErrLoginInvalidCredentials = std_errors.New("invalid credentials")
 
-func (h *Handler) Login(ctx context.Context, cmd domain.LoginCmd) (err error) {
+func (h *Handler) Login(ctx context.Context, cmd command.LoginCmd) (err error) {
 	log := logger.
 		FromContext(ctx).
 		WithField("handler", "login")
@@ -26,7 +28,7 @@ func (h *Handler) Login(ctx context.Context, cmd domain.LoginCmd) (err error) {
 	account := cmd.Account
 	if cmd.Account == nil {
 		// Use an empty user to have constant password compare times
-		account = domain.Account{
+		account = model.Account{
 			PasswordHash: security_helper.DefaultHashForComparison(h.config.HashCost),
 		}
 	}
@@ -37,7 +39,7 @@ func (h *Handler) Login(ctx context.Context, cmd domain.LoginCmd) (err error) {
 		if cmd.Account == nil {
 			log.
 				WithField("emailAddress", cmd.EmailAddress).
-				WithField("errorCode", domain.ErrorCodeNotExists).
+				WithField("errorCode", types.ErrorCodeNotExists).
 				Warn("Login failed, account not found")
 		} else {
 			log.

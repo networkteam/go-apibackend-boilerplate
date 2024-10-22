@@ -10,26 +10,27 @@ import (
 	"github.com/networkteam/qrb/fn"
 	"github.com/networkteam/qrb/qrbsql"
 
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/model"
+	domain_query "myvendor.mytld/myproject/backend/domain/query"
 )
 
 type OrganisationsFilter struct {
-	Opts       domain.OrganisationQueryOpts
+	Opts       *domain_query.OrganisationQueryOpts
 	IDs        []uuid.UUID
 	SearchTerm string
 }
 
-func organisationBuildFindQuery(opts domain.OrganisationQueryOpts) builder.SelectBuilder {
+func organisationBuildFindQuery(opts *domain_query.OrganisationQueryOpts) builder.SelectBuilder {
 	return Select(buildOrganisationJSON(opts)).
 		From(organisation).
 		SelectBuilder
 }
 
-func FindOrganisationByID(ctx context.Context, executor qrbsql.Executor, id uuid.UUID, opts domain.OrganisationQueryOpts) (domain.Organisation, error) {
+func FindOrganisationByID(ctx context.Context, executor qrbsql.Executor, id uuid.UUID, opts *domain_query.OrganisationQueryOpts) (model.Organisation, error) {
 	query := organisationBuildFindQuery(opts).
 		Where(organisation.ID.Eq(Arg(id)))
 
-	return constructsql.ScanRow[domain.Organisation](
+	return constructsql.ScanRow[model.Organisation](
 		qrbsql.Build(query).WithExecutor(executor).QueryRow(ctx),
 	)
 }
@@ -46,7 +47,7 @@ func applyOrganisationFilter(filter OrganisationsFilter) func(q builder.SelectBu
 	}
 }
 
-func FindAllOrganisations(ctx context.Context, executor qrbsql.Executor, filter OrganisationsFilter, pagingOpts ...PagingOption) ([]domain.Organisation, error) {
+func FindAllOrganisations(ctx context.Context, executor qrbsql.Executor, filter OrganisationsFilter, pagingOpts ...PagingOption) ([]model.Organisation, error) {
 	query := organisationBuildFindQuery(filter.Opts).
 		ApplyIf(true, applyOrganisationFilter(filter))
 
@@ -55,7 +56,7 @@ func FindAllOrganisations(ctx context.Context, executor qrbsql.Executor, filter 
 		return nil, err
 	}
 
-	return constructsql.CollectRows[domain.Organisation](
+	return constructsql.CollectRows[model.Organisation](
 		qrbsql.Build(query).WithExecutor(executor).Query(ctx),
 	)
 }
@@ -101,6 +102,6 @@ func OrganisationConstraintErr(error) error {
 	return nil
 }
 
-func buildOrganisationJSON(domain.OrganisationQueryOpts) builder.JsonBuildObjectBuilder {
+func buildOrganisationJSON(*domain_query.OrganisationQueryOpts) builder.JsonBuildObjectBuilder {
 	return organisationDefaultJson
 }

@@ -1,4 +1,4 @@
-package domain
+package types
 
 // Copied from cloud.google.com/go/civil
 

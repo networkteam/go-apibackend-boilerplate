@@ -9,7 +9,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	apexlogutils_middleware "github.com/networkteam/apexlogutils/middleware"
 
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/types"
 )
 
 func SentryGraphqlMiddleware(ctx context.Context, next graphql.Resolver) (res any, err error) {
@@ -18,7 +18,7 @@ func SentryGraphqlMiddleware(ctx context.Context, next graphql.Resolver) (res an
 	res, err = next(ctx)
 	if err != nil {
 		// Skip field resolvable errors, since these are expected to occur
-		var fieldErr domain.FieldResolvableError
+		var fieldErr types.FieldResolvableError
 		if errors.As(err, &fieldErr) {
 			return nil, err
 		}

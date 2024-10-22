@@ -1,4 +1,4 @@
-package domain
+package model
 
 import (
 	"time"
@@ -6,6 +6,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/networkteam/construct/v2"
 
+	"myvendor.mytld/myproject/backend/domain/types"
 	security_helper "myvendor.mytld/myproject/backend/security/helper"
 )
 
@@ -18,7 +19,7 @@ type Account struct {
 	EmailAddress   string        `read_col:"accounts.email_address,sortable" write_col:"email_address"`
 	Secret         []byte        `read_col:"accounts.secret" write_col:"secret"`
 	PasswordHash   []byte        `read_col:"accounts.password_hash" write_col:"password_hash"`
-	Role           Role          `read_col:"accounts.role_identifier,sortable" write_col:"role_identifier"`
+	Role           types.Role    `read_col:"accounts.role_identifier,sortable" write_col:"role_identifier"`
 	LastLogin      *time.Time    `read_col:"accounts.last_login,sortable" write_col:"last_login"`
 	OrganisationID uuid.NullUUID `read_col:"accounts.organisation_id" write_col:"organisation_id"`
 
@@ -56,6 +57,6 @@ func (a Account) GetPasswordHash() []byte {
 	return a.PasswordHash
 }
 
-func newAccountSecret() ([]byte, error) {
+func NewAccountSecret() ([]byte, error) {
 	return security_helper.GenerateRandomBytes(accountSecretLength)
 }

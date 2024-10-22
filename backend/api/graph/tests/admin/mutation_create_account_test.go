@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"myvendor.mytld/myproject/backend/api"
-	"myvendor.mytld/myproject/backend/domain"
 	"myvendor.mytld/myproject/backend/persistence/repository"
 	"myvendor.mytld/myproject/backend/test"
 	test_auth "myvendor.mytld/myproject/backend/test/auth"
@@ -61,7 +60,7 @@ func TestMutationResolver_CreateAccount(t *testing.T) {
 				test_graphql.RequireNoErrors(t, res.GraphqlErrors)
 
 				require.NotNil(t, res.Data.Result)
-				account, err := repository.FindAccountByID(context.Background(), db, res.Data.Result.ID, domain.AccountQueryOpts{})
+				account, err := repository.FindAccountByID(context.Background(), db, res.Data.Result.ID, nil)
 				require.NoError(t, err)
 
 				assert.Equal(t, "test@acme.com", account.EmailAddress)
@@ -98,7 +97,7 @@ func TestMutationResolver_CreateAccount(t *testing.T) {
 				test_graphql.RequireNoErrors(t, res.GraphqlErrors)
 
 				require.NotNil(t, res.Data.Result)
-				account, err := repository.FindAccountByID(context.Background(), db, res.Data.Result.ID, domain.AccountQueryOpts{})
+				account, err := repository.FindAccountByID(context.Background(), db, res.Data.Result.ID, nil)
 				require.NoError(t, err)
 
 				assert.Equal(t, "test@acme.com", account.EmailAddress)

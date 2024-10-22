@@ -4,10 +4,11 @@ import (
 	"context"
 
 	"myvendor.mytld/myproject/backend/api/graph/model"
-	"myvendor.mytld/myproject/backend/domain"
+	model2 "myvendor.mytld/myproject/backend/domain/model"
+	"myvendor.mytld/myproject/backend/domain/query"
 )
 
-func MapToAccount(record domain.Account) *model.Account {
+func MapToAccount(record model2.Account) *model.Account {
 	return &model.Account{
 		ID:             record.ID,
 		EmailAddress:   record.EmailAddress,
@@ -19,7 +20,7 @@ func MapToAccount(record domain.Account) *model.Account {
 	}
 }
 
-func MapToAccounts(records []domain.Account) []*model.Account {
+func MapToAccounts(records []model2.Account) []*model.Account {
 	result := make([]*model.Account, len(records))
 	for i, record := range records {
 		result[i] = MapToAccount(record)
@@ -27,20 +28,20 @@ func MapToAccounts(records []domain.Account) []*model.Account {
 	return result
 }
 
-func MapFromAccountFilter(filter *model.AccountFilter) domain.AccountsQuery {
+func MapFromAccountFilter(filter *model.AccountFilter) query.AccountsQuery {
 	if filter == nil {
-		return domain.AccountsQuery{}
+		return query.AccountsQuery{}
 	}
-	return domain.AccountsQuery{
+	return query.AccountsQuery{
 		IDs:            filter.Ids,
 		SearchTerm:     ToVal(filter.Q),
 		OrganisationID: filter.OrganisationID,
 	}
 }
 
-func AccountQueryOptsFromSelection(ctx context.Context, accountSelectPath ...string) domain.AccountQueryOpts {
+func AccountQueryOptsFromSelection(ctx context.Context, accountSelectPath ...string) *query.AccountQueryOpts {
 	selectedFields := SelectedFields(ctx)
-	return domain.AccountQueryOpts{
+	return &query.AccountQueryOpts{
 		IncludeOrganisation:   selectedFields.PathSelected(append(accountSelectPath, "organisation")...),
 		OrganisationQueryOpts: OrganisationQueryOptsFromSelection(ctx, append(accountSelectPath, "organisation")...),
 	}

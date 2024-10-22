@@ -1,4 +1,4 @@
-package domain_test
+package types_test
 
 import (
 	"encoding/json"
@@ -7,30 +7,30 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/types"
 )
 
 func TestDates(t *testing.T) {
 	for _, test := range []struct {
-		date     domain.Date
+		date     types.Date
 		loc      *time.Location
 		wantStr  string
 		wantTime time.Time
 	}{
 		{
-			date:     domain.Date{2014, 7, 29},
+			date:     types.Date{2014, 7, 29},
 			loc:      time.Local,
 			wantStr:  "2014-07-29",
 			wantTime: time.Date(2014, time.July, 29, 0, 0, 0, 0, time.Local),
 		},
 		{
-			date:     domain.DateOf(time.Date(2014, 8, 20, 15, 8, 43, 1, time.Local)),
+			date:     types.DateOf(time.Date(2014, 8, 20, 15, 8, 43, 1, time.Local)),
 			loc:      time.UTC,
 			wantStr:  "2014-08-20",
 			wantTime: time.Date(2014, 8, 20, 0, 0, 0, 0, time.UTC),
 		},
 		{
-			date:     domain.DateOf(time.Date(999, time.January, 26, 0, 0, 0, 0, time.Local)),
+			date:     types.DateOf(time.Date(999, time.January, 26, 0, 0, 0, 0, time.Local)),
 			loc:      time.UTC,
 			wantStr:  "0999-01-26",
 			wantTime: time.Date(999, 1, 26, 0, 0, 0, 0, time.UTC),
@@ -47,21 +47,21 @@ func TestDates(t *testing.T) {
 
 func TestDateIsValid(t *testing.T) {
 	for _, test := range []struct {
-		date domain.Date
+		date types.Date
 		want bool
 	}{
-		{domain.Date{2014, 7, 29}, true},
-		{domain.Date{2000, 2, 29}, true},
-		{domain.Date{10000, 12, 31}, true},
-		{domain.Date{1, 1, 1}, true},
-		{domain.Date{0, 1, 1}, true},  // year zero is OK
-		{domain.Date{-1, 1, 1}, true}, // negative year is OK
-		{domain.Date{1, 0, 1}, false},
-		{domain.Date{1, 1, 0}, false},
-		{domain.Date{2016, 1, 32}, false},
-		{domain.Date{2016, 13, 1}, false},
-		{domain.Date{1, -1, 1}, false},
-		{domain.Date{1, 1, -1}, false},
+		{types.Date{2014, 7, 29}, true},
+		{types.Date{2000, 2, 29}, true},
+		{types.Date{10000, 12, 31}, true},
+		{types.Date{1, 1, 1}, true},
+		{types.Date{0, 1, 1}, true},  // year zero is OK
+		{types.Date{-1, 1, 1}, true}, // negative year is OK
+		{types.Date{1, 0, 1}, false},
+		{types.Date{1, 1, 0}, false},
+		{types.Date{2016, 1, 32}, false},
+		{types.Date{2016, 13, 1}, false},
+		{types.Date{1, -1, 1}, false},
+		{types.Date{1, 1, -1}, false},
 	} {
 		got := test.date.IsValid()
 		if got != test.want {
@@ -73,20 +73,20 @@ func TestDateIsValid(t *testing.T) {
 func TestParseDate(t *testing.T) {
 	for _, test := range []struct {
 		str  string
-		want domain.Date // if empty, expect an error
+		want types.Date // if empty, expect an error
 	}{
-		{"2016-01-02", domain.Date{2016, 1, 2}},
-		{"2016-12-31", domain.Date{2016, 12, 31}},
-		{"0003-02-04", domain.Date{3, 2, 4}},
-		{"999-01-26", domain.Date{}},
-		{"", domain.Date{}},
-		{"2016-01-02x", domain.Date{}},
+		{"2016-01-02", types.Date{2016, 1, 2}},
+		{"2016-12-31", types.Date{2016, 12, 31}},
+		{"0003-02-04", types.Date{3, 2, 4}},
+		{"999-01-26", types.Date{}},
+		{"", types.Date{}},
+		{"2016-01-02x", types.Date{}},
 	} {
-		got, err := domain.ParseDate(test.str)
+		got, err := types.ParseDate(test.str)
 		if got != test.want {
 			t.Errorf("ParseDate(%q) = %+v, want %+v", test.str, got, test.want)
 		}
-		if err != nil && test.want != (domain.Date{}) {
+		if err != nil && test.want != (types.Date{}) {
 			t.Errorf("Unexpected error %v from ParseDate(%q)", err, test.str)
 		}
 	}
@@ -95,50 +95,50 @@ func TestParseDate(t *testing.T) {
 func TestDateArithmetic(t *testing.T) {
 	for _, test := range []struct {
 		desc  string
-		start domain.Date
-		end   domain.Date
+		start types.Date
+		end   types.Date
 		days  int
 	}{
 		{
 			desc:  "zero days noop",
-			start: domain.Date{2014, 5, 9},
-			end:   domain.Date{2014, 5, 9},
+			start: types.Date{2014, 5, 9},
+			end:   types.Date{2014, 5, 9},
 			days:  0,
 		},
 		{
 			desc:  "crossing a year boundary",
-			start: domain.Date{2014, 12, 31},
-			end:   domain.Date{2015, 1, 1},
+			start: types.Date{2014, 12, 31},
+			end:   types.Date{2015, 1, 1},
 			days:  1,
 		},
 		{
 			desc:  "negative number of days",
-			start: domain.Date{2015, 1, 1},
-			end:   domain.Date{2014, 12, 31},
+			start: types.Date{2015, 1, 1},
+			end:   types.Date{2014, 12, 31},
 			days:  -1,
 		},
 		{
 			desc:  "full leap year",
-			start: domain.Date{2004, 1, 1},
-			end:   domain.Date{2005, 1, 1},
+			start: types.Date{2004, 1, 1},
+			end:   types.Date{2005, 1, 1},
 			days:  366,
 		},
 		{
 			desc:  "full non-leap year",
-			start: domain.Date{2001, 1, 1},
-			end:   domain.Date{2002, 1, 1},
+			start: types.Date{2001, 1, 1},
+			end:   types.Date{2002, 1, 1},
 			days:  365,
 		},
 		{
 			desc:  "crossing a leap second",
-			start: domain.Date{1972, 6, 30},
-			end:   domain.Date{1972, 7, 1},
+			start: types.Date{1972, 6, 30},
+			end:   types.Date{1972, 7, 1},
 			days:  1,
 		},
 		{
 			desc:  "dates before the unix epoch",
-			start: domain.Date{101, 1, 1},
-			end:   domain.Date{102, 1, 1},
+			start: types.Date{101, 1, 1},
+			end:   types.Date{102, 1, 1},
 			days:  365,
 		},
 	} {
@@ -154,38 +154,38 @@ func TestDateArithmetic(t *testing.T) {
 func TestAddMonths(t *testing.T) {
 	for _, test := range []struct {
 		desc   string
-		start  domain.Date
-		end    domain.Date
+		start  types.Date
+		end    types.Date
 		months int
 	}{
 		{
 			desc:   "zero months noop",
-			start:  domain.Date{2014, 5, 9},
-			end:    domain.Date{2014, 5, 9},
+			start:  types.Date{2014, 5, 9},
+			end:    types.Date{2014, 5, 9},
 			months: 0,
 		},
 		{
 			desc:   "crossing a year boundary",
-			start:  domain.Date{2014, 12, 31},
-			end:    domain.Date{2015, 1, 31},
+			start:  types.Date{2014, 12, 31},
+			end:    types.Date{2015, 1, 31},
 			months: 1,
 		},
 		{
 			desc:   "keeps amount of days",
-			start:  domain.Date{2015, 1, 31},
-			end:    domain.Date{2015, 3, 3},
+			start:  types.Date{2015, 1, 31},
+			end:    types.Date{2015, 3, 3},
 			months: 1,
 		},
 		{
 			desc:   "negative number of months",
-			start:  domain.Date{2015, 1, 1},
-			end:    domain.Date{2014, 12, 1},
+			start:  types.Date{2015, 1, 1},
+			end:    types.Date{2014, 12, 1},
 			months: -1,
 		},
 		{
 			desc:   "full year",
-			start:  domain.Date{2004, 1, 1},
-			end:    domain.Date{2005, 1, 1},
+			start:  types.Date{2004, 1, 1},
+			end:    types.Date{2005, 1, 1},
 			months: 12,
 		},
 	} {
@@ -197,12 +197,12 @@ func TestAddMonths(t *testing.T) {
 
 func TestDateBefore(t *testing.T) {
 	for _, test := range []struct {
-		d1, d2 domain.Date
+		d1, d2 types.Date
 		want   bool
 	}{
-		{domain.Date{2016, 12, 31}, domain.Date{2017, 1, 1}, true},
-		{domain.Date{2016, 1, 1}, domain.Date{2016, 1, 1}, false},
-		{domain.Date{2016, 12, 30}, domain.Date{2016, 12, 31}, true},
+		{types.Date{2016, 12, 31}, types.Date{2017, 1, 1}, true},
+		{types.Date{2016, 1, 1}, types.Date{2016, 1, 1}, false},
+		{types.Date{2016, 12, 30}, types.Date{2016, 12, 31}, true},
 	} {
 		if got := test.d1.Before(test.d2); got != test.want {
 			t.Errorf("%v.Before(%v): got %t, want %t", test.d1, test.d2, got, test.want)
@@ -212,12 +212,12 @@ func TestDateBefore(t *testing.T) {
 
 func TestDateAfter(t *testing.T) {
 	for _, test := range []struct {
-		d1, d2 domain.Date
+		d1, d2 types.Date
 		want   bool
 	}{
-		{domain.Date{2016, 12, 31}, domain.Date{2017, 1, 1}, false},
-		{domain.Date{2016, 1, 1}, domain.Date{2016, 1, 1}, false},
-		{domain.Date{2016, 12, 30}, domain.Date{2016, 12, 31}, false},
+		{types.Date{2016, 12, 31}, types.Date{2017, 1, 1}, false},
+		{types.Date{2016, 1, 1}, types.Date{2016, 1, 1}, false},
+		{types.Date{2016, 12, 30}, types.Date{2016, 12, 31}, false},
 	} {
 		if got := test.d1.After(test.d2); got != test.want {
 			t.Errorf("%v.After(%v): got %t, want %t", test.d1, test.d2, got, test.want)
@@ -230,7 +230,7 @@ func TestMarshalJSON(t *testing.T) {
 		value interface{}
 		want  string
 	}{
-		{domain.Date{1987, 4, 15}, `"1987-04-15"`},
+		{types.Date{1987, 4, 15}, `"1987-04-15"`},
 	} {
 		bgot, err := json.Marshal(test.value)
 		if err != nil {
@@ -243,14 +243,14 @@ func TestMarshalJSON(t *testing.T) {
 }
 
 func TestUnmarshalJSON(t *testing.T) {
-	var d domain.Date
+	var d types.Date
 	for _, test := range []struct {
 		data string
 		ptr  interface{}
 		want interface{}
 	}{
-		{`"1987-04-15"`, &d, &domain.Date{1987, 4, 15}},
-		{`"1987-04-\u0031\u0035"`, &d, &domain.Date{1987, 4, 15}},
+		{`"1987-04-15"`, &d, &types.Date{1987, 4, 15}},
+		{`"1987-04-\u0031\u0035"`, &d, &types.Date{1987, 4, 15}},
 	} {
 		if err := json.Unmarshal([]byte(test.data), test.ptr); err != nil {
 			t.Fatalf("%s: %v", test.data, err)
@@ -270,7 +270,7 @@ func TestUnmarshalJSON(t *testing.T) {
 }
 
 func TestDateAt(t *testing.T) {
-	d := domain.Date{
+	d := types.Date{
 		Year:  2022,
 		Month: 1,
 		Day:   28,

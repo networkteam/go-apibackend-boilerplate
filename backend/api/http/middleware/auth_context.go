@@ -12,14 +12,14 @@ import (
 	"github.com/gofrs/uuid"
 
 	"myvendor.mytld/myproject/backend/api"
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/persistence/repository"
 	"myvendor.mytld/myproject/backend/security/authentication"
 )
 
 // AuthContextMiddleware sets an auth context from a HTTP request
 // considering auth token and CSRF token
-func AuthContextMiddleware(db *sql.DB, timeSource domain.TimeSource, next http.Handler) http.Handler {
+func AuthContextMiddleware(db *sql.DB, timeSource types.TimeSource, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -50,7 +50,7 @@ func AuthContextMiddleware(db *sql.DB, timeSource domain.TimeSource, next http.H
 	})
 }
 
-func authCtxFromToken(ctx context.Context, db *sql.DB, authTokenValue string, timeSource domain.TimeSource) (authCtx authentication.AuthContext) {
+func authCtxFromToken(ctx context.Context, db *sql.DB, authTokenValue string, timeSource types.TimeSource) (authCtx authentication.AuthContext) {
 	log := logger.FromContext(ctx)
 
 	authToken, err := jwt.ParseSigned(authTokenValue, []jose.SignatureAlgorithm{jose.HS256})
@@ -76,7 +76,7 @@ func authCtxFromToken(ctx context.Context, db *sql.DB, authTokenValue string, ti
 		return authentication.AuthContextWithError(api.ErrAuthTokenInvalid)
 	}
 
-	account, err := repository.FindAccountByID(ctx, db, accountID, domain.AccountQueryOpts{})
+	account, err := repository.FindAccountByID(ctx, db, accountID, nil)
 	if err != nil {
 		log.
 			WithError(errors.WithStack(err)).
@@ -129,7 +129,7 @@ func authCtxFromToken(ctx context.Context, db *sql.DB, authTokenValue string, ti
 	return authCtx
 }
 
-func checkCsrfToken(ctx context.Context, authCtx authentication.AuthContext, csrfTokenValue string, timeSource domain.TimeSource) error {
+func checkCsrfToken(ctx context.Context, authCtx authentication.AuthContext, csrfTokenValue string, timeSource types.TimeSource) error {
 	log := logger.FromContext(ctx)
 
 	if csrfTokenValue == "" {

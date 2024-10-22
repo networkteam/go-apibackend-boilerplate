@@ -1,4 +1,4 @@
-package domain
+package command
 
 import (
 	"strings"
@@ -6,18 +6,21 @@ import (
 	"github.com/friendsofgo/errors"
 	"github.com/gofrs/uuid"
 
+	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/model"
+	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/security/helper"
 )
 
 type AccountCreateCmd struct {
 	AccountID      uuid.UUID
 	EmailAddress   string
-	Role           Role
+	Role           types.Role
 	OrganisationID uuid.NullUUID
 	password       string
 }
 
-func NewAccountCreateCmd(emailAddress string, role Role, password string) (cmd AccountCreateCmd, err error) {
+func NewAccountCreateCmd(emailAddress string, role types.Role, password string) (cmd AccountCreateCmd, err error) {
 	accountID, err := uuid.NewV4()
 	if err != nil {
 		return cmd, errors.Wrap(err, "generate account id")
@@ -31,51 +34,51 @@ func NewAccountCreateCmd(emailAddress string, role Role, password string) (cmd A
 	}, nil
 }
 
-func (c AccountCreateCmd) Validate(_ Config) error {
-	if IsBlank(c.EmailAddress) {
-		return FieldError{
+func (c AccountCreateCmd) Validate(_ domain.Config) error {
+	if isBlank(c.EmailAddress) {
+		return types.FieldError{
 			Field: "emailAddress",
-			Code:  ErrorCodeRequired,
+			Code:  types.ErrorCodeRequired,
 		}
 	}
-	if IsBlank(c.password) {
-		return FieldError{
+	if isBlank(c.password) {
+		return types.FieldError{
 			Field: "password",
-			Code:  ErrorCodeRequired,
+			Code:  types.ErrorCodeRequired,
 		}
 	}
 	if err := helper.ValidatePassword(c.password); err != nil {
-		return FieldError{
+		return types.FieldError{
 			Field: "password",
 			Code:  err.Error(),
 		}
 	}
 	if !c.Role.IsValid() {
-		return FieldError{
+		return types.FieldError{
 			Field: "role",
-			Code:  ErrorCodeInvalid,
+			Code:  types.ErrorCodeInvalid,
 		}
 	}
 	// organisationID must be set iff role is not SystemAdministrator
-	if !((c.Role != RoleSystemAdministrator) == c.OrganisationID.Valid) {
-		return FieldError{
+	if !((c.Role != types.RoleSystemAdministrator) == c.OrganisationID.Valid) {
+		return types.FieldError{
 			Field: "organisationId",
-			Code:  ErrorCodeRequired,
+			Code:  types.ErrorCodeRequired,
 		}
 	}
 	return nil
 }
 
-func (c AccountCreateCmd) NewAccount(config Config) (Account, error) {
-	accountSecret, err := newAccountSecret()
+func (c AccountCreateCmd) NewAccount(config domain.Config) (model.Account, error) {
+	accountSecret, err := model.NewAccountSecret()
 	if err != nil {
-		return Account{}, errors.Wrap(err, "generate account secret")
+		return model.Account{}, errors.Wrap(err, "generate account secret")
 	}
 	passwordHash, err := helper.GenerateHashFromPassword([]byte(c.password), config.HashCost)
 	if err != nil {
-		return Account{}, errors.Wrap(err, "hashing password")
+		return model.Account{}, errors.Wrap(err, "hashing password")
 	}
-	account := Account{
+	account := model.Account{
 		ID:             c.AccountID,
 		EmailAddress:   c.EmailAddress,
 		Secret:         accountSecret,

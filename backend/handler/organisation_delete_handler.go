@@ -7,13 +7,14 @@ import (
 	logger "github.com/apex/log"
 	"github.com/friendsofgo/errors"
 
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/command"
+	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/persistence/repository"
 	"myvendor.mytld/myproject/backend/security/authentication"
 	"myvendor.mytld/myproject/backend/security/authorization"
 )
 
-func (h *Handler) OrganisationDelete(ctx context.Context, cmd domain.OrganisationDeleteCmd) error {
+func (h *Handler) OrganisationDelete(ctx context.Context, cmd command.OrganisationDeleteCmd) error {
 	log := logger.FromContext(ctx).
 		WithField("component", "handler").
 		WithField("handler", "OrganisationDelete")
@@ -29,11 +30,11 @@ func (h *Handler) OrganisationDelete(ctx context.Context, cmd domain.Organisatio
 
 	var organisationName string
 	err := repository.Transactional(ctx, h.db, func(tx *sql.Tx) error {
-		prevRecord, err := repository.FindOrganisationByID(ctx, tx, cmd.OrganisationID, domain.OrganisationQueryOpts{})
+		prevRecord, err := repository.FindOrganisationByID(ctx, tx, cmd.OrganisationID, nil)
 		if errors.Is(err, repository.ErrNotFound) {
-			return domain.FieldError{
+			return types.FieldError{
 				Field: "organisationId",
-				Code:  domain.ErrorCodeNotExists,
+				Code:  types.ErrorCodeNotExists,
 			}
 		} else if err != nil {
 			return errors.Wrap(err, "finding organisation")

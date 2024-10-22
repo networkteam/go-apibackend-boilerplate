@@ -7,13 +7,14 @@ import (
 	logger "github.com/apex/log"
 	"github.com/friendsofgo/errors"
 
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/command"
+	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/persistence/repository"
 	"myvendor.mytld/myproject/backend/security/authentication"
 	"myvendor.mytld/myproject/backend/security/authorization"
 )
 
-func (h *Handler) AccountUpdate(ctx context.Context, cmd domain.AccountUpdateCmd) error {
+func (h *Handler) AccountUpdate(ctx context.Context, cmd command.AccountUpdateCmd) error {
 	log := logger.FromContext(ctx).
 		WithField("component", "handler").
 		WithField("handler", "AccountUpdate")
@@ -37,11 +38,11 @@ func (h *Handler) AccountUpdate(ctx context.Context, cmd domain.AccountUpdateCmd
 		prevRole           string
 	)
 	err := repository.Transactional(ctx, h.db, func(tx *sql.Tx) error {
-		prevRecord, err := repository.FindAccountByID(ctx, tx, cmd.AccountID, domain.AccountQueryOpts{})
+		prevRecord, err := repository.FindAccountByID(ctx, tx, cmd.AccountID, nil)
 		if errors.Is(err, repository.ErrNotFound) {
-			return domain.FieldError{
+			return types.FieldError{
 				Field: "accountId",
-				Code:  domain.ErrorCodeNotExists,
+				Code:  types.ErrorCodeNotExists,
 			}
 		} else if err != nil {
 			return errors.Wrap(err, "finding account")

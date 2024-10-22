@@ -7,7 +7,7 @@ import (
 	"github.com/apex/log"
 	"github.com/gofrs/uuid"
 
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/types"
 )
 
 type ctxKey string
@@ -37,7 +37,7 @@ type AuthContext struct {
 	Error                     error
 	AccountID                 uuid.UUID
 	OrganisationID            *uuid.UUID
-	Role                      domain.Role
+	Role                      types.Role
 	Secret                    []byte
 	IssuedAt                  time.Time
 	Expiry                    time.Time

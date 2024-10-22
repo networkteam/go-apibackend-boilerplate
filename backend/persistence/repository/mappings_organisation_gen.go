@@ -6,7 +6,8 @@ import (
 	qrb "github.com/networkteam/qrb"
 	builder "github.com/networkteam/qrb/builder"
 	fn "github.com/networkteam/qrb/fn"
-	domain "myvendor.mytld/myproject/backend/domain"
+
+	domain "myvendor.mytld/myproject/backend/domain/model"
 )
 
 var organisation = struct {

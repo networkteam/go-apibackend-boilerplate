@@ -7,13 +7,13 @@ import (
 	logger "github.com/apex/log"
 	"github.com/friendsofgo/errors"
 
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/command"
 	"myvendor.mytld/myproject/backend/persistence/repository"
 	"myvendor.mytld/myproject/backend/security/authentication"
 	"myvendor.mytld/myproject/backend/security/authorization"
 )
 
-func (h *Handler) AccountCreate(ctx context.Context, cmd domain.AccountCreateCmd) error {
+func (h *Handler) AccountCreate(ctx context.Context, cmd command.AccountCreateCmd) error {
 	log := logger.FromContext(ctx).
 		WithField("component", "handler").
 		WithField("handler", "AccountCreate")

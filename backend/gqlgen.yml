@@ -55,4 +55,4 @@ models:
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int32
   Role:
-    model: myvendor.mytld/myproject/backend/domain.Role
+    model: myvendor.mytld/myproject/backend/domain/types.Role

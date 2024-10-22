@@ -7,7 +7,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/types"
 )
 
 type extendedError interface {
@@ -18,7 +18,7 @@ func ErrorPresenter(ctx context.Context, err error) *gqlerror.Error {
 	graphqlErr := graphql.DefaultErrorPresenter(ctx, err)
 
 	// A field resolvable error should be unwrapped before presenting
-	var fieldErr domain.FieldResolvableError
+	var fieldErr types.FieldResolvableError
 	if errors.As(err, &fieldErr) {
 		graphqlErr.Message = fieldErr.Error()
 	}

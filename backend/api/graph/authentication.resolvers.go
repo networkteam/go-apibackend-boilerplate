@@ -9,11 +9,12 @@ import (
 
 	logger "github.com/apex/log"
 	fog_errors "github.com/friendsofgo/errors"
-
 	"myvendor.mytld/myproject/backend/api"
 	"myvendor.mytld/myproject/backend/api/graph/helper"
 	"myvendor.mytld/myproject/backend/api/graph/model"
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/command"
+	"myvendor.mytld/myproject/backend/domain/query"
+	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/handler"
 	"myvendor.mytld/myproject/backend/persistence/repository"
 	"myvendor.mytld/myproject/backend/security/authentication"
@@ -23,12 +24,12 @@ import (
 func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCredentials) (*model.LoginResult, error) {
 	defer helper.ConstantTime(r.SensitiveOperationConstantTime).Wait(ctx)
 
-	cmd := domain.NewLoginCmd(credentials.EmailAddress, credentials.Password)
+	cmd := command.NewLoginCmd(credentials.EmailAddress, credentials.Password)
 	if credentials.KeepMeLoggedIn != nil && *credentials.KeepMeLoggedIn {
 		cmd.ExtendedExpiry = true
 	}
 
-	account, err := r.finder.QueryAccountNotAuthorized(ctx, domain.AccountQueryNotAuthorized{
+	account, err := r.finder.QueryAccountNotAuthorized(ctx, query.AccountQueryNotAuthorized{
 		Opts:         helper.AccountQueryOptsFromSelection(ctx, "account"),
 		EmailAddress: &cmd.EmailAddress,
 	})
@@ -46,7 +47,7 @@ func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCre
 		if fog_errors.Is(err, handler.ErrLoginInvalidCredentials) {
 			return &model.LoginResult{
 				Error: &model.Error{
-					Code: domain.ErrorCodeInvalidCredentials,
+					Code: types.ErrorCodeInvalidCredentials,
 				},
 			}, nil
 		}
@@ -91,7 +92,7 @@ func (r *queryResolver) LoginStatus(ctx context.Context) (bool, error) {
 // CurrentAccount is the resolver for the currentAccount field.
 func (r *queryResolver) CurrentAccount(ctx context.Context) (*model.Account, error) {
 	authCtx := authentication.GetAuthContext(ctx)
-	account, err := r.finder.QueryAccount(ctx, domain.AccountQuery{
+	account, err := r.finder.QueryAccount(ctx, query.AccountQuery{
 		AccountID: authCtx.AccountID,
 		Opts:      helper.AccountQueryOptsFromSelection(ctx),
 	})

@@ -7,7 +7,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/urfave/cli/v2"
 
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/persistence/repository"
 )
 
@@ -37,9 +37,9 @@ func newAccountListCmd() *cli.Command {
 
 			roleIdentifiers := c.StringSlice("role")
 
-			roles := make([]domain.Role, len(roleIdentifiers))
+			roles := make([]types.Role, len(roleIdentifiers))
 			for i, roleIdentifier := range roleIdentifiers {
-				role := domain.Role(roleIdentifier)
+				role := types.Role(roleIdentifier)
 				if !role.IsValid() {
 					return errors.Errorf("invalid role %q", roleIdentifier)
 				}

@@ -10,7 +10,8 @@ import (
 	"github.com/urfave/cli/v2"
 	"golang.org/x/term"
 
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/command"
+	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/handler"
 )
 
@@ -25,7 +26,7 @@ func newAccountCmd() *cli.Command {
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:  "role",
-						Value: string(domain.RoleSystemAdministrator),
+						Value: string(types.RoleSystemAdministrator),
 					},
 					&cli.StringFlag{
 						Name:     "email",
@@ -44,7 +45,7 @@ func newAccountCmd() *cli.Command {
 					fmt.Println() //nolint:forbidigo
 					password := strings.TrimSpace(string(line))
 
-					cmd, err := domain.NewAccountCreateCmd(c.String("email"), domain.Role(c.String("role")), password)
+					cmd, err := command.NewAccountCreateCmd(c.String("email"), types.Role(c.String("role")), password)
 					if err != nil {
 						return err
 					}

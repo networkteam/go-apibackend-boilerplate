@@ -6,39 +6,39 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/security/authentication"
 )
 
 func TestRequireRole(t *testing.T) {
 	tests := []struct {
 		name      string
-		authRole  domain.Role
-		required  []domain.Role
+		authRole  types.Role
+		required  []types.Role
 		expectErr bool
 	}{
 		{
 			name:      "Role matches",
-			authRole:  domain.RoleOrganisationAdministrator,
-			required:  []domain.Role{domain.RoleOrganisationAdministrator},
+			authRole:  types.RoleOrganisationAdministrator,
+			required:  []types.Role{types.RoleOrganisationAdministrator},
 			expectErr: false,
 		},
 		{
 			name:      "Role does not match",
-			authRole:  domain.RoleSystemAdministrator,
-			required:  []domain.Role{domain.RoleOrganisationAdministrator},
+			authRole:  types.RoleSystemAdministrator,
+			required:  []types.Role{types.RoleOrganisationAdministrator},
 			expectErr: true,
 		},
 		{
 			name:      "Role matches one of multiple",
-			authRole:  domain.RoleOrganisationAdministrator,
-			required:  []domain.Role{domain.RoleSystemAdministrator, domain.RoleOrganisationAdministrator},
+			authRole:  types.RoleOrganisationAdministrator,
+			required:  []types.Role{types.RoleSystemAdministrator, types.RoleOrganisationAdministrator},
 			expectErr: false,
 		},
 		{
 			name:      "No roles required",
-			authRole:  domain.RoleSystemAdministrator,
-			required:  []domain.Role{},
+			authRole:  types.RoleSystemAdministrator,
+			required:  []types.Role{},
 			expectErr: true,
 		},
 	}
@@ -351,35 +351,35 @@ func TestRequireSameOrganisationAdministrator(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		authRole      domain.Role
+		authRole      types.Role
 		authOrgID     *uuid.UUID
 		inputOrgID    *uuid.UUID
 		expectedError bool
 	}{
 		{
 			name:          "Role and organisation match",
-			authRole:      domain.RoleOrganisationAdministrator,
+			authRole:      types.RoleOrganisationAdministrator,
 			authOrgID:     &organisationID,
 			inputOrgID:    &organisationID,
 			expectedError: false,
 		},
 		{
 			name:          "Role matches, organisation does not",
-			authRole:      domain.RoleOrganisationAdministrator,
+			authRole:      types.RoleOrganisationAdministrator,
 			authOrgID:     &organisationID,
 			inputOrgID:    &differentOrganisationID,
 			expectedError: true,
 		},
 		{
 			name:          "Role does not match",
-			authRole:      domain.RoleSystemAdministrator,
+			authRole:      types.RoleSystemAdministrator,
 			authOrgID:     &organisationID,
 			inputOrgID:    &organisationID,
 			expectedError: true,
 		},
 		{
 			name:          "Nil organisation ID",
-			authRole:      domain.RoleOrganisationAdministrator,
+			authRole:      types.RoleOrganisationAdministrator,
 			authOrgID:     nil,
 			inputOrgID:    &organisationID,
 			expectedError: true,
@@ -410,35 +410,35 @@ func TestRequireSameOrganisation(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		authRole      domain.Role
+		authRole      types.Role
 		authOrgID     *uuid.UUID
 		inputOrgID    *uuid.UUID
 		expectedError bool
 	}{
 		{
 			name:          "Organisation Administrator with matching ID",
-			authRole:      domain.RoleOrganisationAdministrator,
+			authRole:      types.RoleOrganisationAdministrator,
 			authOrgID:     &organisationID,
 			inputOrgID:    &organisationID,
 			expectedError: false,
 		},
 		{
 			name:          "Role does not match",
-			authRole:      domain.RoleSystemAdministrator,
+			authRole:      types.RoleSystemAdministrator,
 			authOrgID:     &organisationID,
 			inputOrgID:    &organisationID,
 			expectedError: true,
 		},
 		{
 			name:          "Organisation IDs do not match",
-			authRole:      domain.RoleOrganisationAdministrator,
+			authRole:      types.RoleOrganisationAdministrator,
 			authOrgID:     &organisationID,
 			inputOrgID:    &differentOrganisationID,
 			expectedError: true,
 		},
 		{
 			name:          "Nil organisation ID",
-			authRole:      domain.RoleOrganisationAdministrator,
+			authRole:      types.RoleOrganisationAdministrator,
 			authOrgID:     nil,
 			inputOrgID:    &organisationID,
 			expectedError: true,

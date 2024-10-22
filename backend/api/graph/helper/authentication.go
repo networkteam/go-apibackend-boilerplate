@@ -6,11 +6,11 @@ import (
 	fog_errors "github.com/friendsofgo/errors"
 
 	"myvendor.mytld/myproject/backend/api"
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/security/authentication"
 )
 
-func SetAuthTokenCookieForAccount(ctx context.Context, account authentication.AuthTokenDataProvider, timeSource domain.TimeSource, extendedExpiry bool) (authToken string, csrfToken string, err error) {
+func SetAuthTokenCookieForAccount(ctx context.Context, account authentication.AuthTokenDataProvider, timeSource types.TimeSource, extendedExpiry bool) (authToken string, csrfToken string, err error) {
 	tokenOpts := authentication.TokenOptsForAccount(account, extendedExpiry)
 	authToken, err = authentication.GenerateAuthToken(account, timeSource, tokenOpts)
 	if err != nil {

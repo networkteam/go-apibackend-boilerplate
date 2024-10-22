@@ -7,22 +7,22 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/friendsofgo/errors"
 
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/types"
 )
 
-func MarshalDateScalar(value domain.Date) graphql.Marshaler {
+func MarshalDateScalar(value types.Date) graphql.Marshaler {
 	return graphql.WriterFunc(func(w io.Writer) {
 		_, _ = w.Write([]byte(strconv.Quote(value.String()))) //nolint:errcheck
 	})
 }
 
-func UnmarshalDateScalar(v any) (domain.Date, error) {
+func UnmarshalDateScalar(v any) (types.Date, error) {
 	dateString, ok := v.(string)
 	if !ok {
-		return domain.Date{}, errors.Errorf("%T is not a string", v)
+		return types.Date{}, errors.Errorf("%T is not a string", v)
 	}
 
-	d, err := domain.ParseDate(dateString)
+	d, err := types.ParseDate(dateString)
 	if err != nil {
 		return d, err
 	}

@@ -7,13 +7,14 @@ import (
 	logger "github.com/apex/log"
 	"github.com/friendsofgo/errors"
 
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/command"
+	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/persistence/repository"
 	"myvendor.mytld/myproject/backend/security/authentication"
 	"myvendor.mytld/myproject/backend/security/authorization"
 )
 
-func (h *Handler) AccountDelete(ctx context.Context, cmd domain.AccountDeleteCmd) error {
+func (h *Handler) AccountDelete(ctx context.Context, cmd command.AccountDeleteCmd) error {
 	log := logger.FromContext(ctx).
 		WithField("component", "handler").
 		WithField("handler", "AccountDelete")
@@ -30,14 +31,14 @@ func (h *Handler) AccountDelete(ctx context.Context, cmd domain.AccountDeleteCmd
 	var (
 		organisationID string
 		emailAddress   string
-		role           domain.Role
+		role           types.Role
 	)
 	err := repository.Transactional(ctx, h.db, func(tx *sql.Tx) error {
-		record, err := repository.FindAccountByID(ctx, tx, cmd.AccountID, domain.AccountQueryOpts{})
+		record, err := repository.FindAccountByID(ctx, tx, cmd.AccountID, nil)
 		if errors.Is(err, repository.ErrNotFound) {
-			return domain.FieldError{
+			return types.FieldError{
 				Field: "accountId",
-				Code:  domain.ErrorCodeNotExists,
+				Code:  types.ErrorCodeNotExists,
 			}
 		} else if err != nil {
 			return errors.Wrap(err, "fetching account")

@@ -8,7 +8,7 @@ import (
 
 	"github.com/gofrs/uuid"
 
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/security/authentication"
 )
 
@@ -22,16 +22,16 @@ var (
 	fixedTokenSecret = "f71ab8929ad747915e135b8e9a5e01403329cc6b202c8e540e74920a78394e36" //nolint:gosec
 )
 
-type ApplyAuthValuesFunc func(t *testing.T, timeSource domain.TimeSource, req *http.Request) FixedAuthTokenData
+type ApplyAuthValuesFunc func(t *testing.T, timeSource types.TimeSource, req *http.Request) FixedAuthTokenData
 
-func ApplyFixedAuthValuesOrganisationAdministrator(t *testing.T, timeSource domain.TimeSource, req *http.Request) FixedAuthTokenData {
+func ApplyFixedAuthValuesOrganisationAdministrator(t *testing.T, timeSource types.TimeSource, req *http.Request) FixedAuthTokenData {
 	t.Helper()
 
 	authTokenData := FixedAuthTokenData{
 		TokenSecret:    mustHexDecode(fixedTokenSecret),
 		AccountID:      fixedOrganisationAdminAccountID,
 		OrganisationID: uuid.NullUUID{Valid: true, UUID: fixedOrganisationID},
-		RoleIdentifier: string(domain.RoleOrganisationAdministrator),
+		RoleIdentifier: string(types.RoleOrganisationAdministrator),
 	}
 
 	addTokenToRequest(t, timeSource, req, authTokenData)
@@ -41,13 +41,13 @@ func ApplyFixedAuthValuesOrganisationAdministrator(t *testing.T, timeSource doma
 
 var _ ApplyAuthValuesFunc = ApplyFixedAuthValuesOrganisationAdministrator
 
-func ApplyFixedAuthValuesSystemAdministrator(t *testing.T, timeSource domain.TimeSource, req *http.Request) FixedAuthTokenData {
+func ApplyFixedAuthValuesSystemAdministrator(t *testing.T, timeSource types.TimeSource, req *http.Request) FixedAuthTokenData {
 	t.Helper()
 
 	authTokenData := FixedAuthTokenData{
 		TokenSecret:    mustHexDecode(fixedTokenSecret),
 		AccountID:      fixedSystemAdminAccountID,
-		RoleIdentifier: string(domain.RoleSystemAdministrator),
+		RoleIdentifier: string(types.RoleSystemAdministrator),
 	}
 
 	addTokenToRequest(t, timeSource, req, authTokenData)
@@ -57,7 +57,7 @@ func ApplyFixedAuthValuesSystemAdministrator(t *testing.T, timeSource domain.Tim
 
 var _ ApplyAuthValuesFunc = ApplyFixedAuthValuesSystemAdministrator
 
-func addTokenToRequest(t *testing.T, timeSource domain.TimeSource, req *http.Request, authTokenData FixedAuthTokenData) {
+func addTokenToRequest(t *testing.T, timeSource types.TimeSource, req *http.Request, authTokenData FixedAuthTokenData) {
 	t.Helper()
 
 	tokenOpts := authentication.TokenOptsForAccount(authTokenData, false)
@@ -92,7 +92,7 @@ func GetContextWithSystemAdministrator() context.Context {
 
 	return authentication.WithAuthContext(ctx, authentication.AuthContext{
 		Authenticated: true,
-		Role:          domain.RoleSystemAdministrator,
+		Role:          types.RoleSystemAdministrator,
 	})
 }
 
@@ -103,7 +103,7 @@ func GetContextWithOrganisationAdministrator() context.Context {
 	return authentication.WithAuthContext(ctx, authentication.AuthContext{
 		Authenticated:  true,
 		OrganisationID: &organisationID,
-		Role:           domain.RoleOrganisationAdministrator,
+		Role:           types.RoleOrganisationAdministrator,
 	})
 }
 

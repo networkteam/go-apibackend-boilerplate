@@ -8,7 +8,7 @@ import (
 	logger "github.com/apex/log"
 	"github.com/friendsofgo/errors"
 
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/persistence/repository"
 	"myvendor.mytld/myproject/backend/security/authentication"
 )
@@ -17,7 +17,7 @@ const (
 	AuthTokenRefreshThreshold = 15 * time.Minute
 )
 
-func RefreshTokensMiddleware(db *sql.DB, timeSource domain.TimeSource, next http.Handler) http.Handler {
+func RefreshTokensMiddleware(db *sql.DB, timeSource types.TimeSource, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		log := logger.FromContext(ctx)
@@ -40,8 +40,8 @@ func RefreshTokensMiddleware(db *sql.DB, timeSource domain.TimeSource, next http
 	})
 }
 
-func refreshTokens(w http.ResponseWriter, r *http.Request, authCtx authentication.AuthContext, db *sql.DB, timeSource domain.TimeSource) error {
-	account, err := repository.FindAccountByID(r.Context(), db, authCtx.AccountID, domain.AccountQueryOpts{})
+func refreshTokens(w http.ResponseWriter, r *http.Request, authCtx authentication.AuthContext, db *sql.DB, timeSource types.TimeSource) error {
+	account, err := repository.FindAccountByID(r.Context(), db, authCtx.AccountID, nil)
 	if err != nil {
 		return errors.Wrap(err, "could not find account")
 	}

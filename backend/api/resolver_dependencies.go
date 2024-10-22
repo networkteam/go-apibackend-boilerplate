@@ -6,6 +6,7 @@ import (
 	"go.opentelemetry.io/otel/metric"
 
 	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/mail"
 )
 
@@ -13,7 +14,7 @@ import (
 type ResolverDependencies struct {
 	Config        domain.Config
 	DB            *sql.DB
-	TimeSource    domain.TimeSource
+	TimeSource    types.TimeSource
 	MeterProvider metric.MeterProvider
 	Mailer        *mail.Mailer
 }

@@ -5,7 +5,7 @@ import (
 
 	"github.com/gofrs/uuid"
 
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/finder"
 )
 
@@ -62,9 +62,9 @@ func ToNullUUID(id *uuid.UUID) uuid.NullUUID {
 	return uuid.NullUUID{UUID: *id, Valid: true}
 }
 
-func ToNullDate(date *domain.Date) domain.NullDate {
+func ToNullDate(date *types.Date) types.NullDate {
 	if date == nil {
-		return domain.NullDate{Valid: false}
+		return types.NullDate{Valid: false}
 	}
-	return domain.NullDate{Date: *date, Valid: true}
+	return types.NullDate{Date: *date, Valid: true}
 }

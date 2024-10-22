@@ -8,18 +8,18 @@ import (
 	"github.com/friendsofgo/errors"
 	"github.com/networkteam/qrb/qrbsql"
 
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/persistence/repository"
 )
 
 // Finder is a higher level executor for queries that includes authorization.
 type Finder struct {
 	executor   qrbsql.Executor
-	timeSource domain.TimeSource
+	timeSource types.TimeSource
 }
 
 // NewFinder creates a new Finder.
-func NewFinder(db *sql.DB, timeSource domain.TimeSource) *Finder {
+func NewFinder(db *sql.DB, timeSource types.TimeSource) *Finder {
 	return &Finder{
 		executor:   db,
 		timeSource: timeSource,

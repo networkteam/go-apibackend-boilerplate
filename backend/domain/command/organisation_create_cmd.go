@@ -1,8 +1,10 @@
-package domain
+package command
 
 import (
 	"github.com/friendsofgo/errors"
 	"github.com/gofrs/uuid"
+
+	"myvendor.mytld/myproject/backend/domain/types"
 )
 
 type OrganisationCreateCmd struct {
@@ -22,10 +24,10 @@ func NewOrganisationCreateCmd() (cmd OrganisationCreateCmd, err error) {
 }
 
 func (c OrganisationCreateCmd) Validate() error {
-	if IsBlank(c.Name) {
-		return FieldError{
+	if isBlank(c.Name) {
+		return types.FieldError{
 			Field: "name",
-			Code:  ErrorCodeRequired,
+			Code:  types.ErrorCodeRequired,
 		}
 	}
 

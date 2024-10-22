@@ -6,13 +6,13 @@ import (
 
 	"github.com/gofrs/uuid"
 
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/security/authentication"
 )
 
 type authorizationCheck func(authCtx authentication.AuthContext) error
 
-func requireRole(roles ...domain.Role) authorizationCheck {
+func requireRole(roles ...types.Role) authorizationCheck {
 	return func(authCtx authentication.AuthContext) error {
 		currentRole := authCtx.Role
 		for _, role := range roles {
@@ -87,14 +87,14 @@ func satisfyAny(checks ...authorizationCheck) authorizationCheck {
 
 func requireSameOrganisationAdministrator(organisationID *uuid.UUID) authorizationCheck {
 	return requireAll(
-		requireRole(domain.RoleOrganisationAdministrator),
+		requireRole(types.RoleOrganisationAdministrator),
 		requireOrganisationID(organisationID),
 	)
 }
 
 func requireSameOrganisation(organisationID *uuid.UUID) authorizationCheck {
 	return requireAll(
-		requireRole(domain.OrganisationRoles...),
+		requireRole(types.OrganisationRoles...),
 		requireOrganisationID(organisationID),
 	)
 }
@@ -108,7 +108,7 @@ func requireNotAuthenticated() authorizationCheck {
 	}
 }
 
-func setOrganisationID(query domain.OrganisationIDSetter) authorizationCheck {
+func setOrganisationID(query OrganisationIDSetter) authorizationCheck {
 	return func(authCtx authentication.AuthContext) error {
 		if authCtx.OrganisationID == nil {
 			return authorizationError{"organisation ID is required"}

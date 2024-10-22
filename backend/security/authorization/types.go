@@ -1,4 +1,4 @@
-package domain
+package authorization
 
 import "github.com/gofrs/uuid"
 

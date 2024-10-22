@@ -13,20 +13,26 @@ import (
 	"github.com/networkteam/qrb/fn"
 	"github.com/networkteam/qrb/qrbsql"
 
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/model"
+	domain_query "myvendor.mytld/myproject/backend/domain/query"
+	"myvendor.mytld/myproject/backend/domain/types"
 )
 
 type AccountsFilter struct {
-	Opts           domain.AccountQueryOpts
+	Opts           *domain_query.AccountQueryOpts
 	OrganisationID *uuid.UUID
 	IDs            []uuid.UUID
 	// SearchTerm filters accounts by text fields (email address or organisation name)
 	SearchTerm string
 	// Roles filters account to have one of the given roles
-	Roles []domain.Role
+	Roles []types.Role
 }
 
-func accountBuildFindQuery(opts domain.AccountQueryOpts) builder.SelectBuilder {
+func accountBuildFindQuery(opts *domain_query.AccountQueryOpts) builder.SelectBuilder {
+	if opts == nil {
+		opts = &domain_query.AccountQueryOpts{}
+	}
+
 	return Select(buildAccountJSON(opts)).
 		From(account).
 		ApplyIf(opts.IncludeOrganisation, func(q builder.SelectBuilder) builder.SelectBuilder {
@@ -34,20 +40,20 @@ func accountBuildFindQuery(opts domain.AccountQueryOpts) builder.SelectBuilder {
 		})
 }
 
-func FindAccountByID(ctx context.Context, executor qrbsql.Executor, id uuid.UUID, opts domain.AccountQueryOpts) (domain.Account, error) {
+func FindAccountByID(ctx context.Context, executor qrbsql.Executor, id uuid.UUID, opts *domain_query.AccountQueryOpts) (model.Account, error) {
 	query := accountBuildFindQuery(opts).
 		Where(account.ID.Eq(Arg(id)))
 
-	return constructsql.ScanRow[domain.Account](
+	return constructsql.ScanRow[model.Account](
 		qrbsql.Build(query).WithExecutor(executor).QueryRow(ctx),
 	)
 }
 
-func FindAccountByEmailAddress(ctx context.Context, executor qrbsql.Executor, emailAddress string, opts domain.AccountQueryOpts) (domain.Account, error) {
+func FindAccountByEmailAddress(ctx context.Context, executor qrbsql.Executor, emailAddress string, opts *domain_query.AccountQueryOpts) (model.Account, error) {
 	query := accountBuildFindQuery(opts).
 		Where(fn.Lower(account.EmailAddress).Eq(Arg(strings.ToLower(emailAddress))))
 
-	return constructsql.ScanRow[domain.Account](
+	return constructsql.ScanRow[model.Account](
 		qrbsql.Build(query).WithExecutor(executor).QueryRow(ctx),
 	)
 }
@@ -60,7 +66,7 @@ func applyAccountFilter(filter AccountsFilter) func(q builder.SelectBuilder) bui
 			}).
 			ApplyIf(filter.SearchTerm != "", func(q builder.SelectBuilder) builder.SelectBuilder {
 				var incOrg builder.Exp
-				if filter.Opts.IncludeOrganisation {
+				if filter.Opts != nil && filter.Opts.IncludeOrganisation {
 					incOrg = organisation.Name.ILike(Arg("%" + filter.SearchTerm + "%"))
 				}
 
@@ -78,7 +84,7 @@ func applyAccountFilter(filter AccountsFilter) func(q builder.SelectBuilder) bui
 	}
 }
 
-func FindAllAccounts(ctx context.Context, executor qrbsql.Executor, filter AccountsFilter, pagingOpts ...PagingOption) ([]domain.Account, error) {
+func FindAllAccounts(ctx context.Context, executor qrbsql.Executor, filter AccountsFilter, pagingOpts ...PagingOption) ([]model.Account, error) {
 	query := accountBuildFindQuery(filter.Opts).
 		ApplyIf(true, applyAccountFilter(filter))
 
@@ -87,7 +93,7 @@ func FindAllAccounts(ctx context.Context, executor qrbsql.Executor, filter Accou
 		return nil, err
 	}
 
-	return constructsql.CollectRows[domain.Account](
+	return constructsql.CollectRows[model.Account](
 		qrbsql.Build(query).WithExecutor(executor).Query(ctx),
 	)
 }
@@ -133,16 +139,20 @@ func AccountConstraintErr(err error) error {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
 		if pgErr.Code == pgErrCode_unique_violation && pgErr.ConstraintName == "accounts_email_address_idx" {
-			return domain.FieldError{
+			return types.FieldError{
 				Field: "emailAddress",
-				Code:  domain.ErrorCodeAlreadyExists,
+				Code:  types.ErrorCodeAlreadyExists,
 			}
 		}
 	}
 	return nil
 }
 
-func buildAccountJSON(opts domain.AccountQueryOpts) builder.JsonBuildObjectBuilder {
+func buildAccountJSON(opts *domain_query.AccountQueryOpts) builder.JsonBuildObjectBuilder {
+	if opts == nil {
+		opts = &domain_query.AccountQueryOpts{}
+	}
+
 	return accountDefaultJson.
 		PropIf(
 			opts.IncludeOrganisation,

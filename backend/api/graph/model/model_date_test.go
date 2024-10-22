@@ -8,14 +8,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"myvendor.mytld/myproject/backend/api/graph/model"
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/types"
 )
 
 func TestUnmarshalDateScalar(t *testing.T) {
 	tests := []struct {
 		name    string
 		v       any
-		want    domain.Date
+		want    types.Date
 		wantErr bool
 	}{
 		{
@@ -26,7 +26,7 @@ func TestUnmarshalDateScalar(t *testing.T) {
 		{
 			name: "ISO date",
 			v:    "2020-10-09",
-			want: domain.Date{Year: 2020, Month: time.October, Day: 9},
+			want: types.Date{Year: 2020, Month: time.October, Day: 9},
 		},
 		{
 			name:    "RFC3339 date with time",

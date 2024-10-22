@@ -18,7 +18,7 @@ import (
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 	"myvendor.mytld/myproject/backend/api/graph/model"
-	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/types"
 )
 
 // region    ************************** generated!.gotpl **************************
@@ -87,13 +87,13 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateAccount      func(childComplexity int, role domain.Role, emailAddress string, password string, organisationID *uuid.UUID) int
+		CreateAccount      func(childComplexity int, role types.Role, emailAddress string, password string, organisationID *uuid.UUID) int
 		CreateOrganisation func(childComplexity int, name string) int
 		DeleteAccount      func(childComplexity int, id uuid.UUID) int
 		DeleteOrganisation func(childComplexity int, id uuid.UUID) int
 		Login              func(childComplexity int, credentials model.LoginCredentials) int
 		Logout             func(childComplexity int) int
-		UpdateAccount      func(childComplexity int, id uuid.UUID, role domain.Role, emailAddress string, password *string, organisationID *uuid.UUID) int
+		UpdateAccount      func(childComplexity int, id uuid.UUID, role types.Role, emailAddress string, password *string, organisationID *uuid.UUID) int
 		UpdateOrganisation func(childComplexity int, id uuid.UUID, name string) int
 	}
 
@@ -122,8 +122,8 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	CreateAccount(ctx context.Context, role domain.Role, emailAddress string, password string, organisationID *uuid.UUID) (*model.Account, error)
-	UpdateAccount(ctx context.Context, id uuid.UUID, role domain.Role, emailAddress string, password *string, organisationID *uuid.UUID) (*model.Account, error)
+	CreateAccount(ctx context.Context, role types.Role, emailAddress string, password string, organisationID *uuid.UUID) (*model.Account, error)
+	UpdateAccount(ctx context.Context, id uuid.UUID, role types.Role, emailAddress string, password *string, organisationID *uuid.UUID) (*model.Account, error)
 	DeleteAccount(ctx context.Context, id uuid.UUID) (*model.Account, error)
 	CreateOrganisation(ctx context.Context, name string) (*model.Organisation, error)
 	UpdateOrganisation(ctx context.Context, id uuid.UUID, name string) (*model.Organisation, error)
@@ -298,7 +298,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateAccount(childComplexity, args["role"].(domain.Role), args["emailAddress"].(string), args["password"].(string), args["organisationId"].(*uuid.UUID)), true
+		return e.complexity.Mutation.CreateAccount(childComplexity, args["role"].(types.Role), args["emailAddress"].(string), args["password"].(string), args["organisationId"].(*uuid.UUID)), true
 
 	case "Mutation.createOrganisation":
 		if e.complexity.Mutation.CreateOrganisation == nil {
@@ -365,7 +365,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateAccount(childComplexity, args["id"].(uuid.UUID), args["role"].(domain.Role), args["emailAddress"].(string), args["password"].(*string), args["organisationId"].(*uuid.UUID)), true
+		return e.complexity.Mutation.UpdateAccount(childComplexity, args["id"].(uuid.UUID), args["role"].(types.Role), args["emailAddress"].(string), args["password"].(*string), args["organisationId"].(*uuid.UUID)), true
 
 	case "Mutation.updateOrganisation":
 		if e.complexity.Mutation.UpdateOrganisation == nil {
@@ -808,8 +808,9 @@ scalar UUID
 scalar Date
 scalar DateTime
 scalar ByteSize
+scalar Upload
 
-## TODO Add domain types for your general schema here
+## boilderplate: Add domain types for your general schema here
 
 #
 # Queries
@@ -874,10 +875,10 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 func (ec *executionContext) field_Mutation_createAccount_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 domain.Role
+	var arg0 types.Role
 	if tmp, ok := rawArgs["role"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
-		arg0, err = ec.unmarshalNRole2myvendorᚗmytldᚋmyprojectᚋbackendᚋdomainᚐRole(ctx, tmp)
+		arg0, err = ec.unmarshalNRole2myvendorᚗmytldᚋmyprojectᚋbackendᚋdomainᚋtypesᚐRole(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -985,10 +986,10 @@ func (ec *executionContext) field_Mutation_updateAccount_args(ctx context.Contex
 		}
 	}
 	args["id"] = arg0
-	var arg1 domain.Role
+	var arg1 types.Role
 	if tmp, ok := rawArgs["role"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
-		arg1, err = ec.unmarshalNRole2myvendorᚗmytldᚋmyprojectᚋbackendᚋdomainᚐRole(ctx, tmp)
+		arg1, err = ec.unmarshalNRole2myvendorᚗmytldᚋmyprojectᚋbackendᚋdomainᚋtypesᚐRole(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1464,9 +1465,9 @@ func (ec *executionContext) _Account_role(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(domain.Role)
+	res := resTmp.(types.Role)
 	fc.Result = res
-	return ec.marshalNRole2myvendorᚗmytldᚋmyprojectᚋbackendᚋdomainᚐRole(ctx, field.Selections, res)
+	return ec.marshalNRole2myvendorᚗmytldᚋmyprojectᚋbackendᚋdomainᚋtypesᚐRole(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Account_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2174,7 +2175,7 @@ func (ec *executionContext) _Mutation_createAccount(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateAccount(rctx, fc.Args["role"].(domain.Role), fc.Args["emailAddress"].(string), fc.Args["password"].(string), fc.Args["organisationId"].(*uuid.UUID))
+		return ec.resolvers.Mutation().CreateAccount(rctx, fc.Args["role"].(types.Role), fc.Args["emailAddress"].(string), fc.Args["password"].(string), fc.Args["organisationId"].(*uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2242,7 +2243,7 @@ func (ec *executionContext) _Mutation_updateAccount(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateAccount(rctx, fc.Args["id"].(uuid.UUID), fc.Args["role"].(domain.Role), fc.Args["emailAddress"].(string), fc.Args["password"].(*string), fc.Args["organisationId"].(*uuid.UUID))
+		return ec.resolvers.Mutation().UpdateAccount(rctx, fc.Args["id"].(uuid.UUID), fc.Args["role"].(types.Role), fc.Args["emailAddress"].(string), fc.Args["password"].(*string), fc.Args["organisationId"].(*uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6747,13 +6748,13 @@ func (ec *executionContext) marshalNOrganisation2ᚖmyvendorᚗmytldᚋmyproject
 	return ec._Organisation(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNRole2myvendorᚗmytldᚋmyprojectᚋbackendᚋdomainᚐRole(ctx context.Context, v interface{}) (domain.Role, error) {
-	var res domain.Role
+func (ec *executionContext) unmarshalNRole2myvendorᚗmytldᚋmyprojectᚋbackendᚋdomainᚋtypesᚐRole(ctx context.Context, v interface{}) (types.Role, error) {
+	var res types.Role
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNRole2myvendorᚗmytldᚋmyprojectᚋbackendᚋdomainᚐRole(ctx context.Context, sel ast.SelectionSet, v domain.Role) graphql.Marshaler {
+func (ec *executionContext) marshalNRole2myvendorᚗmytldᚋmyprojectᚋbackendᚋdomainᚋtypesᚐRole(ctx context.Context, sel ast.SelectionSet, v types.Role) graphql.Marshaler {
 	return v
 }
 

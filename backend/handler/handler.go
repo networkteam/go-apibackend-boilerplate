@@ -6,12 +6,13 @@ import (
 	"go.opentelemetry.io/otel/metric"
 
 	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/mail"
 )
 
 type Handler struct {
 	db         *sql.DB
-	timeSource domain.TimeSource
+	timeSource types.TimeSource
 	mailer     *mail.Mailer
 	config     domain.Config
 
@@ -19,7 +20,7 @@ type Handler struct {
 }
 
 type Deps struct {
-	TimeSource    domain.TimeSource
+	TimeSource    types.TimeSource
 	Mailer        *mail.Mailer
 	MeterProvider metric.MeterProvider
 }
