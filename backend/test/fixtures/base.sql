@@ -22,7 +22,7 @@ INSERT INTO
     accounts (account_id, role_identifier, secret, email_address, password_hash)
 VALUES ('d7037ad0-d4bb-4dcc-8759-d82fbb3354e8',
         'SystemAdministrator',
-        '\xf71ab8929ad747915e135b8e9a5e01403329cc6b202c8e540e74920a78394e36f6266e4a505bf9cd362206bfd39665c69330e038f96ba72bbbc1f4a522564410',
+        '\xf71ab8929ad747915e135b8e9a5e01403329cc6b202c8e540e74920a78394e36',
         'admin@example.com',
         '\x24326124303424664b4263675349637966474f6f4571534b5a566c6c4f6d4f347461395161623162545a65556c556e6b4962455269764a645930624f');
 
@@ -35,7 +35,7 @@ INSERT INTO
     accounts (account_id, role_identifier, secret, email_address, password_hash, organisation_id)
 VALUES ('3ad082c7-cbda-49e1-a707-c53e1962be65',
         'OrganisationAdministrator',
-        '\xf71ab8929ad747915e135b8e9a5e01403329cc6b202c8e540e74920a78394e36f6266e4a505bf9cd362206bfd39665c69330e038f96ba72bbbc1f4a522564410',
+        '\xf71ab8929ad747915e135b8e9a5e01403329cc6b202c8e540e74920a78394e36',
         'admin+acmeinc@example.com',
         '\x24326124303424664b4263675349637966474f6f4571534b5a566c6c4f6d4f347461395161623162545a65556c556e6b4962455269764a645930624f',
            -- Acme Inc.
@@ -50,7 +50,7 @@ INSERT INTO
     accounts (account_id, role_identifier, secret, email_address, password_hash, organisation_id)
 VALUES ('f045e5d1-cdad-4964-a7e2-139c8a87346c',
         'OrganisationAdministrator',
-        '\xf71ab8929ad747915e135b8e9a5e01403329cc6b202c8e540e74920a78394e36f6266e4a505bf9cd362206bfd39665c69330e038f96ba72bbbc1f4a522564410',
+        '\xf71ab8929ad747915e135b8e9a5e01403329cc6b202c8e540e74920a78394e36',
         'otheradmin+acmeinc@example.com',
         '\x24326124303424664b4263675349637966474f6f4571534b5a566c6c4f6d4f347461395161623162545a65556c556e6b4962455269764a645930624f',
            -- Acme Inc.
@@ -65,7 +65,7 @@ INSERT INTO
     accounts (account_id, role_identifier, secret, email_address, password_hash, organisation_id)
 VALUES ('2035f4da-f385-42c4-a609-02d9aa7290e5',
         'OrganisationAdministrator',
-        '\xf71ab8929ad747915e135b8e9a5e01403329cc6b202c8e540e74920a78394e36f6266e4a505bf9cd362206bfd39665c69330e038f96ba72bbbc1f4a522564410',
+        '\xf71ab8929ad747915e135b8e9a5e01403329cc6b202c8e540e74920a78394e36',
         'admin+othercorp@example.com',
         '\x2424326124303424664b4263675349637966474f6f4571534b5a566c6c4f6d4f347461395161623162545a65556c556e6b4962455269764a645930624f',
            -- Other Corp

@@ -9,7 +9,7 @@ import (
 	security_helper "myvendor.mytld/myproject/backend/security/helper"
 )
 
-const accountSecretLength = 16
+const accountSecretLength = 32
 
 type Account struct {
 	construct.Table `table_name:"accounts"`
