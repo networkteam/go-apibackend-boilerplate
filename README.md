@@ -18,6 +18,7 @@ That's why a boilerplate can be better shaped and has fewer abstractions than us
 * Fully testable with functional tests for API and database fixtures
 * HTTP server with graceful shutdown
 * OpenTelemetry instrumentation
+* Docker-less development setup with Devbox (Nix), optional
 
 ## Usage
 
