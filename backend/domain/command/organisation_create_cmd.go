@@ -13,7 +13,7 @@ type OrganisationCreateCmd struct {
 }
 
 func NewOrganisationCreateCmd() (cmd OrganisationCreateCmd, err error) {
-	organisationID, err := uuid.NewV4()
+	organisationID, err := uuid.NewV7()
 	if err != nil {
 		return cmd, errors.Wrap(err, "generating id")
 	}

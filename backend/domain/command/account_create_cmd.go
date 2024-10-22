@@ -21,9 +21,9 @@ type AccountCreateCmd struct {
 }
 
 func NewAccountCreateCmd(emailAddress string, role types.Role, password string) (cmd AccountCreateCmd, err error) {
-	accountID, err := uuid.NewV4()
+	accountID, err := uuid.NewV7()
 	if err != nil {
-		return cmd, errors.Wrap(err, "generate account id")
+		return cmd, errors.Wrap(err, "generating id")
 	}
 
 	return AccountCreateCmd{
@@ -72,7 +72,7 @@ func (c AccountCreateCmd) Validate(_ domain.Config) error {
 func (c AccountCreateCmd) NewAccount(config domain.Config) (model.Account, error) {
 	accountSecret, err := model.NewAccountSecret()
 	if err != nil {
-		return model.Account{}, errors.Wrap(err, "generate account secret")
+		return model.Account{}, errors.Wrap(err, "generating account secret")
 	}
 	passwordHash, err := helper.GenerateHashFromPassword([]byte(c.password), config.HashCost)
 	if err != nil {
