@@ -84,6 +84,30 @@ func newMigrateCmd() *cli.Command {
 					return nil
 				},
 			},
+			{
+				Name:      "create",
+				Flags:     []cli.Flag{},
+				ArgsUsage: "<migration-name>",
+				Before: func(c *cli.Context) error {
+					if c.Args().First() == "" {
+						return errors.New("missing migration name")
+					}
+					return nil
+				},
+				Action: func(c *cli.Context) error {
+					db, err := connectDatabase(c)
+					if err != nil {
+						return err
+					}
+
+					err = goose.Create(db, "persistence/migrations", c.Args().First(), "go")
+					if err != nil {
+						return errors.Wrap(err, "creating migration")
+					}
+
+					return nil
+				},
+			},
 		},
 	}
 }
