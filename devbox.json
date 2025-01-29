@@ -4,9 +4,9 @@
     "nodejs@20",
     "python@3.10",
     "python310Packages.pip",
-    "mailhog@latest",
     "golangci-lint@1.57.2",
-    "postgresql_16@latest"
+    "postgresql_16@latest",
+    "mailpit@latest"
   ],
   "include": ["github:networkteam/devbox-plugins?dir=postgresql"],
   "shell": {

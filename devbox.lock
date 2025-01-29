@@ -97,51 +97,51 @@
         }
       }
     },
-    "mailhog@latest": {
-      "last_modified": "2024-11-28T07:51:56Z",
-      "resolved": "github:NixOS/nixpkgs/226216574ada4c3ecefcbbec41f39ce4655f78ef#mailhog",
+    "mailpit@latest": {
+      "last_modified": "2025-01-25T23:17:58Z",
+      "resolved": "github:NixOS/nixpkgs/b582bb5b0d7af253b05d58314b85ab8ec46b8d19#mailpit",
       "source": "devbox-search",
-      "version": "1.0.1",
+      "version": "1.21.8",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/dzsqdsa3g552paw09b595wk05szqjm45-MailHog-1.0.1",
+              "path": "/nix/store/9g2n0lmfarvh9gksxyy9djf7wq2vrypf-mailpit-1.21.8",
               "default": true
             }
           ],
-          "store_path": "/nix/store/dzsqdsa3g552paw09b595wk05szqjm45-MailHog-1.0.1"
+          "store_path": "/nix/store/9g2n0lmfarvh9gksxyy9djf7wq2vrypf-mailpit-1.21.8"
         },
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/lx1zi9lw9k0y7r39b30yaysmacmni4an-MailHog-1.0.1",
+              "path": "/nix/store/9y2q58gy7lnhyzrdq4hsw3mssimjd93s-mailpit-1.21.8",
               "default": true
             }
           ],
-          "store_path": "/nix/store/lx1zi9lw9k0y7r39b30yaysmacmni4an-MailHog-1.0.1"
+          "store_path": "/nix/store/9y2q58gy7lnhyzrdq4hsw3mssimjd93s-mailpit-1.21.8"
         },
         "x86_64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/d9dafarhg44pisk97wjlmdkqq9wn346a-MailHog-1.0.1",
+              "path": "/nix/store/zy4a87wh7yfa4ywbdndv8nc74z99njpy-mailpit-1.21.8",
               "default": true
             }
           ],
-          "store_path": "/nix/store/d9dafarhg44pisk97wjlmdkqq9wn346a-MailHog-1.0.1"
+          "store_path": "/nix/store/zy4a87wh7yfa4ywbdndv8nc74z99njpy-mailpit-1.21.8"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/2zi9biiil18vjg3prssssb2kflympmbh-MailHog-1.0.1",
+              "path": "/nix/store/rzm70vi7n3i4aifr1r1ic36bph0qvadf-mailpit-1.21.8",
               "default": true
             }
           ],
-          "store_path": "/nix/store/2zi9biiil18vjg3prssssb2kflympmbh-MailHog-1.0.1"
+          "store_path": "/nix/store/rzm70vi7n3i4aifr1r1ic36bph0qvadf-mailpit-1.21.8"
         }
       }
     },
