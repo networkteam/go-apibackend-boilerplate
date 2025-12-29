@@ -1,0 +1,20 @@
+{
+  "tagFormat": "${version}",
+  "plugins": [
+    [
+      "@gitlab/semantic-release-merge-request-analyzer",
+      {
+        "labels": {
+          "major": ["type::major"],
+          "premajor": ["pre-major"],
+          "minor": ["type::feature"],
+          "preminor": ["pre-minor"],
+          "patch": ["type::fix", "type::improvement", "type::maintenance"],
+          "prepatch": ["pre-patch"],
+          "prerelease": ["pre-release"]
+        }
+      }
+    ],
+    "@semantic-release/gitlab"
+  ]
+}
