@@ -1,0 +1,7 @@
+# normalize line ending characters so that they work with cupaloy https://github.com/bradleyjkemp/cupaloy/pull/73 https://github.com/actions/checkout/issues/135#issuecomment-613361104
+* text eol=lf
+
+*.png -text
+*.zip -text
+
+**/.snapshots/* -text

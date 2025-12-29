@@ -4,7 +4,17 @@ root = true
 end_of_line = lf
 insert_final_newline = true
 
-[*.{js,json,yml}]
+[*.{js,tsx,json,yml,graphqls}]
 charset = utf-8
 indent_style = space
 indent_size = 2
+
+[{*.go,*.go2}]
+indent_style = tab
+ij_go_GROUP_CURRENT_PROJECT_IMPORTS = true
+ij_go_group_stdlib_imports = true
+ij_go_import_sorting = gofmt
+ij_go_local_group_mode = project
+ij_go_local_package_prefixes =
+ij_go_move_all_imports_in_one_declaration = true
+ij_go_move_all_stdlib_imports_in_one_group = true

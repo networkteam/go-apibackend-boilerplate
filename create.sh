@@ -64,6 +64,12 @@ git commit -q -m "Initial commit"
 echo "Done."
 echo
 
-echo "Run project via Devbox:"
+echo "Next steps:"
+echo
+echo "1. Adapt CLAUDE.md files with your project details:"
+echo "   - CLAUDE.md (project overview, domain concepts, authentication)"
+echo "   - backend/CLAUDE.md (module paths already replaced)"
+echo
+echo "2. Run project via Devbox:"
 echo
 echo "    devbox services up"
