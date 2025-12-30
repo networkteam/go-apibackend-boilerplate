@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	logger "github.com/apex/log"
 	"github.com/friendsofgo/errors"
+	"github.com/networkteam/slogutils"
 
 	"myvendor.mytld/myproject/backend/domain/command"
 	"myvendor.mytld/myproject/backend/persistence/repository"
@@ -14,13 +14,13 @@ import (
 )
 
 func (h *Handler) AccountCreate(ctx context.Context, cmd command.AccountCreateCmd) error {
-	log := logger.FromContext(ctx).
-		WithField("component", "handler").
-		WithField("handler", "AccountCreate")
+	logger := slogutils.FromContext(ctx).
+		With(
+			"component", "handler",
+			"handler", "AccountCreate",
+		)
 
-	log.
-		WithField("cmd", cmd).
-		Debug("Handling account create command")
+	logger.DebugContext(ctx, "Handling account create command", "cmd", cmd)
 
 	if err := cmd.Validate(h.config); err != nil {
 		return err
@@ -55,12 +55,12 @@ func (h *Handler) AccountCreate(ctx context.Context, cmd command.AccountCreateCm
 		organisationID = cmd.OrganisationID.UUID.String()
 	}
 
-	log.
-		WithField("accountID", cmd.AccountID).
-		WithField("organisationID", organisationID).
-		WithField("emailAddress", cmd.EmailAddress).
-		WithField("role", cmd.Role).
-		Info("Created account")
+	logger.InfoContext(ctx, "Created account",
+		"accountID", cmd.AccountID,
+		"organisationID", organisationID,
+		"emailAddress", cmd.EmailAddress,
+		"role", cmd.Role,
+	)
 
 	return nil
 }

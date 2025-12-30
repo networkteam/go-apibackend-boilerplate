@@ -8,8 +8,8 @@ package public
 import (
 	"context"
 
-	logger "github.com/apex/log"
 	fog_errors "github.com/friendsofgo/errors"
+	"github.com/networkteam/slogutils"
 
 	"myvendor.mytld/myproject/backend/api"
 	common_helper "myvendor.mytld/myproject/backend/api/graph/common/helper"
@@ -73,12 +73,10 @@ func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCre
 
 // Logout is the resolver for the logout field.
 func (r *mutationResolver) Logout(ctx context.Context) (*model.Error, error) {
-	log := logger.
-		FromContext(ctx).
-		WithField("handler", "logout")
+	logger := slogutils.FromContext(ctx).
+		With("handler", "logout")
 
-	log.
-		Debug("Handling logout")
+	logger.DebugContext(ctx, "Handling logout")
 
 	w := api.GetHTTPResponse(ctx)
 	req := api.GetHTTPRequest(ctx)

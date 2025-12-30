@@ -21,7 +21,7 @@ func WithHTTPResponse(ctx context.Context, w http.ResponseWriter) context.Contex
 
 // GetHTTPResponse gets the http.ResponseWriter from context
 func GetHTTPResponse(ctx context.Context) http.ResponseWriter {
-	return ctx.Value(httpResponseKey).(http.ResponseWriter) //nolint:forcetypeassert
+	return ctx.Value(httpResponseKey).(http.ResponseWriter) //nolint:forcetypeassert,errcheck
 }
 
 func WithHTTPRequest(ctx context.Context, r *http.Request) context.Context {
@@ -30,7 +30,7 @@ func WithHTTPRequest(ctx context.Context, r *http.Request) context.Context {
 
 // GetHTTPRequest gets the *http.Request from context
 func GetHTTPRequest(ctx context.Context) *http.Request {
-	return ctx.Value(httpRequestKey).(*http.Request) //nolint:forcetypeassert
+	return ctx.Value(httpRequestKey).(*http.Request) //nolint:forcetypeassert,errcheck
 }
 
 func WithAuthToken(ctx context.Context, authToken string) context.Context {
@@ -39,7 +39,7 @@ func WithAuthToken(ctx context.Context, authToken string) context.Context {
 
 // GetAuthToken gets the auth token (e.g. from an underlying http request) from context
 func GetAuthToken(ctx context.Context) string {
-	return ctx.Value(authTokenKey).(string) //nolint:forcetypeassert
+	return ctx.Value(authTokenKey).(string) //nolint:forcetypeassert,errcheck
 }
 
 func WithCsrfToken(ctx context.Context, csrfToken string) context.Context {
@@ -48,7 +48,7 @@ func WithCsrfToken(ctx context.Context, csrfToken string) context.Context {
 
 // GetCsrfToken gets the CSRF token (e.g. from an underlying http request) from context
 func GetCsrfToken(ctx context.Context) string {
-	return ctx.Value(csrfTokenKey).(string) //nolint:forcetypeassert
+	return ctx.Value(csrfTokenKey).(string) //nolint:forcetypeassert,errcheck
 }
 
 func WithSkipCsrfCheck(ctx context.Context, skipCsrfCheck bool) context.Context {
@@ -57,5 +57,5 @@ func WithSkipCsrfCheck(ctx context.Context, skipCsrfCheck bool) context.Context 
 
 // GetSkipCsrfCheck tells if the csrf check should be skipped
 func GetSkipCsrfCheck(ctx context.Context) bool {
-	return ctx.Value(skipCsrfCheckKey).(bool) //nolint:forcetypeassert
+	return ctx.Value(skipCsrfCheckKey).(bool) //nolint:forcetypeassert,errcheck
 }

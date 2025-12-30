@@ -111,7 +111,7 @@ func TestRequireSameAccount(t *testing.T) {
 			err := check(authCtx)
 			if tt.expectErr {
 				assert.Error(t, err)
-				assert.ErrorIs(t, err, authorizationError{"requires same account"})
+				assert.ErrorIs(t, err, authorizationError{cause: "requires same account"})
 			} else {
 				assert.NoError(t, err)
 			}
@@ -175,7 +175,7 @@ func TestRequireOrganisationID(t *testing.T) {
 			err := check(authCtx)
 			if tt.expectedError {
 				assert.Error(t, err)
-				assert.ErrorIs(t, err, authorizationError{tt.expectedMessage})
+				assert.ErrorIs(t, err, authorizationError{cause: tt.expectedMessage})
 			} else {
 				assert.NoError(t, err)
 			}
@@ -234,7 +234,7 @@ func TestRequireNotSameAccount(t *testing.T) {
 			err := check(authCtx)
 			if tt.expectErr {
 				assert.Error(t, err)
-				assert.ErrorIs(t, err, authorizationError{"cannot perform action on own account"})
+				assert.ErrorIs(t, err, authorizationError{cause: "cannot perform action on own account"})
 			} else {
 				assert.NoError(t, err)
 			}
@@ -247,7 +247,7 @@ func TestRequireAll(t *testing.T) {
 		return nil
 	}
 	failCheck := func(authCtx authentication.AuthContext) error {
-		return authorizationError{"fail"}
+		return authorizationError{cause: "fail"}
 	}
 
 	tests := []struct {
@@ -286,7 +286,7 @@ func TestRequireAll(t *testing.T) {
 			if tt.expectErr {
 				assert.Error(t, err)
 				// Since the first failing check's error is returned, we can assert the error message
-				assert.ErrorIs(t, err, authorizationError{"fail"})
+				assert.ErrorIs(t, err, authorizationError{cause: "fail"})
 			} else {
 				assert.NoError(t, err)
 			}
@@ -299,7 +299,7 @@ func TestSatisfyAny(t *testing.T) {
 		return nil
 	}
 	failCheck := func(authCtx authentication.AuthContext) error {
-		return authorizationError{"fail"}
+		return authorizationError{cause: "fail"}
 	}
 
 	tests := []struct {
@@ -490,7 +490,7 @@ func TestRequireNotAuthenticated(t *testing.T) {
 			err := check(authCtx)
 			if tt.expectedError {
 				assert.Error(t, err)
-				assert.ErrorIs(t, err, authorizationError{"must not be authenticated"})
+				assert.ErrorIs(t, err, authorizationError{cause: "must not be authenticated"})
 			} else {
 				assert.NoError(t, err)
 			}
@@ -536,7 +536,7 @@ func TestSetOrganisationID(t *testing.T) {
 			err := check(authCtx)
 			if tt.expectErr {
 				assert.Error(t, err)
-				assert.ErrorIs(t, err, authorizationError{"organisation ID is required"})
+				assert.ErrorIs(t, err, authorizationError{cause: "organisation ID is required"})
 				assert.Nil(t, query.organisationID)
 			} else {
 				assert.NoError(t, err)

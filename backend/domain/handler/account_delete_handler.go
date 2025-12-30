@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	logger "github.com/apex/log"
 	"github.com/friendsofgo/errors"
+	"github.com/networkteam/slogutils"
 
 	"myvendor.mytld/myproject/backend/domain/command"
 	"myvendor.mytld/myproject/backend/domain/types"
@@ -15,13 +15,13 @@ import (
 )
 
 func (h *Handler) AccountDelete(ctx context.Context, cmd command.AccountDeleteCmd) error {
-	log := logger.FromContext(ctx).
-		WithField("component", "handler").
-		WithField("handler", "AccountDelete")
+	logger := slogutils.FromContext(ctx).
+		With(
+			"component", "handler",
+			"handler", "AccountDelete",
+		)
 
-	log.
-		WithField("cmd", cmd).
-		Debug("Handling account delete command")
+	logger.DebugContext(ctx, "Handling account delete command", "cmd", cmd)
 
 	authCtx := authentication.GetAuthContext(ctx)
 	if err := authorization.NewAuthorizer(authCtx).AllowsAccountDeleteCmd(cmd); err != nil {
@@ -61,12 +61,12 @@ func (h *Handler) AccountDelete(ctx context.Context, cmd command.AccountDeleteCm
 		return err
 	}
 
-	log.
-		WithField("accountID", cmd.AccountID).
-		WithField("organisationID", organisationID).
-		WithField("emailAddress", emailAddress).
-		WithField("role", role).
-		Info("Deleted account")
+	logger.InfoContext(ctx, "Deleted account",
+		"accountID", cmd.AccountID,
+		"organisationID", organisationID,
+		"emailAddress", emailAddress,
+		"role", role,
+	)
 
 	return nil
 }

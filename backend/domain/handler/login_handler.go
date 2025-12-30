@@ -4,8 +4,8 @@ import (
 	"context"
 	std_errors "errors"
 
-	logger "github.com/apex/log"
 	fog_errors "github.com/friendsofgo/errors"
+	"github.com/networkteam/slogutils"
 
 	"myvendor.mytld/myproject/backend/domain/command"
 	"myvendor.mytld/myproject/backend/domain/model"
@@ -17,13 +17,10 @@ import (
 var ErrLoginInvalidCredentials = std_errors.New("invalid credentials")
 
 func (h *Handler) Login(ctx context.Context, cmd command.LoginCmd) (err error) {
-	log := logger.
-		FromContext(ctx).
-		WithField("handler", "login")
+	logger := slogutils.FromContext(ctx).
+		With("handler", "login")
 
-	log.
-		WithField("emailAddress", cmd.EmailAddress).
-		Debug("Handling login")
+	logger.DebugContext(ctx, "Handling login", "emailAddress", cmd.EmailAddress)
 
 	account := cmd.Account
 	if cmd.Account == nil {
@@ -37,16 +34,16 @@ func (h *Handler) Login(ctx context.Context, cmd command.LoginCmd) (err error) {
 	if err != nil || cmd.Account == nil {
 		// Log warning to find potential attacks
 		if cmd.Account == nil {
-			log.
-				WithField("emailAddress", cmd.EmailAddress).
-				WithField("errorCode", types.ErrorCodeNotExists).
-				Warn("Login failed, account not found")
+			logger.WarnContext(ctx, "Login failed, account not found",
+				"emailAddress", cmd.EmailAddress,
+				"errorCode", types.ErrorCodeNotExists,
+			)
 		} else {
-			log.
-				WithField("emailAddress", cmd.EmailAddress).
-				WithField("errorCode", "invalidPassword").
-				WithError(err).
-				Warn("Login failed, invalid password")
+			logger.WarnContext(ctx, "Login failed, invalid password",
+				"emailAddress", cmd.EmailAddress,
+				"errorCode", "invalidPassword",
+				slogutils.Err(err),
+			)
 		}
 
 		h.instrumentation.loginFailedCounter.Add(ctx, 1)
@@ -63,10 +60,10 @@ func (h *Handler) Login(ctx context.Context, cmd command.LoginCmd) (err error) {
 
 	h.instrumentation.loginSuccessCounter.Add(ctx, 1)
 
-	log.
-		WithField("emailAddress", cmd.EmailAddress).
-		WithField("accountID", account.GetAccountID()).
-		Info("Login success")
+	logger.InfoContext(ctx, "Login success",
+		"emailAddress", cmd.EmailAddress,
+		"accountID", account.GetAccountID(),
+	)
 
 	return nil
 }

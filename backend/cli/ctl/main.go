@@ -8,7 +8,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/apex/log"
 	"github.com/friendsofgo/errors"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/multitracer"
@@ -38,103 +37,103 @@ func main() {
 		Usage: "App CLI control",
 		Flags: flattenFlags(
 			[]cli.Flag{
-			&cli.IntFlag{
-				Name:    "verbosity",
-				Usage:   "Verbosity: 0=fatal, 1=error, 2=warn, 3=info, 4=debug",
-				Aliases: []string{"v"},
-				EnvVars: []string{"BACKEND_VERBOSITY"},
-				Value:   3,
-			},
-			&cli.StringFlag{
-				Name:    "postgres-dsn",
-				Usage:   "PostgreSQL connection DSN",
-				Value:   "dbname=myproject-dev sslmode=disable",
-				EnvVars: []string{"BACKEND_POSTGRES_DSN"},
-			},
-			&cli.DurationFlag{
-				Name:    "db-wait-timeout",
-				Usage:   "Duration to wait for database to become available (0 to disable)",
-				Value:   15 * time.Second,
-				EnvVars: []string{"BACKEND_DB_WAIT_TIMEOUT"},
-			},
+				&cli.IntFlag{
+					Name:    "verbosity",
+					Usage:   "Verbosity: 0=fatal, 1=error, 2=warn, 3=info, 4=debug",
+					Aliases: []string{"v"},
+					EnvVars: []string{"BACKEND_VERBOSITY"},
+					Value:   3,
+				},
+				&cli.StringFlag{
+					Name:    "postgres-dsn",
+					Usage:   "PostgreSQL connection DSN",
+					Value:   "dbname=myproject-dev sslmode=disable",
+					EnvVars: []string{"BACKEND_POSTGRES_DSN"},
+				},
+				&cli.DurationFlag{
+					Name:    "db-wait-timeout",
+					Usage:   "Duration to wait for database to become available (0 to disable)",
+					Value:   15 * time.Second,
+					EnvVars: []string{"BACKEND_DB_WAIT_TIMEOUT"},
+				},
 
-			&cli.IntFlag{
-				Name:    "hash-cost",
-				Usage:   "Hash cost for password hashing with bcrypt (between 4 and 31, higher is slower)",
-				Value:   defaultConfig.HashCost,
-				EnvVars: []string{"BACKEND_HASH_COST"},
-			},
+				&cli.IntFlag{
+					Name:    "hash-cost",
+					Usage:   "Hash cost for password hashing with bcrypt (between 4 and 31, higher is slower)",
+					Value:   defaultConfig.HashCost,
+					EnvVars: []string{"BACKEND_HASH_COST"},
+				},
 
-			&cli.StringFlag{
-				Name:    "app-base-url",
-				Usage:   "Application base URL",
-				Value:   "http://localhost:3000/",
-				EnvVars: []string{"BACKEND_APP_BASE_URL"},
-			},
+				&cli.StringFlag{
+					Name:    "app-base-url",
+					Usage:   "Application base URL",
+					Value:   "http://localhost:3000/",
+					EnvVars: []string{"BACKEND_APP_BASE_URL"},
+				},
 
-			&cli.StringFlag{
-				Name:    "jwt-secret",
-				Usage:   "JWT secret",
-				EnvVars: []string{"BACKEND_JWT_SECRET"},
-			},
+				&cli.StringFlag{
+					Name:    "jwt-secret",
+					Usage:   "JWT secret",
+					EnvVars: []string{"BACKEND_JWT_SECRET"},
+				},
 
-			&cli.StringFlag{
-				Name:    "smtp-host",
-				Usage:   "Host of SMTP for outgoing mails",
-				Value:   "localhost",
-				EnvVars: []string{"BACKEND_SMTP_HOST"},
-			},
-			&cli.IntFlag{
-				Name:    "smtp-port",
-				Usage:   "SMTP Port for outgoing mails",
-				Value:   1025,
-				EnvVars: []string{"BACKEND_SMTP_PORT"},
-			},
-			&cli.StringFlag{
-				Name:    "smtp-user",
-				Usage:   "SMTP User for outgoing mails",
-				EnvVars: []string{"BACKEND_SMTP_USER"},
-			},
-			&cli.StringFlag{
-				Name:    "smtp-password",
-				Usage:   "SMTP Password for outgoing mails",
-				EnvVars: []string{"BACKEND_SMTP_PASSWORD"},
-			},
-			&cli.StringFlag{
-				Name:    "smtp-tls-policy",
-				Usage:   "TLS policy for outgoing mails (Values: opportunistic, mandatory, non)",
-				EnvVars: []string{"BACKEND_SMTP_TLS_POLICY"},
-				Value:   "non",
-			},
-			&cli.StringFlag{
-				Name:    "mail-default-from",
-				Usage:   "Default sender address for outgoing mails",
-				EnvVars: []string{"MAIL_DEFAULT_FROM"},
-				Value:   "app@example.com",
-			},
+				&cli.StringFlag{
+					Name:    "smtp-host",
+					Usage:   "Host of SMTP for outgoing mails",
+					Value:   "localhost",
+					EnvVars: []string{"BACKEND_SMTP_HOST"},
+				},
+				&cli.IntFlag{
+					Name:    "smtp-port",
+					Usage:   "SMTP Port for outgoing mails",
+					Value:   1025,
+					EnvVars: []string{"BACKEND_SMTP_PORT"},
+				},
+				&cli.StringFlag{
+					Name:    "smtp-user",
+					Usage:   "SMTP User for outgoing mails",
+					EnvVars: []string{"BACKEND_SMTP_USER"},
+				},
+				&cli.StringFlag{
+					Name:    "smtp-password",
+					Usage:   "SMTP Password for outgoing mails",
+					EnvVars: []string{"BACKEND_SMTP_PASSWORD"},
+				},
+				&cli.StringFlag{
+					Name:    "smtp-tls-policy",
+					Usage:   "TLS policy for outgoing mails (Values: opportunistic, mandatory, non)",
+					EnvVars: []string{"BACKEND_SMTP_TLS_POLICY"},
+					Value:   "non",
+				},
+				&cli.StringFlag{
+					Name:    "mail-default-from",
+					Usage:   "Default sender address for outgoing mails",
+					EnvVars: []string{"MAIL_DEFAULT_FROM"},
+					Value:   "app@example.com",
+				},
 
-			&cli.StringFlag{
-				Name:    "test-time-delta",
-				Usage:   "Time delta for testing (format: 1y2m3d4h). Examples: '1y' (1 year forward), '-2m' (2 months back), '30d12h' (30 days 12 hours forward)",
-				Value:   "",
-				EnvVars: []string{"TEST_TIME_DELTA"},
-			},
+				&cli.StringFlag{
+					Name:    "test-time-delta",
+					Usage:   "Time delta for testing (format: 1y2m3d4h). Examples: '1y' (1 year forward), '-2m' (2 months back), '30d12h' (30 days 12 hours forward)",
+					Value:   "",
+					EnvVars: []string{"TEST_TIME_DELTA"},
+				},
 
-			&cli.BoolFlag{
-				Name:    "disable-ansi",
-				Usage:   "Force disable ANSI log output and output log in logfmt format",
-				EnvVars: []string{"BACKEND_DISABLE_ANSI"},
-				Value:   false,
+				&cli.BoolFlag{
+					Name:    "disable-ansi",
+					Usage:   "Force disable ANSI log output and output log in logfmt format",
+					EnvVars: []string{"BACKEND_DISABLE_ANSI"},
+					Value:   false,
+				},
+				&cli.BoolFlag{
+					Name:    "force-ansi",
+					Usage:   "Force enable ANSI log output",
+					EnvVars: []string{"BACKEND_FORCE_ANSI"},
+					Value:   false,
+				},
 			},
-			&cli.BoolFlag{
-				Name:    "force-ansi",
-				Usage:   "Force enable ANSI log output",
-				EnvVars: []string{"BACKEND_FORCE_ANSI"},
-				Value:   false,
-			},
-		},
-		jobqueueMainFlags(),
-	),
+			jobqueueMainFlags(),
+		),
 		Before: func(c *cli.Context) error {
 			handler := setLogHandler(c)
 
@@ -200,7 +199,11 @@ func loadDotenv() {
 
 func connectDatabase(c *cli.Context, dlog *devlog.Instance) (*sql.DB, error) {
 	postgresDSN := c.String("postgres-dsn")
-	slog.Debug("Connecting to database", "component", "cli", "postgresDSN", postgresDSN)
+	slog.Debug(
+		"Connecting to database",
+		"component", "cli",
+		"postgresDSN", postgresDSN,
+	)
 
 	connConfig, err := pgx.ParseConfig(postgresDSN)
 	if err != nil {
@@ -249,14 +252,12 @@ func waitForDatabase(ctx context.Context, db *sql.DB, timeout time.Duration) err
 	deadline := start.Add(timeout)
 	backoff := 100 * time.Millisecond
 
-	log.WithField("component", "cli").Info("Waiting for database to become available...")
+	slog.Info("Waiting for database to become available...", "component", "cli")
 
 	for time.Now().Before(deadline) {
 		err := db.PingContext(ctx)
 		if err == nil {
-			log.WithField("component", "cli").
-				WithField("duration", time.Since(start)).
-				Info("Database is available")
+			slog.Info("Database is available", "component", "cli", "duration", time.Since(start))
 			return nil
 		}
 		time.Sleep(backoff)

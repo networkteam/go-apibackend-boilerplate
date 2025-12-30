@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	logger "github.com/apex/log"
 	"github.com/friendsofgo/errors"
+	"github.com/networkteam/slogutils"
 
 	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/persistence/repository"
@@ -20,7 +20,7 @@ const (
 func RefreshTokensMiddleware(db *sql.DB, timeSource types.TimeSource, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		log := logger.FromContext(ctx)
+		logger := slogutils.FromContext(ctx)
 
 		authCtx := authentication.GetAuthContext(ctx)
 		if authCtx.Authenticated {
@@ -28,10 +28,8 @@ func RefreshTokensMiddleware(db *sql.DB, timeSource types.TimeSource, next http.
 			if delta > AuthTokenRefreshThreshold {
 				err := refreshTokens(w, r, authCtx, db, timeSource)
 				if err != nil {
-					log.
-						// err already has stacktrace
-						WithError(err).
-						Error("could not refresh tokens")
+					// err already has stacktrace
+					logger.ErrorContext(ctx, "Could not refresh tokens", slogutils.Err(err))
 				}
 			}
 		}

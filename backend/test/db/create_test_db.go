@@ -3,17 +3,18 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
 
-	"github.com/apex/log"
 	"github.com/friendsofgo/errors"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/jackc/pgx/v5/tracelog"
-	apexlogutils_pgx "github.com/networkteam/apexlogutils/pgx/v5"
+	"github.com/networkteam/slogutils"
+	slogutils_tracelog "github.com/networkteam/slogutils/adapter/pgx/v5/tracelog"
 	"github.com/pressly/goose/v3"
 
 	// Import migrations with side-effect
@@ -38,7 +39,10 @@ func PrepareTestDatabase() error {
 		return errors.Wrap(err, "parsing PostgreSQL connection string")
 	}
 	connConfig.Tracer = &tracelog.TraceLog{
-		Logger: apexlogutils_pgx.NewLogger(log.Log),
+		Logger: slogutils_tracelog.NewLogger(
+			slog.Default().With("component", "db.driver"),
+			slogutils_tracelog.WithRemapLevel(tracelog.LogLevelInfo, slogutils.LevelTrace),
+		),
 		// Increase to LogLevelTrace to see all queries
 		LogLevel: tracelog.LogLevelDebug,
 	}
@@ -72,9 +76,17 @@ func CreateTestDatabase(t *testing.T) *sql.DB {
 		t.Fatalf("Failed to parse PostgreSQL connection string: %v", err)
 	}
 	connConfig.Tracer = &tracelog.TraceLog{
-		Logger: apexlogutils_pgx.NewLogger(log.Log, apexlogutils_pgx.WithIgnoreErrors(func(err error) bool {
-			return err.Error() == "ERROR: relation \"goose_db_version\" does not exist (SQLSTATE 42P01)"
-		})),
+		Logger: slogutils_tracelog.NewLogger(
+			slog.Default().With("component", "db.driver"),
+			slogutils_tracelog.WithRemapLevel(tracelog.LogLevelInfo, slogutils.LevelTrace),
+			slogutils_tracelog.WithRemapErrorLevel(func(_ tracelog.LogLevel, err error) slog.Level {
+				// Ignore the goose_db_version table not found error
+				if err.Error() == "ERROR: relation \"goose_db_version\" does not exist (SQLSTATE 42P01)" {
+					return slogutils.LevelTrace
+				}
+				return slog.LevelError
+			}),
+		),
 		// Increase to LogLevelTrace to see all queries
 		LogLevel: tracelog.LogLevelDebug,
 	}

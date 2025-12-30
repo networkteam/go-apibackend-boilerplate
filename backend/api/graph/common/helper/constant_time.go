@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/apex/log"
+	"github.com/networkteam/slogutils"
 )
 
 type ConstantTimeWaiter struct {
@@ -22,13 +22,15 @@ func (w *ConstantTimeWaiter) Wait(ctx context.Context) {
 		return
 	}
 
+	logger := slogutils.FromContext(ctx)
+
 	waitTime := w.delay - time.Since(w.started)
 	if waitTime <= 0 {
-		log.Warnf("Constant time operation exceeded delay by %s", -waitTime)
+		logger.WarnContext(ctx, "Constant time operation exceeded delay", "exceeded", -waitTime)
 		return
 	}
 
-	log.Debugf("Waiting %s to ensure constant time for operation", waitTime)
+	logger.DebugContext(ctx, "Waiting to ensure constant time for operation", "waitTime", waitTime)
 
 	// Wait until delay since start has passed (if needed to wait) or the context is done
 	select {

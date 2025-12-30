@@ -3,12 +3,12 @@ package graphql
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/apex/log"
 	graphql_ws "github.com/korylprince/go-graphql-ws"
 	"github.com/stretchr/testify/require"
 
@@ -39,7 +39,7 @@ func ServerAndSubscribe[T any](t *testing.T, deps api.ResolverDependencies, subs
 
 	wsURL := httpToWs(t, s.URL) + "/query"
 
-	log.Debugf("connecting to: %s", wsURL)
+	slog.Debug("connecting to WS", "url", wsURL)
 
 	conn, resp, err := graphql_ws.DefaultDialer.Dial(wsURL, req.Header, nil)
 	require.NoError(t, err)
@@ -48,7 +48,7 @@ func ServerAndSubscribe[T any](t *testing.T, deps api.ResolverDependencies, subs
 		err := resp.Body.Close()
 		require.NoError(t, err)
 		_ = conn.Close()
-		log.Debug("WS client: closed connection")
+		slog.Debug("WS client: closed connection")
 	})
 
 	notifications := make(chan T, 1)

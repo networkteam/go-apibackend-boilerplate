@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	std_errors "errors"
+	"log/slog"
 
-	"github.com/apex/log"
 	"github.com/friendsofgo/errors"
 	gomail "github.com/wneessen/go-mail"
 
@@ -52,9 +52,7 @@ func (m *Sender) Send(_ context.Context, message *gomail.Msg) error {
 
 	m.LastMail = buf.String()
 
-	log.
-		WithField("message", buf.String()).
-		Debug("Sent message via fixture mailer")
+	slog.Debug("Sent message via fixture mailer", "message", buf.String())
 
 	return nil
 }

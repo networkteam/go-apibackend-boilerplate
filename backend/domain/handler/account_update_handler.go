@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	logger "github.com/apex/log"
 	"github.com/friendsofgo/errors"
+	"github.com/networkteam/slogutils"
 
 	"myvendor.mytld/myproject/backend/domain/command"
 	"myvendor.mytld/myproject/backend/domain/types"
@@ -15,13 +15,13 @@ import (
 )
 
 func (h *Handler) AccountUpdate(ctx context.Context, cmd command.AccountUpdateCmd) error {
-	log := logger.FromContext(ctx).
-		WithField("component", "handler").
-		WithField("handler", "AccountUpdate")
+	logger := slogutils.FromContext(ctx).
+		With(
+			"component", "handler",
+			"handler", "AccountUpdate",
+		)
 
-	log.
-		WithField("cmd", cmd).
-		Debug("Handling account update command")
+	logger.DebugContext(ctx, "Handling account update command", "cmd", cmd)
 
 	if err := cmd.Validate(h.config); err != nil {
 		return err
@@ -83,15 +83,15 @@ func (h *Handler) AccountUpdate(ctx context.Context, cmd command.AccountUpdateCm
 		organisationID = cmd.NewOrganisationID.UUID.String()
 	}
 
-	log.
-		WithField("accountID", cmd.AccountID).
-		WithField("prevOrganisationID", prevOrganisationID).
-		WithField("organisationID", organisationID).
-		WithField("prevUsername", prevUsername).
-		WithField("emailAddress", cmd.EmailAddress).
-		WithField("prevRole", prevRole).
-		WithField("role", cmd.Role).
-		Info("Updated account")
+	logger.InfoContext(ctx, "Updated account",
+		"accountID", cmd.AccountID,
+		"prevOrganisationID", prevOrganisationID,
+		"organisationID", organisationID,
+		"prevUsername", prevUsername,
+		"emailAddress", cmd.EmailAddress,
+		"prevRole", prevRole,
+		"role", cmd.Role,
+	)
 
 	return nil
 }

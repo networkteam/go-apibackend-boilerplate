@@ -3,13 +3,14 @@ package middleware
 import (
 	"context"
 	"database/sql"
+	"log/slog"
 	"net/http"
 
-	logger "github.com/apex/log"
 	"github.com/friendsofgo/errors"
 	"github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/gofrs/uuid"
+	"github.com/networkteam/slogutils"
 
 	"myvendor.mytld/myproject/backend/api"
 	"myvendor.mytld/myproject/backend/domain/types"
@@ -38,11 +39,9 @@ func AuthContextMiddleware(db *sql.DB, timeSource types.TimeSource, next http.Ha
 
 		// Add some additional logging information if authenticated
 		if authCtx.Authenticated {
-			log := logger.FromContext(ctx)
-			log = log.
-				WithField("authAccountID", authCtx.AccountID).
-				WithField("authRole", authCtx.Role)
-			ctx = logger.NewContext(ctx, log)
+			logger := slogutils.FromContext(ctx)
+			logger = logger.With(slog.Group("auth", "accountID", authCtx.AccountID, "role", authCtx.Role))
+			ctx = slogutils.WithLogger(ctx, logger)
 		}
 
 		r = r.WithContext(ctx)
@@ -51,55 +50,47 @@ func AuthContextMiddleware(db *sql.DB, timeSource types.TimeSource, next http.Ha
 }
 
 func authCtxFromToken(ctx context.Context, db *sql.DB, authTokenValue string, timeSource types.TimeSource) (authCtx authentication.AuthContext) {
-	log := logger.FromContext(ctx)
+	logger := slogutils.FromContext(ctx)
 
 	authToken, err := jwt.ParseSigned(authTokenValue, []jose.SignatureAlgorithm{jose.HS256})
 	if err != nil {
-		log.
-			WithError(errors.WithStack(err)).
-			Warn("could not parse signed auth token")
+		logger.WarnContext(ctx, "Could not parse signed auth token", slogutils.Err(errors.WithStack(err)))
 		return authentication.AuthContextWithError(api.ErrAuthTokenInvalid)
 	}
 	var unverifiedClaims jwt.Claims
 	if err := authToken.UnsafeClaimsWithoutVerification(&unverifiedClaims); err != nil {
-		log.
-			WithError(errors.WithStack(err)).
-			Warn("could not get claims from auth token")
+		logger.WarnContext(ctx, "Could not get claims from auth token", slogutils.Err(errors.WithStack(err)))
 		return authentication.AuthContextWithError(api.ErrAuthTokenInvalid)
 	}
 	accountID, err := uuid.FromString(unverifiedClaims.Subject)
 	if err != nil {
-		log.
-			WithError(errors.WithStack(err)).
-			WithField("subject", unverifiedClaims.Subject).
-			Warn("could not get account ID from subject claim in auth token")
+		logger.WarnContext(ctx, "Could not get account ID from subject claim in auth token",
+			slog.Group("auth", "subject", unverifiedClaims.Subject),
+			slogutils.Err(errors.WithStack(err)))
 		return authentication.AuthContextWithError(api.ErrAuthTokenInvalid)
 	}
 
 	account, err := repository.FindAccountByID(ctx, db, accountID, nil)
 	if err != nil {
-		log.
-			WithError(errors.WithStack(err)).
-			WithField("accountID", accountID).
-			Warn("could not find account for subject claim in auth token")
+		logger.WarnContext(ctx, "Could not find account for subject claim in auth token",
+			slog.Group("auth", "accountID", accountID),
+			slogutils.Err(errors.WithStack(err)))
 		return authentication.AuthContextWithError(api.ErrAuthTokenInvalid)
 	}
 
 	var verifiedClaims jwt.Claims
 	if err := authToken.Claims(account.Secret, &verifiedClaims); err != nil {
-		log.
-			WithError(errors.WithStack(err)).
-			WithField("accountID", accountID).
-			Warn("could not verify claims in auth token")
+		logger.WarnContext(ctx, "Could not verify claims in auth token",
+			slog.Group("auth", "accountID", accountID),
+			slogutils.Err(errors.WithStack(err)))
 		return authentication.AuthContextWithError(api.ErrAuthTokenInvalid)
 	}
 
 	err = verifiedClaims.Validate(jwt.Expected{}.WithTime(timeSource.Now()))
 	if err != nil {
-		log.
-			WithError(errors.WithStack(err)).
-			WithField("accountID", accountID).
-			Warn("could not validate claims in auth token")
+		logger.WarnContext(ctx, "Could not validate claims in auth token",
+			slog.Group("auth", "accountID", accountID),
+			slogutils.Err(errors.WithStack(err)))
 		if errors.Is(err, jwt.ErrExpired) {
 			return authentication.AuthContextWithError(api.ErrAuthTokenExpired)
 		}
@@ -120,9 +111,8 @@ func authCtxFromToken(ctx context.Context, db *sql.DB, authTokenValue string, ti
 	authCtx.Secret = account.Secret
 	authCtx.Role = account.Role
 	if !authCtx.Role.IsValid() {
-		log.
-			WithField("accountID", accountID).
-			Errorf("Invalid role in account: %q", account.Role)
+		logger.ErrorContext(ctx, "Invalid role in account",
+			slog.Group("auth", "accountID", accountID, "role", account.Role))
 		return authentication.AuthContextWithError(api.ErrAuthTokenInvalid)
 	}
 
@@ -130,7 +120,7 @@ func authCtxFromToken(ctx context.Context, db *sql.DB, authTokenValue string, ti
 }
 
 func checkCsrfToken(ctx context.Context, authCtx authentication.AuthContext, csrfTokenValue string, timeSource types.TimeSource) error {
-	log := logger.FromContext(ctx)
+	logger := slogutils.FromContext(ctx)
 
 	if csrfTokenValue == "" {
 		return api.ErrCsrfTokenMissing
@@ -138,27 +128,23 @@ func checkCsrfToken(ctx context.Context, authCtx authentication.AuthContext, csr
 
 	csrfToken, err := jwt.ParseSigned(csrfTokenValue, []jose.SignatureAlgorithm{jose.HS256})
 	if err != nil {
-		log.
-			WithError(errors.WithStack(err)).
-			Warn("could not parse signed CSRF token")
+		logger.WarnContext(ctx, "Could not parse signed CSRF token", slogutils.Err(errors.WithStack(err)))
 		return api.ErrCsrfTokenInvalid
 	}
 
 	var verifiedClaims jwt.Claims
 	if err := csrfToken.Claims(authCtx.Secret, &verifiedClaims); err != nil {
-		log.
-			WithError(errors.WithStack(err)).
-			WithField("accountID", authCtx.AccountID).
-			Warn("could not verify claims in CSRF token")
+		logger.WarnContext(ctx, "Could not verify claims in CSRF token",
+			slog.Group("auth", "accountID", authCtx.AccountID),
+			slogutils.Err(errors.WithStack(err)))
 		return api.ErrCsrfTokenInvalid
 	}
 
 	err = verifiedClaims.Validate(jwt.Expected{}.WithTime(timeSource.Now()))
 	if err != nil {
-		log.
-			WithError(errors.WithStack(err)).
-			WithField("accountID", authCtx.AccountID).
-			Warn("could not validate claims in CSRF token")
+		logger.WarnContext(ctx, "Could not validate claims in CSRF token",
+			slog.Group("auth", "accountID", authCtx.AccountID),
+			slogutils.Err(errors.WithStack(err)))
 		return api.ErrCsrfTokenInvalid
 	}
 

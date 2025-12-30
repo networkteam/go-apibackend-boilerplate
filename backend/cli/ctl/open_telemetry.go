@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"errors"
+	"log/slog"
 
-	apexlog "github.com/apex/log"
 	"github.com/urfave/cli/v2"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/prometheus"
@@ -40,11 +40,11 @@ func setupOTelSDK(c *cli.Context, config domain.Config) (shutdown func(context.C
 	}
 
 	if !c.Bool("open-telemetry-enabled") {
-		apexlog.Debug("OpenTelemetry is disabled")
+		slog.Debug("OpenTelemetry is disabled")
 		return shutdown, err
 	}
 
-	apexlog.Info("Setting up OpenTelemetry")
+	slog.Info("Setting up OpenTelemetry")
 
 	// handleErr calls shutdown for cleanup and makes sure that all errors are returned.
 	handleErr := func(inErr error) {

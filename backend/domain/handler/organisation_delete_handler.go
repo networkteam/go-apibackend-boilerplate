@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	logger "github.com/apex/log"
 	"github.com/friendsofgo/errors"
+	"github.com/networkteam/slogutils"
 
 	"myvendor.mytld/myproject/backend/domain/command"
 	"myvendor.mytld/myproject/backend/domain/types"
@@ -15,13 +15,13 @@ import (
 )
 
 func (h *Handler) OrganisationDelete(ctx context.Context, cmd command.OrganisationDeleteCmd) error {
-	log := logger.FromContext(ctx).
-		WithField("component", "handler").
-		WithField("handler", "OrganisationDelete")
+	logger := slogutils.FromContext(ctx).
+		With(
+			"component", "handler",
+			"handler", "OrganisationDelete",
+		)
 
-	log.
-		WithField("cmd", cmd).
-		Debug("Handling organisation delete command")
+	logger.DebugContext(ctx, "Handling organisation delete command", "cmd", cmd)
 
 	authCtx := authentication.GetAuthContext(ctx)
 	if err := authorization.NewAuthorizer(authCtx).AllowsOrganisationDeleteCmd(cmd); err != nil {
@@ -51,10 +51,10 @@ func (h *Handler) OrganisationDelete(ctx context.Context, cmd command.Organisati
 		return errors.Wrap(err, "running transaction")
 	}
 
-	log.
-		WithField("organisationID", cmd.OrganisationID).
-		WithField("organisationName", organisationName).
-		Info("Deleted organisation")
+	logger.InfoContext(ctx, "Deleted organisation",
+		"organisationID", cmd.OrganisationID,
+		"organisationName", organisationName,
+	)
 
 	return nil
 }

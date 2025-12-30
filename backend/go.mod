@@ -4,7 +4,6 @@ require (
 	github.com/99designs/gqlgen v0.17.85
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/alicebob/miniredis/v2 v2.35.0
-	github.com/apex/log v1.9.0
 	github.com/coreos/go-oidc/v3 v3.17.0
 	github.com/friendsofgo/errors v0.9.2
 	github.com/getsentry/sentry-go v0.40.0
@@ -20,7 +19,6 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/korylprince/go-graphql-ws v0.3.6
 	github.com/mattn/go-isatty v0.0.20
-	github.com/networkteam/apexlogutils v0.3.0
 	github.com/networkteam/construct/v2 v2.2.0
 	github.com/networkteam/devlog v0.3.3
 	github.com/networkteam/qrb v0.13.1
@@ -33,6 +31,7 @@ require (
 	github.com/samber/slog-http v1.9.0
 	github.com/samber/slog-multi v1.6.0
 	github.com/stretchr/testify v1.11.1
+	github.com/thejerf/slogassert v0.3.4
 	github.com/urfave/cli/v2 v2.27.7
 	github.com/vektah/gqlparser/v2 v2.5.31
 	github.com/wneessen/go-mail v0.7.2
@@ -61,6 +60,7 @@ require (
 	github.com/agnivade/levenshtein v1.2.1 // indirect
 	github.com/alecthomas/chroma/v2 v2.21.1 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
+	github.com/apex/log v1.9.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bitfield/gotestdox v0.2.2 // indirect
 	github.com/boumenot/gocover-cobertura v1.2.0 // indirect

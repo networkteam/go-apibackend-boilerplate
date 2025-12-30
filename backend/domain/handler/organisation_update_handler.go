@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	logger "github.com/apex/log"
 	"github.com/friendsofgo/errors"
+	"github.com/networkteam/slogutils"
 
 	"myvendor.mytld/myproject/backend/domain/command"
 	"myvendor.mytld/myproject/backend/domain/types"
@@ -15,13 +15,13 @@ import (
 )
 
 func (h *Handler) OrganisationUpdate(ctx context.Context, cmd command.OrganisationUpdateCmd) error {
-	log := logger.FromContext(ctx).
-		WithField("component", "handler").
-		WithField("handler", "OrganisationUpdate")
+	logger := slogutils.FromContext(ctx).
+		With(
+			"component", "handler",
+			"handler", "OrganisationUpdate",
+		)
 
-	log.
-		WithField("cmd", cmd).
-		Debug("Handling organisation update command")
+	logger.DebugContext(ctx, "Handling organisation update command", "cmd", cmd)
 
 	if err := cmd.Validate(); err != nil {
 		return err
@@ -63,11 +63,11 @@ func (h *Handler) OrganisationUpdate(ctx context.Context, cmd command.Organisati
 		return errors.Wrap(err, "running transaction")
 	}
 
-	log.
-		WithField("organisationID", cmd.OrganisationID).
-		WithField("organisationName", cmd.Name).
-		WithField("prevOrganisationName", prevOrganisationName).
-		Info("Updated organisation")
+	logger.InfoContext(ctx, "Updated organisation",
+		"organisationID", cmd.OrganisationID,
+		"organisationName", cmd.Name,
+		"prevOrganisationName", prevOrganisationName,
+	)
 
 	return nil
 }

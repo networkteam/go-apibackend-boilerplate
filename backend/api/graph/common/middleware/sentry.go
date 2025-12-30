@@ -5,9 +5,9 @@ import (
 	"errors"
 
 	"github.com/99designs/gqlgen/graphql"
-	logger "github.com/apex/log"
 	"github.com/getsentry/sentry-go"
-	apexlogutils_middleware "github.com/networkteam/apexlogutils/middleware"
+	"github.com/networkteam/slogutils"
+	sloghttp "github.com/samber/slog-http"
 
 	"myvendor.mytld/myproject/backend/domain/types"
 )
@@ -33,7 +33,7 @@ func SentryGraphqlMiddleware(ctx context.Context, next graphql.Resolver) (res an
 			}
 		}
 
-		log := logger.FromContext(ctx)
+		logger := slogutils.FromContext(ctx)
 
 		hub := sentry.GetHubFromContext(ctx)
 		if hub == nil {
@@ -45,16 +45,14 @@ func SentryGraphqlMiddleware(ctx context.Context, next graphql.Resolver) (res an
 			scope.SetExtras(map[string]any{
 				"Field":      fieldCtx.Field.Name,
 				"Type":       fieldCtx.Object,
-				"Request ID": apexlogutils_middleware.GetReqID(ctx),
+				"Request ID": sloghttp.GetRequestIDFromContext(ctx),
 			})
 
 			var eventID string
 			eID := hub.CaptureException(err)
 			if eID != nil {
 				eventID = string(*eID)
-				log.
-					WithField("sentryEventId", eventID).
-					Infof("Captured error with Sentry")
+				logger.InfoContext(ctx, "Captured error with Sentry", "sentryEventId", eventID)
 			}
 		})
 	}

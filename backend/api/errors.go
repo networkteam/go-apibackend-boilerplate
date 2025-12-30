@@ -9,6 +9,7 @@ import (
 
 var ErrAuthTokenInvalid = TypedError{"authTokenInvalid", "auth token invalid"}
 var ErrAuthTokenExpired = TypedError{"authTokenExpired", "auth token expired"}
+var ErrAuthenticationFailed = TypedError{"authenticationFailed", "authentication failed"}
 var ErrAuthenticationRequired = TypedError{"authenticationRequired", "authentication required"}
 var ErrCsrfTokenMissing = TypedError{"csrfTokenMissing", "CSRF token missing"}
 var ErrCsrfTokenInvalid = TypedError{"csrfTokenInvalid", "CSRF token invalid"}

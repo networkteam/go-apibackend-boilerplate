@@ -2,9 +2,9 @@ package authentication
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
-	"github.com/apex/log"
 	"github.com/gofrs/uuid"
 
 	"myvendor.mytld/myproject/backend/domain/types"
@@ -43,16 +43,17 @@ type AuthContext struct {
 	Expiry                    time.Time
 }
 
-func (authCtx AuthContext) Fields() log.Fields {
-	return map[string]any{
-		"authenticated":             authCtx.Authenticated,
-		"role":                      authCtx.Role,
-		"ignoreAuthenticationState": authCtx.IgnoreAuthenticationState,
-		"authenticationError":       authCtx.Error,
-		"skipCsrfCheck":             authCtx.SkipCsrfCheck,
-		"accountID":                 authCtx.AccountID,
-		"organisationID":            authCtx.OrganisationID,
-	}
+// LogValue implements slog.LogValuer for structured logging of AuthContext.
+func (authCtx AuthContext) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Bool("authenticated", authCtx.Authenticated),
+		slog.Any("role", authCtx.Role),
+		slog.Bool("ignoreAuthenticationState", authCtx.IgnoreAuthenticationState),
+		slog.Any("authenticationError", authCtx.Error),
+		slog.Bool("skipCsrfCheck", authCtx.SkipCsrfCheck),
+		slog.Any("accountID", authCtx.AccountID),
+		slog.Any("organisationID", authCtx.OrganisationID),
+	)
 }
 
 // AuthContextWithError builds an auth context with an error

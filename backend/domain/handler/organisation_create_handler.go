@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	logger "github.com/apex/log"
 	"github.com/friendsofgo/errors"
+	"github.com/networkteam/slogutils"
 
 	"myvendor.mytld/myproject/backend/domain/command"
 	"myvendor.mytld/myproject/backend/persistence/repository"
@@ -14,13 +14,13 @@ import (
 )
 
 func (h *Handler) OrganisationCreate(ctx context.Context, cmd command.OrganisationCreateCmd) error {
-	log := logger.FromContext(ctx).
-		WithField("component", "handler").
-		WithField("handler", "OrganisationCreate")
+	logger := slogutils.FromContext(ctx).
+		With(
+			"component", "handler",
+			"handler", "OrganisationCreate",
+		)
 
-	log.
-		WithField("cmd", cmd).
-		Debug("Handling organisation create command")
+	logger.DebugContext(ctx, "Handling organisation create command", "cmd", cmd)
 
 	if err := cmd.Validate(); err != nil {
 		return err
@@ -51,10 +51,10 @@ func (h *Handler) OrganisationCreate(ctx context.Context, cmd command.Organisati
 		return errors.Wrap(err, "running transaction")
 	}
 
-	log.
-		WithField("organisationID", cmd.OrganisationID).
-		WithField("organisationName", cmd.Name).
-		Info("Created organisation")
+	logger.InfoContext(ctx, "Created organisation",
+		"organisationID", cmd.OrganisationID,
+		"organisationName", cmd.Name,
+	)
 
 	return nil
 }

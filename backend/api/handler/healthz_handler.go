@@ -5,8 +5,8 @@ import (
 	"html"
 	"net/http"
 
-	logger "github.com/apex/log"
 	"github.com/friendsofgo/errors"
+	"github.com/networkteam/slogutils"
 )
 
 type DBPinger interface {
@@ -15,15 +15,15 @@ type DBPinger interface {
 
 func NewHealthzHandler(dbPinger DBPinger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log := logger.FromContext(r.Context())
+		ctx := r.Context()
+		logger := slogutils.FromContext(ctx)
 
 		ignoreErrors := r.URL.Query().Get("ignore_errors") == "1"
 
 		if err := dbPinger.Ping(); err != nil {
-			log.
-				WithError(errors.WithStack(err)).
-				WithField("handler", "healthz").
-				Error("Could not connect to database")
+			logger.ErrorContext(ctx, "Could not connect to database",
+				"handler", "healthz",
+				slogutils.Err(errors.WithStack(err)))
 
 			respondErr(w, ignoreErrors, "could not connect to database")
 			return
