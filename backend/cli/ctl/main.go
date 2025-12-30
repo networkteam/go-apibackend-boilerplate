@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/apex/log"
 	cli_handler "github.com/apex/log/handlers/cli"
@@ -44,6 +46,12 @@ func main() {
 				Usage:   "PostgreSQL connection DSN",
 				Value:   "dbname=myproject-dev sslmode=disable",
 				EnvVars: []string{"BACKEND_POSTGRES_DSN"},
+			},
+			&cli.DurationFlag{
+				Name:    "db-wait-timeout",
+				Usage:   "Duration to wait for database to become available (0 to disable)",
+				Value:   15 * time.Second,
+				EnvVars: []string{"BACKEND_DB_WAIT_TIMEOUT"},
 			},
 
 			&cli.IntFlag{
@@ -158,7 +166,6 @@ func loadDotenv() {
 			Infof("Loaded env from %s", filename)
 	}
 }
-
 func connectDatabase(c *cli.Context) (*sql.DB, error) {
 	postgresDSN := c.String("postgres-dsn")
 	log.
@@ -180,7 +187,39 @@ func connectDatabase(c *cli.Context) (*sql.DB, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "opening database connection")
 	}
+
+	waitTimeout := c.Duration("db-wait-timeout")
+	if waitTimeout > 0 {
+		err = waitForDatabase(c.Context, db, waitTimeout)
+		if err != nil {
+			db.Close()
+			return nil, err
+		}
+	}
+
 	return db, nil
+}
+
+func waitForDatabase(ctx context.Context, db *sql.DB, timeout time.Duration) error {
+	start := time.Now()
+	deadline := start.Add(timeout)
+	backoff := 100 * time.Millisecond
+
+	log.WithField("component", "cli").Info("Waiting for database to become available...")
+
+	for time.Now().Before(deadline) {
+		err := db.PingContext(ctx)
+		if err == nil {
+			log.WithField("component", "cli").
+				WithField("duration", time.Since(start)).
+				Info("Database is available")
+			return nil
+		}
+		time.Sleep(backoff)
+		backoff = min(backoff*2, time.Second)
+	}
+
+	return errors.New("timeout waiting for database")
 }
 
 func buildMailer(c *cli.Context) (*mail.Mailer, error) {

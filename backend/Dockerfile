@@ -10,9 +10,6 @@ ENV TZ=Europe/Berlin PGTZ=Europe/Berlin
 
 WORKDIR /app
 
-COPY ./docker/entrypoint.sh ./entrypoint.sh
-ENTRYPOINT ["/app/entrypoint.sh"]
-
-COPY ./docker/wait-for ./wait-for
+ENTRYPOINT ["./myproject-ctl"]
 
 COPY ./bin/myproject-ctl ./myproject-ctl
