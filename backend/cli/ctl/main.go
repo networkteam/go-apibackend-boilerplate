@@ -36,7 +36,8 @@ func main() {
 	app := &cli.App{
 		Name:  "ctl",
 		Usage: "App CLI control",
-		Flags: []cli.Flag{
+		Flags: flattenFlags(
+			[]cli.Flag{
 			&cli.IntFlag{
 				Name:    "verbosity",
 				Usage:   "Verbosity: 0=fatal, 1=error, 2=warn, 3=info, 4=debug",
@@ -132,6 +133,8 @@ func main() {
 				Value:   false,
 			},
 		},
+		jobqueueMainFlags(),
+	),
 		Before: func(c *cli.Context) error {
 			handler := setLogHandler(c)
 
@@ -151,6 +154,7 @@ func main() {
 		},
 		Commands: []*cli.Command{
 			newServerCmd(),
+			newWorkerCmd(),
 			newMigrateCmd(),
 			newAccountCmd(),
 			newFixturesCmd(),

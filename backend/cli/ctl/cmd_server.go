@@ -172,13 +172,14 @@ func serverAction(c *cli.Context) (err error) {
 		err = stderrors.Join(err, otelShutdown(context.Background()))
 	}()
 
-	// TODO Add createAsynqQueue here
+	queue := createAsynqQueue(c)
 
 	deps := api.ResolverDependencies{
 		DB:            db,
 		TimeSource:    timeSource,
 		Config:        config,
 		Mailer:        mailer,
+		Queue:         queue,
 		MeterProvider: otel.GetMeterProvider(),
 	}
 

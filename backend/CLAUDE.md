@@ -187,6 +187,24 @@ The main CLI tool is located at `./cli/ctl/main.go` and provides commands for:
 - Database migrations and setup
 - Fixture import
 - Server operations
+- Worker process for background jobs
+
+## Job Queue
+
+Redis-backed async job queue using Asynq. Worker runs as a separate process.
+
+**Key locations:**
+- `/jobqueue/` - Queue interface and fixture
+- `/jobqueue/asynq/` - Asynq implementation
+
+**Adding a new task requires changes in:**
+1. `domain/command/` - Define command struct
+2. `jobqueue/instance.go` - Add to Queue interface
+3. `jobqueue/asynq/asynq_queue.go` - Task config and queue method
+4. `domain/handler/` - Business logic handler
+5. `jobqueue/asynq/asynq_server_handler.go` - Register task handler
+6. `jobqueue/command_handler.go` - Update interface
+7. `jobqueue/fixture.go` - Update test fixture
 
 ## Testable Time
 
