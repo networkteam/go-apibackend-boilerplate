@@ -59,7 +59,7 @@ func newAccountCmd() *cli.Command {
 						cmd.OrganisationID = uuid.NullUUID{Valid: true, UUID: organisationID}
 					}
 
-					db, err := connectDatabase(c)
+					db, err := connectDatabase(c, nil)
 					if err != nil {
 						return err
 					}

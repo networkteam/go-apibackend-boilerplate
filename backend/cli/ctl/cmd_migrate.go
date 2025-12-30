@@ -30,7 +30,7 @@ func newMigrateCmd() *cli.Command {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					db, err := connectDatabase(c)
+					db, err := connectDatabase(c, nil)
 					if err != nil {
 						return err
 					}
@@ -64,7 +64,7 @@ func newMigrateCmd() *cli.Command {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					db, err := connectDatabase(c)
+					db, err := connectDatabase(c, nil)
 					if err != nil {
 						return err
 					}
@@ -95,7 +95,7 @@ func newMigrateCmd() *cli.Command {
 					return nil
 				},
 				Action: func(c *cli.Context) error {
-					db, err := connectDatabase(c)
+					db, err := connectDatabase(c, nil)
 					if err != nil {
 						return err
 					}

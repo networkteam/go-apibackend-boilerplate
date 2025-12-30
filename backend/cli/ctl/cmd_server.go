@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,13 +16,12 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/friendsofgo/errors"
 	"github.com/hashicorp/go-multierror"
-	"github.com/networkteam/apexlogutils/httplog"
-	apexlogutils_middleware "github.com/networkteam/apexlogutils/middleware"
 	"github.com/networkteam/devlog"
 	"github.com/networkteam/devlog/collector"
 	"github.com/networkteam/slogutils"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/robfig/cron"
+	sloghttp "github.com/samber/slog-http"
 	slogmulti "github.com/samber/slog-multi"
 	"github.com/urfave/cli/v2"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -30,7 +30,9 @@ import (
 	"myvendor.mytld/myproject/backend/api"
 	"myvendor.mytld/myproject/backend/api/graph/public"
 	api_handler "myvendor.mytld/myproject/backend/api/handler"
+	"myvendor.mytld/myproject/backend/api/handler/testapi"
 	http_api "myvendor.mytld/myproject/backend/api/http"
+	http_middleware "myvendor.mytld/myproject/backend/api/http/middleware"
 	domain_handler "myvendor.mytld/myproject/backend/domain/handler"
 )
 
@@ -58,34 +60,11 @@ func newServerCmd() *cli.Command {
 					Usage: "Enable GraphQL playground",
 					Value: false,
 				},
-				&cli.BoolFlag{
-					Name:    "disable-ansi",
-					Usage:   "Force disable ANSI log output and output log in logfmt format",
-					EnvVars: []string{"BACKEND_DISABLE_ANSI"},
-					Value:   false,
-				},
-				&cli.BoolFlag{
-					Name:    "force-ansi",
-					Usage:   "Force enable ANSI log output",
-					EnvVars: []string{"BACKEND_FORCE_ANSI"},
-					Value:   false,
-				},
 
-				&cli.StringFlag{
-					Name:    "sentry-dsn",
-					Usage:   "Sentry DSN (will be disabled if empty)",
-					EnvVars: []string{"SENTRY_DSN"},
-				},
-				&cli.StringFlag{
-					Name:    "sentry-environment",
-					Usage:   "Sentry environment",
-					EnvVars: []string{"SENTRY_ENVIRONMENT"},
-					Value:   "development",
-				},
-				&cli.StringFlag{
-					Name:    "sentry-release",
-					Usage:   "Release version for Sentry",
-					EnvVars: []string{"SENTRY_RELEASE"},
+				&cli.BoolFlag{
+					Name:    "pprof",
+					Usage:   "Enable pprof for profiling the server",
+					EnvVars: []string{"PPROF_ENABLED"},
 				},
 
 				&cli.BoolFlag{
@@ -94,14 +73,28 @@ func newServerCmd() *cli.Command {
 					EnvVars: []string{"OPEN_TELEMETRY_ENABLED"},
 				},
 
+				&cli.BoolFlag{
+					Name:    "enable-test-api",
+					Usage:   "Enable a REST API for test purposes (must not be enabled in production!)",
+					EnvVars: []string{"ENABLE_TEST_API"},
+				},
+
 				&cli.DurationFlag{
 					Name:    "sensitive-operation-constant-time",
 					Usage:   "Constant time duration to wait for sensitive operations (e.g. login / request password reset / perform password reset / registration), to prevent timing attacks",
 					EnvVars: []string{"SENSITIVE_OPERATION_CONSTANT_TIME"},
 					Value:   700 * time.Millisecond,
 				},
+
+				&cli.StringFlag{
+					Name:    "delete-expired-access-tokens-cron",
+					Usage:   "Cron schedule for deleting expired access tokens",
+					Value:   "@every 1h",
+					EnvVars: []string{"BACKEND_DELETE_EXPIRED_ACCESS_TOKENS_CRON"},
+				},
 			},
 
+			devlogFlags(),
 			sentryFlags(),
 		),
 		Action: serverAction,
@@ -144,14 +137,12 @@ func serverAction(c *cli.Context) (err error) {
 		logger = initializeSentrySlog(c)
 	}
 
-	db, err := connectDatabase(c)
+	// Configure logger with process field _after_ Sentry slog integration to ensure process field is included in Sentry logs
+	logger = setLogProcess(c, "server")
+
+	db, err := connectDatabase(c, dlog)
 	if err != nil {
 		return err
-	}
-
-	err = db.Ping()
-	if err != nil {
-		return errors.Wrap(err, "pinging database")
 	}
 
 	mailer, err := buildMailer(c)
@@ -180,6 +171,8 @@ func serverAction(c *cli.Context) (err error) {
 	defer func() {
 		err = stderrors.Join(err, otelShutdown(context.Background()))
 	}()
+
+	// TODO Add createAsynqQueue here
 
 	deps := api.ResolverDependencies{
 		DB:            db,
@@ -220,14 +213,46 @@ func serverAction(c *cli.Context) (err error) {
 	mux.HandleFunc("/healthz", api_handler.NewHealthzHandler(db))
 	mux.Handle("/metrics", promhttp.Handler())
 
-	// FIXME RequestID should be replaced by OpenTelemetry (?)
-	rootHandler := apexlogutils_middleware.RequestID(
-		httplog.New(
-			mux,
-			// Do not log health checks, it would be too verbose
-			httplog.ExcludePathPrefix("/healthz"),
+	rootHandler := http_middleware.RequestID(
+		sloghttp.NewWithConfig(logger.WithGroup("http"), sloghttp.Config{
+			DefaultLevel:     slog.LevelInfo,
+			ServerErrorLevel: slog.LevelError,
+			ClientErrorLevel: slog.LevelWarn,
+			WithRequestID:    true,
+		})(
+			http_middleware.RequestIDLogger(
+				http_middleware.RecoverAndLog(mux),
+			),
 		),
 	)
+
+	outerMux := http.NewServeMux()
+
+	// Wrap the root handler with devlog middleware for HTTP server request tracing
+	if c.Bool("devlog") {
+		rootHandler = dlog.CollectHTTPServer(rootHandler)
+	}
+	outerMux.Handle("/", rootHandler)
+	if c.Bool("devlog") {
+		err = addDevlogDashboard(c, outerMux, dlog)
+		if err != nil {
+			return errors.Wrap(err, "adding devlog dashboard")
+		}
+	}
+	// Add pprof handlers if enabled
+	if c.Bool("pprof") {
+		outerMux.HandleFunc("/debug/pprof/", pprof.Index)
+		outerMux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+		outerMux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+		outerMux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+		outerMux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	}
+
+	outerMux.HandleFunc("/healthz", api_handler.NewHealthzHandler(db))
+	if c.Bool("enable-test-api") {
+		logger.Warn("Test API enabled, don't do this in production!")
+		outerMux.Handle("/test-api/", http.StripPrefix("/test-api", testapi.NewAPI(db)))
+	}
 
 	address := c.String("address")
 	logger.Info("Serving GraphQL endpoint", "url", fmt.Sprintf("http://%s/query", address))

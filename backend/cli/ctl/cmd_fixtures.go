@@ -37,7 +37,7 @@ func newFixturesCmd() *cli.Command {
 func fixturesImportAction(c *cli.Context) error {
 	force := c.Bool("force")
 
-	db, err := connectDatabase(c)
+	db, err := connectDatabase(c, nil)
 	if err != nil {
 		return err
 	}

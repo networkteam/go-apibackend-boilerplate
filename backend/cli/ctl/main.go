@@ -4,29 +4,32 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/apex/log"
-	cli_handler "github.com/apex/log/handlers/cli"
 	"github.com/friendsofgo/errors"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/multitracer"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/jackc/pgx/v5/tracelog"
 	"github.com/joho/godotenv"
-	"github.com/networkteam/apexlogutils"
-	apexlogutils_pgx "github.com/networkteam/apexlogutils/pgx/v5"
+	"github.com/networkteam/devlog"
+	"github.com/networkteam/slogutils"
+	slogutils_tracelog "github.com/networkteam/slogutils/adapter/pgx/v5/tracelog"
 	"github.com/urfave/cli/v2"
 
 	"myvendor.mytld/myproject/backend/domain"
 	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/mail"
 	"myvendor.mytld/myproject/backend/mail/smtp"
+	"myvendor.mytld/myproject/backend/persistence/repository"
 	"myvendor.mytld/myproject/backend/security/authentication"
 )
 
 func main() {
+	initialHandler := setupInitialLogging()
 	loadDotenv()
 
 	defaultConfig := domain.DefaultConfig()
@@ -69,6 +72,12 @@ func main() {
 			},
 
 			&cli.StringFlag{
+				Name:    "jwt-secret",
+				Usage:   "JWT secret",
+				EnvVars: []string{"BACKEND_JWT_SECRET"},
+			},
+
+			&cli.StringFlag{
 				Name:    "smtp-host",
 				Usage:   "Host of SMTP for outgoing mails",
 				Value:   "localhost",
@@ -102,12 +111,35 @@ func main() {
 				EnvVars: []string{"MAIL_DEFAULT_FROM"},
 				Value:   "app@example.com",
 			},
+
+			&cli.StringFlag{
+				Name:    "test-time-delta",
+				Usage:   "Time delta for testing (format: 1y2m3d4h). Examples: '1y' (1 year forward), '-2m' (2 months back), '30d12h' (30 days 12 hours forward)",
+				Value:   "",
+				EnvVars: []string{"TEST_TIME_DELTA"},
+			},
+
+			&cli.BoolFlag{
+				Name:    "disable-ansi",
+				Usage:   "Force disable ANSI log output and output log in logfmt format",
+				EnvVars: []string{"BACKEND_DISABLE_ANSI"},
+				Value:   false,
+			},
+			&cli.BoolFlag{
+				Name:    "force-ansi",
+				Usage:   "Force enable ANSI log output",
+				EnvVars: []string{"BACKEND_FORCE_ANSI"},
+				Value:   false,
+			},
 		},
 		Before: func(c *cli.Context) error {
-			verbosity := apexlogutils.Verbosity(c.Int("verbosity"))
-			log.SetLevel(apexlogutils.ToApexLogLevel(verbosity))
-			// Use a CLI friendly handler by default, server sets its own handler depending on terminal / ANSI
-			log.SetHandler(cli_handler.New(os.Stderr))
+			handler := setLogHandler(c)
+
+			// There might be some log records already buffered, emit them now
+			err := initialHandler.EmitTo(handler)
+			if err != nil {
+				slog.Warn("Error emitting initial logs", "component", "cli", slogutils.Err(err))
+			}
 
 			// Pretend the CLI has a SystemAdministrator role (without setting an account)
 			c.Context = authentication.WithAuthContext(c.Context, authentication.AuthContext{
@@ -128,9 +160,8 @@ func main() {
 
 	err := app.Run(os.Args)
 	if err != nil {
-		log.
-			WithField("component", "cli").
-			Fatalf("Error executing command: %v", err)
+		slog.Error("Error executing command", "component", "cli", slogutils.Err(err))
+		os.Exit(1)
 	}
 }
 
@@ -146,41 +177,50 @@ func loadDotenv() {
 	filenames := []string{".env.local", ".env"}
 	filenames = append([]string{fmt.Sprintf(".env.%s.local", backendEnv), fmt.Sprintf(".env.%s", backendEnv)}, filenames...)
 
-	log.
-		WithField("component", "cli").
-		Infof("Trying to load env from %v", strings.Join(filenames, ", "))
+	slog.Log(context.Background(), slogutils.LevelTrace, "Trying to load env from files", "component", "cli", "filenames", filenames)
 
+	loadedEnvFiles := make([]string, 0, len(filenames))
 	for _, filename := range filenames {
 		err := godotenv.Load(filename)
 		if os.IsNotExist(err) {
 			continue
 		}
 		if err != nil {
-			log.
-				WithField("component", "cli").
-				WithError(err).
-				Fatalf("Error loading envs from %s", filename)
+			slog.Error("Error loading envs", "component", "cli", slogutils.Err(err), "filename", filename)
+			continue
 		}
-		log.
-			WithField("component", "cli").
-			Infof("Loaded env from %s", filename)
+		loadedEnvFiles = append(loadedEnvFiles, filename)
 	}
+	slog.Debug("Loaded env from files", "component", "cli", "filenames", loadedEnvFiles)
 }
-func connectDatabase(c *cli.Context) (*sql.DB, error) {
+
+func connectDatabase(c *cli.Context, dlog *devlog.Instance) (*sql.DB, error) {
 	postgresDSN := c.String("postgres-dsn")
-	log.
-		WithField("component", "cli").
-		WithField("postgresDSN", postgresDSN).
-		Debug("Connecting to database")
+	slog.Debug("Connecting to database", "component", "cli", "postgresDSN", postgresDSN)
 
 	connConfig, err := pgx.ParseConfig(postgresDSN)
 	if err != nil {
 		return nil, errors.Wrap(err, "parsing PostgreSQL connection string")
 	}
-	verbosity := apexlogutils.Verbosity(c.Int("verbosity"))
+	verbosity := c.Int("verbosity")
 	connConfig.Tracer = &tracelog.TraceLog{
-		Logger:   apexlogutils_pgx.NewLogger(log.Log),
-		LogLevel: apexlogutils_pgx.ToPgxLogLevel(verbosity),
+		Logger: slogutils_tracelog.NewLogger(
+			slog.Default().With("component", "db.driver"),
+			slogutils_tracelog.WithRemapLevel(tracelog.LogLevelInfo, slogutils.LevelTrace),
+			slogutils_tracelog.WithRemapErrorLevel(func(_ tracelog.LogLevel, err error) slog.Level {
+				if repository.IsConstraintViolationError(err) {
+					return slogutils.LevelTrace
+				}
+				return slog.LevelError
+			}),
+		),
+		LogLevel: verbosityToTracelogLevel(verbosity),
+	}
+	if dlog != nil {
+		connConfig.Tracer = multitracer.New(
+			connConfig.Tracer,
+			newDevlogQueryTracer(dlog.CollectDBQuery()),
+		)
 	}
 	connStr := stdlib.RegisterConnConfig(connConfig)
 	db, err := sql.Open("pgx", connStr)
