@@ -1,0 +1,13 @@
+{{- /*gotype: myvendor.mytld/myproject/backend/mail.WelcomeEmailMsg*/ -}}
+Welcome to myproject
+
+Hello,
+
+Welcome to myproject! Your account has been created successfully.
+
+You can now log in using your email address: {{ .EmailAddress }}
+
+If you have any questions, please don't hesitate to contact our support team.
+
+Best regards,
+The myproject Team
