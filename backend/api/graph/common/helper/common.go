@@ -48,7 +48,7 @@ func ToVal[T any](ptr *T) T {
 	return *ptr
 }
 
-func uuidOrNil(id uuid.NullUUID) *uuid.UUID {
+func ToUUID(id uuid.NullUUID) *uuid.UUID {
 	if id.Valid {
 		return &id.UUID
 	}

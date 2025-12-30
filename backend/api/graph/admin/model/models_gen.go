@@ -20,6 +20,15 @@ type Account struct {
 	UpdatedAt      time.Time  `json:"updatedAt"`
 }
 
+type AccountFilter struct {
+	// Filter by multiple ids for fetching references
+	Ids []uuid.UUID `json:"ids,omitempty"`
+	// Filter by a query string on all text fields
+	Q *string `json:"q,omitempty"`
+	// Filter by organisation id
+	OrganisationID *uuid.UUID `json:"organisationId,omitempty"`
+}
+
 // A generic application error (for expected errors)
 type Error struct {
 	// An error code that can be translated in the client
@@ -44,29 +53,25 @@ type FieldsError struct {
 	Errors []*FieldError `json:"errors"`
 }
 
-// Login credentials for accounts
-type LoginCredentials struct {
-	// Email address of the account
-	EmailAddress string `json:"emailAddress"`
-	// Password of the account
-	Password string `json:"password"`
-	// Enable longer session
-	KeepMeLoggedIn *bool `json:"keepMeLoggedIn,omitempty"`
-}
-
-// Login result
-type LoginResult struct {
-	// The authenticated account (if error is null)
-	Account *Account `json:"account,omitempty"`
-	// Auth token for using header based authentication (if error is null)
-	AuthToken string `json:"authToken"`
-	// CSRF token to be sent in subsequent requests (if error is null)
-	CsrfToken string `json:"csrfToken"`
-	// An error if authentication failed
-	Error *Error `json:"error,omitempty"`
+type ListMetadata struct {
+	Count int `json:"count"`
 }
 
 type Mutation struct {
+}
+
+type Organisation struct {
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+type OrganisationFilter struct {
+	// Filter by multiple ids for fetching references
+	Ids []uuid.UUID `json:"ids,omitempty"`
+	// Filter by a query string on all text fields
+	Q *string `json:"q,omitempty"`
 }
 
 type Query struct {

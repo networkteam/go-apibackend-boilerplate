@@ -12,11 +12,6 @@ type Account {
   updatedAt: DateTime!
 }
 
-enum Role {
-  SystemAdministrator
-  OrganisationAdministrator
-}
-
 #
 # Queries
 #

@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"myvendor.mytld/myproject/backend/api"
+	"myvendor.mytld/myproject/backend/api/graph/public"
 	api_handler "myvendor.mytld/myproject/backend/api/handler"
 	http_api "myvendor.mytld/myproject/backend/api/http"
 	test_auth "myvendor.mytld/myproject/backend/test/auth"
@@ -26,9 +27,11 @@ func ServerAndSubscribe[T any](t *testing.T, deps api.ResolverDependencies, subs
 	require.NoError(t, err)
 	test_auth.ApplyFixedAuthValuesOrganisationAdministrator(t, deps.TimeSource, req)
 
-	graphqlHandler := api_handler.NewGraphqlHandler(deps, api_handler.Config{
+	apiHandlerConfig := api_handler.Config{
 		DisableRecover: true,
-	})
+	}
+	publicExecutableSchema := public.BuildExecutableSchema(deps, apiHandlerConfig)
+	graphqlHandler := api_handler.NewGraphqlHandler(deps, apiHandlerConfig, publicExecutableSchema)
 	srv := http_api.MiddlewareStackWithAuth(deps, graphqlHandler)
 
 	s := httptest.NewServer(srv)

@@ -12,10 +12,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/99designs/gqlgen/graphql"
 	"go.opentelemetry.io/otel/metric/noop"
 	"golang.org/x/crypto/bcrypt"
 
 	"myvendor.mytld/myproject/backend/api"
+	"myvendor.mytld/myproject/backend/api/graph/admin"
+	"myvendor.mytld/myproject/backend/api/graph/public"
 	api_handler "myvendor.mytld/myproject/backend/api/handler"
 	http_api "myvendor.mytld/myproject/backend/api/http"
 	"myvendor.mytld/myproject/backend/domain"
@@ -65,14 +68,37 @@ func SetTestDependencies(t *testing.T, deps *api.ResolverDependencies) {
 	}
 }
 
-func Handle(t *testing.T, deps api.ResolverDependencies, req *http.Request, dst interface{}) *httptest.ResponseRecorder {
+func HandlePublic(t *testing.T, deps api.ResolverDependencies, req *http.Request, dst interface{}) *httptest.ResponseRecorder {
 	t.Helper()
 
 	SetTestDependencies(t, &deps)
 
-	graphqlHandler := api_handler.NewGraphqlHandler(deps, api_handler.Config{
+	apiHandlerConfig := api_handler.Config{
 		DisableRecover: true,
-	})
+	}
+	publicExecutableSchema := public.BuildExecutableSchema(deps, apiHandlerConfig)
+	return handleSchema(t, deps, publicExecutableSchema, req, dst)
+}
+
+func HandleAdmin(t *testing.T, deps api.ResolverDependencies, req *http.Request, dst interface{}) *httptest.ResponseRecorder {
+	t.Helper()
+
+	SetTestDependencies(t, &deps)
+
+	apiHandlerConfig := api_handler.Config{
+		DisableRecover: true,
+	}
+	publicExecutableSchema := admin.BuildExecutableSchema(deps, apiHandlerConfig)
+	return handleSchema(t, deps, publicExecutableSchema, req, dst)
+}
+
+func handleSchema(t *testing.T, deps api.ResolverDependencies, executableSchema graphql.ExecutableSchema, req *http.Request, dst interface{}) *httptest.ResponseRecorder {
+	t.Helper()
+
+	apiHandlerConfig := api_handler.Config{
+		DisableRecover: true,
+	}
+	graphqlHandler := api_handler.NewGraphqlHandler(deps, apiHandlerConfig, executableSchema)
 	srv := http_api.MiddlewareStackWithAuth(deps, graphqlHandler)
 
 	rec := httptest.NewRecorder()

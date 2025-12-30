@@ -1,0 +1,12 @@
+directive @bypassAuthentication on FIELD_DEFINITION
+
+scalar UUID
+scalar Date
+scalar DateTime
+scalar ByteSize
+scalar Upload
+
+enum Role {
+  SystemAdministrator
+  OrganisationAdministrator
+}

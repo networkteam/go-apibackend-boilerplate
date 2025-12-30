@@ -75,7 +75,7 @@ func TestMutationResolver_Login_WithSystemAdministrator_Valid(t *testing.T) {
 	metricsReader, meterProvider := test_telemetry.SetupTestMeter(t)
 
 	req := test_graphql.NewRequest(t, query)
-	resp := test_graphql.Handle(t, api.ResolverDependencies{DB: db, TimeSource: timeSource, MeterProvider: meterProvider}, req, &result)
+	resp := test_graphql.HandlePublic(t, api.ResolverDependencies{DB: db, TimeSource: timeSource, MeterProvider: meterProvider}, req, &result)
 	test_graphql.RequireNoErrors(t, result.GraphqlErrors)
 
 	require.Nil(t, result.Data.Result.Error)
@@ -106,7 +106,7 @@ func TestMutationResolver_Login_WithSystemAdministrator_Valid(t *testing.T) {
 	req = test_graphql.NewRequest(t, query)
 	req.Header.Set("Cookie", setCookieHeader)
 	req.Header.Set("X-CSRF-Token", csrfToken)
-	test_graphql.Handle(t, api.ResolverDependencies{DB: db, TimeSource: timeSource}, req, &loginStatusResult)
+	test_graphql.HandlePublic(t, api.ResolverDependencies{DB: db, TimeSource: timeSource}, req, &loginStatusResult)
 	test_graphql.RequireNoErrors(t, loginStatusResult.GraphqlErrors)
 
 	assert.True(t, loginStatusResult.Data.Result, "result")
@@ -131,7 +131,7 @@ func TestMutationResolver_Login_WithSystemAdministrator_InvalidPassword(t *testi
 	metricsReader, meterProvider := test_telemetry.SetupTestMeter(t)
 
 	req := test_graphql.NewRequest(t, query)
-	test_graphql.Handle(t, api.ResolverDependencies{DB: db, TimeSource: timeSource, MeterProvider: meterProvider}, req, &result)
+	test_graphql.HandlePublic(t, api.ResolverDependencies{DB: db, TimeSource: timeSource, MeterProvider: meterProvider}, req, &result)
 	test_graphql.RequireNoErrors(t, result.GraphqlErrors)
 
 	require.NotNil(t, result.Data.Result.Error, "result.error")
@@ -157,7 +157,7 @@ func TestMutationResolver_Login_WithOrganisationAdministrator_Valid(t *testing.T
 	var result loginResult
 
 	req := test_graphql.NewRequest(t, query)
-	test_graphql.Handle(t, api.ResolverDependencies{DB: db, TimeSource: timeSource}, req, &result)
+	test_graphql.HandlePublic(t, api.ResolverDependencies{DB: db, TimeSource: timeSource}, req, &result)
 	test_graphql.RequireNoErrors(t, result.GraphqlErrors)
 
 	require.Nil(t, result.Data.Result.Error)

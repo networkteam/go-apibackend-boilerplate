@@ -15,21 +15,27 @@ import (
 	test_graphql "myvendor.mytld/myproject/backend/test/graphql"
 )
 
-const accountGQL = `
-	query Account($id: UUID!) {
-		result: Account(id: $id) {
+const allOrganisationsGQL = `
+	query AllOrganisations($filter: OrganisationFilter) {
+		result: allOrganisations(filter: $filter) {
 			id
-			emailAddress
+			name
+		}
+		meta: _allOrganisationsMeta(filter: $filter) {
+			count
 		}
 	}
 `
 
-func TestQueryResolver_Account(t *testing.T) {
+func TestQueryResolver_AllOrganisations(t *testing.T) {
 	type result struct {
 		Data struct {
-			Result *struct {
-				ID           uuid.UUID
-				EmailAddress string
+			Result []struct {
+				ID   uuid.UUID
+				Name string
+			}
+			Meta *struct {
+				Count int
 			}
 		}
 		test_graphql.GraphqlErrors
@@ -43,39 +49,29 @@ func TestQueryResolver_Account(t *testing.T) {
 		expects       func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result)
 	}{
 		{
-			name:          "with SystemAdministrator",
+			name:          "with SystemAdministrator and no filter",
 			applyAuthFunc: test_auth.ApplyFixedAuthValuesSystemAdministrator,
 			fixtures:      []string{"base"},
-			variables: map[string]interface{}{
-				"id": "d7037ad0-d4bb-4dcc-8759-d82fbb3354e8",
-			},
+			variables:     map[string]interface{}{},
 			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
 				test_graphql.RequireNoErrors(t, res.GraphqlErrors)
 
-				require.NotNil(t, res.Data.Result, "result")
-				assert.Equal(t, "admin@example.com", res.Data.Result.EmailAddress)
+				require.Len(t, res.Data.Result, 2, "result")
+				assert.Equal(t, 2, res.Data.Meta.Count, "meta.count")
 			},
 		},
 		{
-			name:          "with OrganisationAdministrator and global account",
+			name:          "with OrganisationAdministrator",
 			applyAuthFunc: test_auth.ApplyFixedAuthValuesOrganisationAdministrator,
 			fixtures:      []string{"base"},
-			variables: map[string]interface{}{
-				"id": "d7037ad0-d4bb-4dcc-8759-d82fbb3354e8",
-			},
+			variables:     map[string]interface{}{},
 			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
-				test_graphql.RequireNotAuthorizedError(t, res.GraphqlErrors)
-			},
-		},
-		{
-			name:          "with OrganisationAdministrator and account in other organisation",
-			applyAuthFunc: test_auth.ApplyFixedAuthValuesOrganisationAdministrator,
-			fixtures:      []string{"base"},
-			variables: map[string]interface{}{
-				"id": "2035f4da-f385-42c4-a609-02d9aa7290e5",
-			},
-			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
-				test_graphql.RequireNotAuthorizedError(t, res.GraphqlErrors)
+				test_graphql.RequireNoErrors(t, res.GraphqlErrors)
+
+				require.Len(t, res.Data.Result, 1, "result")
+				assert.Equalf(t, auth.OrganisationID.UUID, res.Data.Result[0].ID, "result.0.id")
+
+				assert.Equal(t, 1, res.Data.Meta.Count, "meta.count")
 			},
 		},
 	}
@@ -88,7 +84,7 @@ func TestQueryResolver_Account(t *testing.T) {
 			test_db.ExecFixtures(t, db, tc.fixtures...)
 
 			query := test_graphql.GraphqlQuery{
-				Query:     accountGQL,
+				Query:     allOrganisationsGQL,
 				Variables: tc.variables,
 			}
 
@@ -96,7 +92,7 @@ func TestQueryResolver_Account(t *testing.T) {
 
 			req := test_graphql.NewRequest(t, query)
 			auth := tc.applyAuthFunc(t, timeSource, req)
-			test_graphql.Handle(t, api.ResolverDependencies{DB: db, TimeSource: timeSource}, req, &res)
+			test_graphql.HandleAdmin(t, api.ResolverDependencies{DB: db, TimeSource: timeSource}, req, &res)
 			tc.expects(t, db, auth, res)
 		})
 	}

@@ -17,10 +17,9 @@ import (
 	test_graphql "myvendor.mytld/myproject/backend/test/graphql"
 )
 
-const updateAccountGQL = `
-	mutation UpdateAccount($id: UUID!, $role: Role!, $emailAddress: String!, $password: String, $organisationId: UUID) {
-		result: updateAccount(
-			id: $id,
+const createAccountGQL = `
+	mutation CreateAccount($role: Role!, $emailAddress: String!, $password: String!, $organisationId: UUID) {
+		result: createAccount(
 			role: $role,
 			emailAddress: $emailAddress,
 			password: $password,
@@ -31,7 +30,7 @@ const updateAccountGQL = `
 	}
 `
 
-func TestMutationResolver_UpdateAccount(t *testing.T) {
+func TestMutationResolver_CreateAccount(t *testing.T) {
 	type result struct {
 		Data struct {
 			Result *struct {
@@ -53,18 +52,35 @@ func TestMutationResolver_UpdateAccount(t *testing.T) {
 			applyAuthFunc: test_auth.ApplyFixedAuthValuesSystemAdministrator,
 			fixtures:      []string{"base"},
 			variables: map[string]interface{}{
-				"id":             "d7037ad0-d4bb-4dcc-8759-d82fbb3354e8",
-				"role":           "SystemAdministrator",
-				"emailAddress":   "test@acme.com",
-				"organisationId": nil,
+				"role":         "SystemAdministrator",
+				"emailAddress": "test@acme.com",
+				"password":     "myRandomPassword",
 			},
 			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
 				test_graphql.RequireNoErrors(t, res.GraphqlErrors)
 
-				account, err := repository.FindAccountByID(context.Background(), db, uuid.Must(uuid.FromString("d7037ad0-d4bb-4dcc-8759-d82fbb3354e8")), nil)
+				require.NotNil(t, res.Data.Result)
+				account, err := repository.FindAccountByID(context.Background(), db, res.Data.Result.ID, nil)
 				require.NoError(t, err)
 
 				assert.Equal(t, "test@acme.com", account.EmailAddress)
+			},
+		},
+		{
+			name:          "with SystemAdministrator and existing email address",
+			applyAuthFunc: test_auth.ApplyFixedAuthValuesSystemAdministrator,
+			fixtures:      []string{"base"},
+			variables: map[string]interface{}{
+				"role":         "SystemAdministrator",
+				"emailAddress": "admin@example.com",
+				"password":     "myRandomPassword",
+			},
+			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
+				test_graphql.RequireErrors(t, res.GraphqlErrors)
+
+				require.Len(t, res.GraphqlErrors.Errors, 1)
+				assert.Equal(t, "emailAddress", res.GraphqlErrors.Errors[0].Extensions.Field)
+				assert.Equal(t, "alreadyExists", res.GraphqlErrors.Errors[0].Extensions.Code)
 			},
 		},
 		{
@@ -72,7 +88,6 @@ func TestMutationResolver_UpdateAccount(t *testing.T) {
 			applyAuthFunc: test_auth.ApplyFixedAuthValuesOrganisationAdministrator,
 			fixtures:      []string{"base"},
 			variables: map[string]interface{}{
-				"id":             "3ad082c7-cbda-49e1-a707-c53e1962be65",
 				"role":           "OrganisationAdministrator",
 				"emailAddress":   "test@acme.com",
 				"password":       "myRandomPassword",
@@ -81,7 +96,8 @@ func TestMutationResolver_UpdateAccount(t *testing.T) {
 			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
 				test_graphql.RequireNoErrors(t, res.GraphqlErrors)
 
-				account, err := repository.FindAccountByID(context.Background(), db, uuid.Must(uuid.FromString("3ad082c7-cbda-49e1-a707-c53e1962be65")), nil)
+				require.NotNil(t, res.Data.Result)
+				account, err := repository.FindAccountByID(context.Background(), db, res.Data.Result.ID, nil)
 				require.NoError(t, err)
 
 				assert.Equal(t, "test@acme.com", account.EmailAddress)
@@ -92,22 +108,6 @@ func TestMutationResolver_UpdateAccount(t *testing.T) {
 			applyAuthFunc: test_auth.ApplyFixedAuthValuesOrganisationAdministrator,
 			fixtures:      []string{"base"},
 			variables: map[string]interface{}{
-				"id":             "3ad082c7-cbda-49e1-a707-c53e1962be65",
-				"role":           "OrganisationAdministrator",
-				"emailAddress":   "test@acme.com",
-				"password":       "myRandomPassword",
-				"organisationId": "dba20d09-a3df-4975-9406-2fb6fd8f0940",
-			},
-			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
-				test_graphql.RequireNotAuthorizedError(t, res.GraphqlErrors)
-			},
-		},
-		{
-			name:          "with OrganisationAdministrator and account in other organisation",
-			applyAuthFunc: test_auth.ApplyFixedAuthValuesOrganisationAdministrator,
-			fixtures:      []string{"base"},
-			variables: map[string]interface{}{
-				"id":             "2035f4da-f385-42c4-a609-02d9aa7290e5",
 				"role":           "OrganisationAdministrator",
 				"emailAddress":   "test@acme.com",
 				"password":       "myRandomPassword",
@@ -122,7 +122,6 @@ func TestMutationResolver_UpdateAccount(t *testing.T) {
 			applyAuthFunc: test_auth.ApplyFixedAuthValuesOrganisationAdministrator,
 			fixtures:      []string{"base"},
 			variables: map[string]interface{}{
-				"id":           "3ad082c7-cbda-49e1-a707-c53e1962be65",
 				"role":         "SystemAdministrator",
 				"emailAddress": "test@acme.com",
 				"password":     "myRandomPassword",
@@ -141,7 +140,7 @@ func TestMutationResolver_UpdateAccount(t *testing.T) {
 			test_db.ExecFixtures(t, db, tc.fixtures...)
 
 			query := test_graphql.GraphqlQuery{
-				Query:     updateAccountGQL,
+				Query:     createAccountGQL,
 				Variables: tc.variables,
 			}
 
@@ -149,7 +148,7 @@ func TestMutationResolver_UpdateAccount(t *testing.T) {
 
 			req := test_graphql.NewRequest(t, query)
 			auth := tc.applyAuthFunc(t, timeSource, req)
-			test_graphql.Handle(t, api.ResolverDependencies{DB: db, TimeSource: timeSource}, req, &res)
+			test_graphql.HandleAdmin(t, api.ResolverDependencies{DB: db, TimeSource: timeSource}, req, &res)
 			tc.expects(t, db, auth, res)
 		})
 	}

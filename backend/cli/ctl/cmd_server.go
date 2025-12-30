@@ -27,6 +27,7 @@ import (
 	"go.opentelemetry.io/otel"
 
 	"myvendor.mytld/myproject/backend/api"
+	"myvendor.mytld/myproject/backend/api/graph/public"
 	api_handler "myvendor.mytld/myproject/backend/api/handler"
 	http_api "myvendor.mytld/myproject/backend/api/http"
 )
@@ -170,14 +171,16 @@ func serverAction(c *cli.Context) (err error) {
 		Mailer:        mailer,
 		MeterProvider: otel.GetMeterProvider(),
 	}
-	graphqlHandler := api_handler.NewGraphqlHandler(deps, api_handler.Config{
+	apiHandlerConfig := api_handler.Config{
 		EnableTracing:                  false,
 		EnableLogging:                  true,
 		EnableOpenTelemetry:            c.Bool("open-telemetry-enabled"),
 		DisableRecover:                 false,
 		WebsocketAllowOrigin:           c.String("websocket-allow-origin"),
 		SensitiveOperationConstantTime: c.Duration("sensitive-operation-constant-time"),
-	})
+	}
+	publicExecutableSchema := public.BuildExecutableSchema(deps, apiHandlerConfig)
+	publicGraphqlHandler := api_handler.NewGraphqlHandler(deps, apiHandlerConfig, publicExecutableSchema)
 
 	playgroundEnabled := c.Bool("playground")
 	if playgroundEnabled {
@@ -185,10 +188,10 @@ func serverAction(c *cli.Context) (err error) {
 	}
 
 	if c.Bool("open-telemetry-enabled") {
-		graphqlHandler = otelhttp.NewHandler(graphqlHandler, "/query")
+		publicGraphqlHandler = otelhttp.NewHandler(publicGraphqlHandler, "/query")
 	}
 
-	mux.Handle("/query", http_api.MiddlewareStackWithAuth(deps, graphqlHandler))
+	mux.Handle("/query", http_api.MiddlewareStackWithAuth(deps, publicGraphqlHandler))
 	mux.HandleFunc("/healthz", api_handler.NewHealthzHandler(db))
 	mux.Handle("/metrics", promhttp.Handler())
 

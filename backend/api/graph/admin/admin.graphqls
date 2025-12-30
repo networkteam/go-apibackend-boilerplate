@@ -4,6 +4,16 @@
 # Domain
 #
 
+type Account {
+  id: UUID!
+  emailAddress: String!
+  role: Role!
+  lastLogin: DateTime
+  organisationId: UUID
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
 type Organisation {
   id: UUID!
   name: String!

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -18,9 +17,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	"myvendor.mytld/myproject/backend/api"
-	"myvendor.mytld/myproject/backend/api/graph/public"
-	"myvendor.mytld/myproject/backend/api/graph/public/generated"
-	"myvendor.mytld/myproject/backend/api/graph/public/middleware"
+	middleware2 "myvendor.mytld/myproject/backend/api/graph/common/middleware"
 	http_middleware "myvendor.mytld/myproject/backend/api/http/middleware"
 )
 
@@ -38,21 +35,8 @@ const (
 	requestVariablesPrefix = "gql.request.variables"
 )
 
-func NewGraphqlHandler(deps api.ResolverDependencies, handlerConfig Config) http.Handler {
-	config := generated.Config{
-		Resolvers: public.NewResolver(deps, api.ResolverConfig{
-			SensitiveOperationConstantTime: handlerConfig.SensitiveOperationConstantTime,
-		}),
-		Directives: generated.DirectiveRoot{
-			// No op implementation, will be checked in middleware
-			BypassAuthentication: func(ctx context.Context, _ any, next graphql.Resolver) (res any, err error) {
-				return next(ctx)
-			},
-		},
-	}
-	exec := generated.NewExecutableSchema(config)
-
-	srv := newDefaultServer(exec, handlerConfig)
+func NewGraphqlHandler(deps api.ResolverDependencies, handlerConfig Config, executableSchema graphql.ExecutableSchema) http.Handler {
+	srv := newDefaultServer(executableSchema, handlerConfig)
 	srv.SetErrorPresenter(ErrorPresenter)
 
 	if handlerConfig.EnableOpenTelemetry {
@@ -76,11 +60,11 @@ func NewGraphqlHandler(deps api.ResolverDependencies, handlerConfig Config) http
 		))
 	}
 
-	srv.AroundFields(middleware.RequireAuthenticationFieldMiddleware)
-	srv.AroundFields(middleware.SentryGraphqlMiddleware)
+	srv.AroundFields(middleware2.RequireAuthenticationFieldMiddleware)
+	srv.AroundFields(middleware2.SentryGraphqlMiddleware)
 
 	if handlerConfig.EnableLogging {
-		srv.AroundFields(middleware.LoggerFieldMiddleware)
+		srv.AroundFields(middleware2.LoggerFieldMiddleware)
 	}
 
 	if handlerConfig.EnableTracing {

@@ -139,7 +139,7 @@ func TestQueryResolver_AllAccounts(t *testing.T) {
 
 			req := test_graphql.NewRequest(t, query)
 			auth := tc.applyAuthFunc(t, timeSource, req)
-			test_graphql.Handle(t, api.ResolverDependencies{DB: db, TimeSource: timeSource}, req, &res)
+			test_graphql.HandleAdmin(t, api.ResolverDependencies{DB: db, TimeSource: timeSource}, req, &res)
 			tc.expects(t, db, auth, res)
 		})
 	}

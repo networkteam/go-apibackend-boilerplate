@@ -1,5 +1,5 @@
 //go:generate go run github.com/99designs/gqlgen generate
-package public
+package admin
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 
 	"myvendor.mytld/myproject/backend/api"
-	"myvendor.mytld/myproject/backend/api/graph/public/generated"
+	"myvendor.mytld/myproject/backend/api/graph/admin/generated"
 	"myvendor.mytld/myproject/backend/api/handler"
 )
 

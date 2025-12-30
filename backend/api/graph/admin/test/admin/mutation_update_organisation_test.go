@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/gofrs/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"myvendor.mytld/myproject/backend/api"
@@ -16,17 +17,18 @@ import (
 	test_graphql "myvendor.mytld/myproject/backend/test/graphql"
 )
 
-const deleteOrganisationGQL = `
-	mutation DeleteOrganisation($id: UUID!) {
-		result: deleteOrganisation(
+const updateOrganisationGQL = `
+	mutation UpdateOrganisation($id: UUID!, $name: String!) {
+		result: updateOrganisation(
 			id: $id,
+			name: $name,
 		) {
 			id
 		}
 	}
 `
 
-func TestMutationResolver_DeleteOrganisation(t *testing.T) {
+func TestMutationResolver_UpdateOrganisation(t *testing.T) {
 	type result struct {
 		Data struct {
 			Result *struct {
@@ -44,18 +46,21 @@ func TestMutationResolver_DeleteOrganisation(t *testing.T) {
 		expects       func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result)
 	}{
 		{
-			name:          "with SystemAdministrator",
+			name:          "with SystemAdministrator and valid values",
 			applyAuthFunc: test_auth.ApplyFixedAuthValuesSystemAdministrator,
 			fixtures:      []string{"base"},
 			variables: map[string]interface{}{
-				"id": "6330de58-2761-411e-a243-bec6d0c53876",
+				"id":   "6330de58-2761-411e-a243-bec6d0c53876",
+				"name": "Acme Ltd.",
 			},
 			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
 				test_graphql.RequireNoErrors(t, res.GraphqlErrors)
 
 				require.NotNil(t, res.Data.Result)
-				_, err := repository.FindOrganisationByID(context.Background(), db, res.Data.Result.ID, nil)
-				require.ErrorIs(t, err, repository.ErrNotFound)
+				organisation, err := repository.FindOrganisationByID(context.Background(), db, res.Data.Result.ID, nil)
+				require.NoError(t, err)
+
+				assert.Equal(t, "Acme Ltd.", organisation.Name)
 			},
 		},
 		{
@@ -63,7 +68,8 @@ func TestMutationResolver_DeleteOrganisation(t *testing.T) {
 			applyAuthFunc: test_auth.ApplyFixedAuthValuesOrganisationAdministrator,
 			fixtures:      []string{"base"},
 			variables: map[string]interface{}{
-				"id": "6330de58-2761-411e-a243-bec6d0c53876",
+				"id":   "6330de58-2761-411e-a243-bec6d0c53876",
+				"name": "Test corp",
 			},
 			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
 				test_graphql.RequireNotAuthorizedError(t, res.GraphqlErrors)
@@ -79,7 +85,7 @@ func TestMutationResolver_DeleteOrganisation(t *testing.T) {
 			test_db.ExecFixtures(t, db, tc.fixtures...)
 
 			query := test_graphql.GraphqlQuery{
-				Query:     deleteOrganisationGQL,
+				Query:     updateOrganisationGQL,
 				Variables: tc.variables,
 			}
 
@@ -87,7 +93,7 @@ func TestMutationResolver_DeleteOrganisation(t *testing.T) {
 
 			req := test_graphql.NewRequest(t, query)
 			auth := tc.applyAuthFunc(t, timeSource, req)
-			test_graphql.Handle(t, api.ResolverDependencies{DB: db, TimeSource: timeSource}, req, &res)
+			test_graphql.HandleAdmin(t, api.ResolverDependencies{DB: db, TimeSource: timeSource}, req, &res)
 			tc.expects(t, db, auth, res)
 		})
 	}

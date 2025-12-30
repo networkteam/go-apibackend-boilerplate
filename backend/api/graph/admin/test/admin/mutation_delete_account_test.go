@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/gofrs/uuid"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"myvendor.mytld/myproject/backend/api"
@@ -17,20 +16,17 @@ import (
 	test_graphql "myvendor.mytld/myproject/backend/test/graphql"
 )
 
-const createAccountGQL = `
-	mutation CreateAccount($role: Role!, $emailAddress: String!, $password: String!, $organisationId: UUID) {
-		result: createAccount(
-			role: $role,
-			emailAddress: $emailAddress,
-			password: $password,
-			organisationId: $organisationId,
+const deleteAccountGQL = `
+	mutation DeleteAccount($id: UUID!) {
+		result: deleteAccount(
+			id: $id,
 		) {
 			id
 		}
 	}
 `
 
-func TestMutationResolver_CreateAccount(t *testing.T) {
+func TestMutationResolver_DeleteAccount(t *testing.T) {
 	type result struct {
 		Data struct {
 			Result *struct {
@@ -48,83 +44,61 @@ func TestMutationResolver_CreateAccount(t *testing.T) {
 		expects       func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result)
 	}{
 		{
-			name:          "with SystemAdministrator and valid values",
+			name:          "with SystemAdministrator and own account",
 			applyAuthFunc: test_auth.ApplyFixedAuthValuesSystemAdministrator,
 			fixtures:      []string{"base"},
 			variables: map[string]interface{}{
-				"role":         "SystemAdministrator",
-				"emailAddress": "test@acme.com",
-				"password":     "myRandomPassword",
-			},
-			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
-				test_graphql.RequireNoErrors(t, res.GraphqlErrors)
-
-				require.NotNil(t, res.Data.Result)
-				account, err := repository.FindAccountByID(context.Background(), db, res.Data.Result.ID, nil)
-				require.NoError(t, err)
-
-				assert.Equal(t, "test@acme.com", account.EmailAddress)
-			},
-		},
-		{
-			name:          "with SystemAdministrator and existing email address",
-			applyAuthFunc: test_auth.ApplyFixedAuthValuesSystemAdministrator,
-			fixtures:      []string{"base"},
-			variables: map[string]interface{}{
-				"role":         "SystemAdministrator",
-				"emailAddress": "admin@example.com",
-				"password":     "myRandomPassword",
-			},
-			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
-				test_graphql.RequireErrors(t, res.GraphqlErrors)
-
-				require.Len(t, res.GraphqlErrors.Errors, 1)
-				assert.Equal(t, "emailAddress", res.GraphqlErrors.Errors[0].Extensions.Field)
-				assert.Equal(t, "alreadyExists", res.GraphqlErrors.Errors[0].Extensions.Code)
-			},
-		},
-		{
-			name:          "with OrganisationAdministrator and valid values",
-			applyAuthFunc: test_auth.ApplyFixedAuthValuesOrganisationAdministrator,
-			fixtures:      []string{"base"},
-			variables: map[string]interface{}{
-				"role":           "OrganisationAdministrator",
-				"emailAddress":   "test@acme.com",
-				"password":       "myRandomPassword",
-				"organisationId": "6330de58-2761-411e-a243-bec6d0c53876",
-			},
-			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
-				test_graphql.RequireNoErrors(t, res.GraphqlErrors)
-
-				require.NotNil(t, res.Data.Result)
-				account, err := repository.FindAccountByID(context.Background(), db, res.Data.Result.ID, nil)
-				require.NoError(t, err)
-
-				assert.Equal(t, "test@acme.com", account.EmailAddress)
-			},
-		},
-		{
-			name:          "with OrganisationAdministrator and other organisation",
-			applyAuthFunc: test_auth.ApplyFixedAuthValuesOrganisationAdministrator,
-			fixtures:      []string{"base"},
-			variables: map[string]interface{}{
-				"role":           "OrganisationAdministrator",
-				"emailAddress":   "test@acme.com",
-				"password":       "myRandomPassword",
-				"organisationId": "dba20d09-a3df-4975-9406-2fb6fd8f0940",
+				"id": "d7037ad0-d4bb-4dcc-8759-d82fbb3354e8",
 			},
 			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
 				test_graphql.RequireNotAuthorizedError(t, res.GraphqlErrors)
 			},
 		},
 		{
-			name:          "with OrganisationAdministrator and invalid role",
+			name:          "with SystemAdministrator and other account",
+			applyAuthFunc: test_auth.ApplyFixedAuthValuesSystemAdministrator,
+			fixtures:      []string{"base"},
+			variables: map[string]interface{}{
+				"id": "3ad082c7-cbda-49e1-a707-c53e1962be65",
+			},
+			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
+				test_graphql.RequireNoErrors(t, res.GraphqlErrors)
+
+				_, err := repository.FindAccountByID(context.Background(), db, uuid.Must(uuid.FromString("3ad082c7-cbda-49e1-a707-c53e1962be65")), nil)
+				require.ErrorIs(t, err, repository.ErrNotFound)
+			},
+		},
+		{
+			name:          "with OrganisationAdministrator and own account",
 			applyAuthFunc: test_auth.ApplyFixedAuthValuesOrganisationAdministrator,
 			fixtures:      []string{"base"},
 			variables: map[string]interface{}{
-				"role":         "SystemAdministrator",
-				"emailAddress": "test@acme.com",
-				"password":     "myRandomPassword",
+				"id": "d7037ad0-d4bb-4dcc-8759-d82fbb3354e8",
+			},
+			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
+				test_graphql.RequireNotAuthorizedError(t, res.GraphqlErrors)
+			},
+		},
+		{
+			name:          "with OrganisationAdministrator and other account",
+			applyAuthFunc: test_auth.ApplyFixedAuthValuesOrganisationAdministrator,
+			fixtures:      []string{"base"},
+			variables: map[string]interface{}{
+				"id": "f045e5d1-cdad-4964-a7e2-139c8a87346c",
+			},
+			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
+				test_graphql.RequireNoErrors(t, res.GraphqlErrors)
+
+				_, err := repository.FindAccountByID(context.Background(), db, uuid.Must(uuid.FromString("f045e5d1-cdad-4964-a7e2-139c8a87346c")), nil)
+				require.ErrorIs(t, err, repository.ErrNotFound)
+			},
+		},
+		{
+			name:          "with OrganisationAdministrator and account in other organisation",
+			applyAuthFunc: test_auth.ApplyFixedAuthValuesOrganisationAdministrator,
+			fixtures:      []string{"base"},
+			variables: map[string]interface{}{
+				"id": "2035f4da-f385-42c4-a609-02d9aa7290e5",
 			},
 			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
 				test_graphql.RequireNotAuthorizedError(t, res.GraphqlErrors)
@@ -140,7 +114,7 @@ func TestMutationResolver_CreateAccount(t *testing.T) {
 			test_db.ExecFixtures(t, db, tc.fixtures...)
 
 			query := test_graphql.GraphqlQuery{
-				Query:     createAccountGQL,
+				Query:     deleteAccountGQL,
 				Variables: tc.variables,
 			}
 
@@ -148,7 +122,7 @@ func TestMutationResolver_CreateAccount(t *testing.T) {
 
 			req := test_graphql.NewRequest(t, query)
 			auth := tc.applyAuthFunc(t, timeSource, req)
-			test_graphql.Handle(t, api.ResolverDependencies{DB: db, TimeSource: timeSource}, req, &res)
+			test_graphql.HandleAdmin(t, api.ResolverDependencies{DB: db, TimeSource: timeSource}, req, &res)
 			tc.expects(t, db, auth, res)
 		})
 	}

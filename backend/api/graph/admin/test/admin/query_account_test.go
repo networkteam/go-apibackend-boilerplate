@@ -1,7 +1,6 @@
 package admin_test
 
 import (
-	"context"
 	"database/sql"
 	"testing"
 
@@ -10,28 +9,27 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"myvendor.mytld/myproject/backend/api"
-	"myvendor.mytld/myproject/backend/persistence/repository"
 	"myvendor.mytld/myproject/backend/test"
 	test_auth "myvendor.mytld/myproject/backend/test/auth"
 	test_db "myvendor.mytld/myproject/backend/test/db"
 	test_graphql "myvendor.mytld/myproject/backend/test/graphql"
 )
 
-const createOrganisationGQL = `
-	mutation CreateOrganisation($name: String!) {
-		result: createOrganisation(
-			name: $name,
-		) {
+const accountGQL = `
+	query Account($id: UUID!) {
+		result: Account(id: $id) {
 			id
+			emailAddress
 		}
 	}
 `
 
-func TestMutationResolver_CreateOrganisation(t *testing.T) {
+func TestQueryResolver_Account(t *testing.T) {
 	type result struct {
 		Data struct {
 			Result *struct {
-				ID uuid.UUID
+				ID           uuid.UUID
+				EmailAddress string
 			}
 		}
 		test_graphql.GraphqlErrors
@@ -45,28 +43,36 @@ func TestMutationResolver_CreateOrganisation(t *testing.T) {
 		expects       func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result)
 	}{
 		{
-			name:          "with SystemAdministrator and valid values",
+			name:          "with SystemAdministrator",
 			applyAuthFunc: test_auth.ApplyFixedAuthValuesSystemAdministrator,
 			fixtures:      []string{"base"},
 			variables: map[string]interface{}{
-				"name": "Next big thing",
+				"id": "d7037ad0-d4bb-4dcc-8759-d82fbb3354e8",
 			},
 			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
 				test_graphql.RequireNoErrors(t, res.GraphqlErrors)
 
-				require.NotNil(t, res.Data.Result)
-				organisation, err := repository.FindOrganisationByID(context.Background(), db, res.Data.Result.ID, nil)
-				require.NoError(t, err)
-
-				assert.Equal(t, "Next big thing", organisation.Name)
+				require.NotNil(t, res.Data.Result, "result")
+				assert.Equal(t, "admin@example.com", res.Data.Result.EmailAddress)
 			},
 		},
 		{
-			name:          "with OrganisationAdministrator",
+			name:          "with OrganisationAdministrator and global account",
 			applyAuthFunc: test_auth.ApplyFixedAuthValuesOrganisationAdministrator,
 			fixtures:      []string{"base"},
 			variables: map[string]interface{}{
-				"name": "My new corp",
+				"id": "d7037ad0-d4bb-4dcc-8759-d82fbb3354e8",
+			},
+			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
+				test_graphql.RequireNotAuthorizedError(t, res.GraphqlErrors)
+			},
+		},
+		{
+			name:          "with OrganisationAdministrator and account in other organisation",
+			applyAuthFunc: test_auth.ApplyFixedAuthValuesOrganisationAdministrator,
+			fixtures:      []string{"base"},
+			variables: map[string]interface{}{
+				"id": "2035f4da-f385-42c4-a609-02d9aa7290e5",
 			},
 			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
 				test_graphql.RequireNotAuthorizedError(t, res.GraphqlErrors)
@@ -82,7 +88,7 @@ func TestMutationResolver_CreateOrganisation(t *testing.T) {
 			test_db.ExecFixtures(t, db, tc.fixtures...)
 
 			query := test_graphql.GraphqlQuery{
-				Query:     createOrganisationGQL,
+				Query:     accountGQL,
 				Variables: tc.variables,
 			}
 
@@ -90,7 +96,7 @@ func TestMutationResolver_CreateOrganisation(t *testing.T) {
 
 			req := test_graphql.NewRequest(t, query)
 			auth := tc.applyAuthFunc(t, timeSource, req)
-			test_graphql.Handle(t, api.ResolverDependencies{DB: db, TimeSource: timeSource}, req, &res)
+			test_graphql.HandleAdmin(t, api.ResolverDependencies{DB: db, TimeSource: timeSource}, req, &res)
 			tc.expects(t, db, auth, res)
 		})
 	}

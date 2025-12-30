@@ -1,10 +1,8 @@
 package helper
 
 import (
-	"context"
-
+	"myvendor.mytld/myproject/backend/api/graph/admin/model"
 	common_helper "myvendor.mytld/myproject/backend/api/graph/common/helper"
-	"myvendor.mytld/myproject/backend/api/graph/public/model"
 	domain_model "myvendor.mytld/myproject/backend/domain/model"
 	"myvendor.mytld/myproject/backend/domain/query"
 )
@@ -21,10 +19,21 @@ func MapToAccount(record domain_model.Account) *model.Account {
 	}
 }
 
-func AccountQueryOptsFromSelection(ctx context.Context, accountSelectPath ...string) *query.AccountQueryOpts {
-	selectedFields := common_helper.SelectedFields(ctx)
-	return &query.AccountQueryOpts{
-		IncludeOrganisation:   selectedFields.PathSelected(append(accountSelectPath, "organisation")...),
-		OrganisationQueryOpts: OrganisationQueryOptsFromSelection(ctx, append(accountSelectPath, "organisation")...),
+func MapToAccounts(records []domain_model.Account) []*model.Account {
+	result := make([]*model.Account, len(records))
+	for i, record := range records {
+		result[i] = MapToAccount(record)
+	}
+	return result
+}
+
+func MapFromAccountFilter(filter *model.AccountFilter) query.AccountsQuery {
+	if filter == nil {
+		return query.AccountsQuery{}
+	}
+	return query.AccountsQuery{
+		IDs:            filter.Ids,
+		SearchTerm:     common_helper.ToVal(filter.Q),
+		OrganisationID: filter.OrganisationID,
 	}
 }
