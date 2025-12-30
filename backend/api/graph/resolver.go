@@ -3,7 +3,7 @@ package graph
 import (
 	"myvendor.mytld/myproject/backend/api"
 	"myvendor.mytld/myproject/backend/domain/finder"
-	"myvendor.mytld/myproject/backend/handler"
+	"myvendor.mytld/myproject/backend/domain/handler"
 )
 
 type Resolver struct {

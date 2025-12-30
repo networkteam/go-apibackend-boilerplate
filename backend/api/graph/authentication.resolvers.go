@@ -10,13 +10,14 @@ import (
 
 	logger "github.com/apex/log"
 	fog_errors "github.com/friendsofgo/errors"
+
 	"myvendor.mytld/myproject/backend/api"
 	"myvendor.mytld/myproject/backend/api/graph/helper"
 	"myvendor.mytld/myproject/backend/api/graph/model"
 	"myvendor.mytld/myproject/backend/domain/command"
+	"myvendor.mytld/myproject/backend/domain/handler"
 	"myvendor.mytld/myproject/backend/domain/query"
 	"myvendor.mytld/myproject/backend/domain/types"
-	"myvendor.mytld/myproject/backend/handler"
 	"myvendor.mytld/myproject/backend/persistence/repository"
 	"myvendor.mytld/myproject/backend/security/authentication"
 )

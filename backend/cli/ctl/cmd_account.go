@@ -11,8 +11,8 @@ import (
 	"golang.org/x/term"
 
 	"myvendor.mytld/myproject/backend/domain/command"
+	"myvendor.mytld/myproject/backend/domain/handler"
 	"myvendor.mytld/myproject/backend/domain/types"
-	"myvendor.mytld/myproject/backend/handler"
 )
 
 func newAccountCmd() *cli.Command {
