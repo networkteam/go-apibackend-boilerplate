@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	stderrors "errors"
+	"fmt"
+	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,17 +13,16 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/playground"
-	logger "github.com/apex/log"
-	"github.com/apex/log/handlers/logfmt"
 	"github.com/friendsofgo/errors"
-	"github.com/getsentry/sentry-go"
 	"github.com/hashicorp/go-multierror"
-	"github.com/mattn/go-isatty"
-	"github.com/networkteam/apexlogutils"
 	"github.com/networkteam/apexlogutils/httplog"
 	apexlogutils_middleware "github.com/networkteam/apexlogutils/middleware"
+	"github.com/networkteam/devlog"
+	"github.com/networkteam/devlog/collector"
+	"github.com/networkteam/slogutils"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/robfig/cron"
+	slogmulti "github.com/samber/slog-multi"
 	"github.com/urfave/cli/v2"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
@@ -30,6 +31,7 @@ import (
 	"myvendor.mytld/myproject/backend/api/graph/public"
 	api_handler "myvendor.mytld/myproject/backend/api/handler"
 	http_api "myvendor.mytld/myproject/backend/api/http"
+	domain_handler "myvendor.mytld/myproject/backend/domain/handler"
 )
 
 const shutdownTimeout = 5 * time.Second
@@ -38,71 +40,70 @@ func newServerCmd() *cli.Command {
 	return &cli.Command{
 		Name:  "server",
 		Usage: "Run the backend server",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    "address",
-				Usage:   "Listen on this address",
-				EnvVars: []string{"BACKEND_ADDRESS"},
-				Value:   "0.0.0.0:8080",
-			},
-			&cli.StringFlag{
-				Name:    "websocket-allow-origin",
-				Usage:   "Allow websocket connections from this origin, if empty only the origin matching the host of the request is allowed",
-				EnvVars: []string{"BACKEND_WEBSOCKET_ALLOW_ORIGIN"},
-			},
-			&cli.BoolFlag{
-				Name:  "playground",
-				Usage: "Enable GraphQL playground",
-				Value: false,
-			},
-			&cli.BoolFlag{
-				Name:    "disable-ansi",
-				Usage:   "Force disable ANSI log output and output log in logfmt format",
-				EnvVars: []string{"BACKEND_DISABLE_ANSI"},
-				Value:   false,
-			},
-			&cli.BoolFlag{
-				Name:    "force-ansi",
-				Usage:   "Force enable ANSI log output",
-				EnvVars: []string{"BACKEND_FORCE_ANSI"},
-				Value:   false,
+		Flags: flattenFlags(
+			[]cli.Flag{
+				&cli.StringFlag{
+					Name:    "address",
+					Usage:   "Listen on this address",
+					EnvVars: []string{"BACKEND_ADDRESS"},
+					Value:   "0.0.0.0:8080",
+				},
+				&cli.StringFlag{
+					Name:    "websocket-allow-origin",
+					Usage:   "Allow websocket connections from this origin, if empty only the origin matching the host of the request is allowed",
+					EnvVars: []string{"BACKEND_WEBSOCKET_ALLOW_ORIGIN"},
+				},
+				&cli.BoolFlag{
+					Name:  "playground",
+					Usage: "Enable GraphQL playground",
+					Value: false,
+				},
+				&cli.BoolFlag{
+					Name:    "disable-ansi",
+					Usage:   "Force disable ANSI log output and output log in logfmt format",
+					EnvVars: []string{"BACKEND_DISABLE_ANSI"},
+					Value:   false,
+				},
+				&cli.BoolFlag{
+					Name:    "force-ansi",
+					Usage:   "Force enable ANSI log output",
+					EnvVars: []string{"BACKEND_FORCE_ANSI"},
+					Value:   false,
+				},
+
+				&cli.StringFlag{
+					Name:    "sentry-dsn",
+					Usage:   "Sentry DSN (will be disabled if empty)",
+					EnvVars: []string{"SENTRY_DSN"},
+				},
+				&cli.StringFlag{
+					Name:    "sentry-environment",
+					Usage:   "Sentry environment",
+					EnvVars: []string{"SENTRY_ENVIRONMENT"},
+					Value:   "development",
+				},
+				&cli.StringFlag{
+					Name:    "sentry-release",
+					Usage:   "Release version for Sentry",
+					EnvVars: []string{"SENTRY_RELEASE"},
+				},
+
+				&cli.BoolFlag{
+					Name:    "open-telemetry-enabled",
+					Usage:   "Enable open telemetry",
+					EnvVars: []string{"OPEN_TELEMETRY_ENABLED"},
+				},
+
+				&cli.DurationFlag{
+					Name:    "sensitive-operation-constant-time",
+					Usage:   "Constant time duration to wait for sensitive operations (e.g. login / request password reset / perform password reset / registration), to prevent timing attacks",
+					EnvVars: []string{"SENSITIVE_OPERATION_CONSTANT_TIME"},
+					Value:   700 * time.Millisecond,
+				},
 			},
 
-			&cli.StringFlag{
-				Name:    "sentry-dsn",
-				Usage:   "Sentry DSN (will be disabled if empty)",
-				EnvVars: []string{"SENTRY_DSN"},
-			},
-			&cli.StringFlag{
-				Name:    "sentry-environment",
-				Usage:   "Sentry environment",
-				EnvVars: []string{"SENTRY_ENVIRONMENT"},
-				Value:   "development",
-			},
-			&cli.StringFlag{
-				Name:    "sentry-release",
-				Usage:   "Release version for Sentry",
-				EnvVars: []string{"SENTRY_RELEASE"},
-			},
-
-			&cli.BoolFlag{
-				Name:    "open-telemetry-enabled",
-				Usage:   "Enable open telemetry",
-				EnvVars: []string{"OPEN_TELEMETRY_ENABLED"},
-			},
-
-			&cli.DurationFlag{
-				Name:    "sensitive-operation-constant-time",
-				Usage:   "Constant time duration to wait for sensitive operations (e.g. login / request password reset / perform password reset / registration), to prevent timing attacks",
-				EnvVars: []string{"SENSITIVE_OPERATION_CONSTANT_TIME"},
-				Value:   700 * time.Millisecond,
-			},
-		},
-		Before: func(c *cli.Context) error {
-			setServerLogHandler(c)
-
-			return nil
-		},
+			sentryFlags(),
+		),
 		Action: serverAction,
 	}
 }
@@ -111,13 +112,36 @@ func serverAction(c *cli.Context) (err error) {
 	// This action is where the server is set up and dependencies are wired
 	// -- make sure to keep it clean and with clear intention what is done here
 
-	log := logger.FromContext(c.Context)
+	logger := slogutils.FromContext(c.Context)
 
-	// Initialize sentry
-	defer sentry.Recover()
+	var dlog *devlog.Instance
+	if c.Bool("devlog") {
+		dlog = devlog.NewWithOptions(devlog.Options{
+			HTTPServerOptions: devlogHTTPServerOptions(),
+		})
+
+		// Collect debug logs with devlog
+		defaultHandler := logger.Handler()
+		logger = setDefaultLoggerAndContext(c, slog.New(
+			slogmulti.Fanout(
+				dlog.CollectSlogLogs(collector.CollectSlogLogsOptions{
+					Level: slog.LevelInfo,
+				}),
+				defaultHandler,
+			),
+		))
+
+		// Add devlog RoundTripper to DefaultTransport to trace outgoing HTTP requests
+		http.DefaultTransport = dlog.CollectHTTPClient(http.DefaultTransport)
+	}
+
 	err = initializeSentry(c, "backend")
 	if err != nil {
 		return err
+	}
+
+	if c.Bool("sentry-log-integration") {
+		logger = initializeSentrySlog(c)
 	}
 
 	db, err := connectDatabase(c)
@@ -157,13 +181,6 @@ func serverAction(c *cli.Context) (err error) {
 		err = stderrors.Join(err, otelShutdown(context.Background()))
 	}()
 
-	shutdownCronJobs, err := startCronJobs(c, db)
-	if err != nil {
-		return err
-	}
-
-	mux := http.NewServeMux()
-
 	deps := api.ResolverDependencies{
 		DB:            db,
 		TimeSource:    timeSource,
@@ -171,6 +188,14 @@ func serverAction(c *cli.Context) (err error) {
 		Mailer:        mailer,
 		MeterProvider: otel.GetMeterProvider(),
 	}
+
+	shutdownCronJobs, err := startCronJobs(c, deps.Handler())
+	if err != nil {
+		return err
+	}
+
+	mux := http.NewServeMux()
+
 	apiHandlerConfig := api_handler.Config{
 		EnableTracing:                  false,
 		EnableLogging:                  true,
@@ -205,9 +230,12 @@ func serverAction(c *cli.Context) (err error) {
 	)
 
 	address := c.String("address")
-	log.Infof("Serving GraphQL endpoint at http://%s/query", address)
+	logger.Info("Serving GraphQL endpoint", "url", fmt.Sprintf("http://%s/query", address))
 	if playgroundEnabled {
-		log.Infof("Connects to http://%s/ for GraphQL playground", address)
+		logger.Info("Running GraphQL playground", "url", fmt.Sprintf("http://%s/", address))
+	}
+	if c.Bool("devlog") {
+		logger.Info("Running devlog dashboard", "url", fmt.Sprintf("http://%s/_devlog/", address))
 	}
 
 	err = serve(c, rootHandler, func(_ *cli.Context) error {
@@ -218,28 +246,30 @@ func serverAction(c *cli.Context) (err error) {
 }
 
 func serve(c *cli.Context, handler http.Handler, onShutdown func(c *cli.Context) error) (err error) {
-	log := logger.FromContext(c.Context)
+	logger := slogutils.FromContext(c.Context)
 
 	address := c.String("address")
 	srv := &http.Server{
 		Addr:              address,
 		Handler:           handler,
 		ReadHeaderTimeout: 60 * time.Second,
+		BaseContext: func(_ net.Listener) context.Context {
+			return c.Context
+		},
 	}
 
 	go func() {
 		if err = srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			// Fatal will exit the program if the server failed to listen
-			log.
-				WithError(err).
-				Fatalf("Failed to listen and serve")
+			logger.Error("Failed to listen and serve", slogutils.Err(err))
+			os.Exit(1)
 		}
 	}()
 
 	<-c.Context.Done()
 
-	log.Debugf("Server stopped")
+	logger.Debug("Server stopped")
 
+	// use background context because the original context is already cancelled
 	ctxShutDown, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer func() {
 		cancel()
@@ -249,7 +279,7 @@ func serve(c *cli.Context, handler http.Handler, onShutdown func(c *cli.Context)
 		return errors.Wrap(err, "shutting down server")
 	}
 
-	log.Debugf("Server exited properly")
+	logger.Debug("Server exited properly")
 
 	if errors.Is(err, http.ErrServerClosed) {
 		err = nil
@@ -259,13 +289,13 @@ func serve(c *cli.Context, handler http.Handler, onShutdown func(c *cli.Context)
 		err = multierror.Append(err, shutdownErr)
 	}
 
-	log.Info("Everything shut down, goodbye")
+	logger.Info("Everything shut down, goodbye")
 
 	return err
 }
 
 func setupCancelOnSignal(c *cli.Context) {
-	log := logger.FromContext(c.Context)
+	logger := slogutils.FromContext(c.Context)
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals,
@@ -279,76 +309,31 @@ func setupCancelOnSignal(c *cli.Context) {
 	c.Context, cancel = context.WithCancel(c.Context)
 	go func() {
 		sig := <-signals
-		log.Infof("Received signal: %v", sig)
+		logger.Info("Received signal", "signal", sig)
 		cancel()
 	}()
 }
 
-//nolint:unparam // Adding jobs needs to return errors
-func startCronJobs(c *cli.Context, _ *sql.DB) (func(), error) {
-	log := logger.FromContext(c.Context)
+func startCronJobs(c *cli.Context, handler *domain_handler.Handler) (func(), error) {
+	logger := slogutils.FromContext(c.Context)
 
 	cronJobs := cron.New()
 
-	// boilerplate: Register your cronjobs here with cronJobs.AddJob
+	/*
+		err := cronJobs.AddJob(
+			c.String("delete-expired-access-tokens-cron"),
+			domain_handler.CommandHandlerJob(c.Context, handler.AuthSessionDeleteExpired, command.AuthSessionDeleteExpiredCmd{}),
+		)
+		if err != nil {
+			return nil, err
+		}
+	*/
 
 	cronJobs.Start()
 
 	return func() {
-		log.Debugf("Stopping cron jobs")
+		logger.Debug("Stopping cron jobs")
 		cronJobs.Stop()
-		log.Debugf("All cron jobs stopped")
+		logger.Debug("All cron jobs stopped")
 	}, nil
-}
-
-func initializeSentry(c *cli.Context, component string) error {
-	log := logger.FromContext(c.Context)
-
-	sentryDSN := c.String("sentry-dsn")
-	sentryEnvironment := c.String("sentry-environment")
-	sentryRelease := c.String("sentry-release")
-
-	if sentryDSN == "" {
-		log.Info("No Sentry DSN set: Sentry disabled")
-
-		return nil
-	}
-
-	sentryOptions := sentry.ClientOptions{
-		Dsn:         sentryDSN,
-		Environment: sentryEnvironment,
-		Release:     sentryRelease,
-		DebugWriter: os.Stderr,
-		Debug:       sentryEnvironment != "production",
-	}
-
-	log.
-		WithField("dsn", sentryDSN).
-		WithField("environment", sentryEnvironment).
-		WithField("release", sentryRelease).
-		Info("Initializing Sentry")
-
-	sentry.ConfigureScope(func(scope *sentry.Scope) {
-		scope.SetTags(map[string]string{"component": component})
-	})
-
-	err := sentry.Init(sentryOptions)
-	if err != nil {
-		return errors.Wrap(err, "initializing Sentry")
-	}
-
-	return nil
-}
-
-func setServerLogHandler(c *cli.Context) {
-	if !c.Bool("disable-ansi") && (isatty.IsTerminal(os.Stdout.Fd()) || c.Bool("force-ansi")) {
-		logger.SetHandler(apexlogutils.NewComponentTextHandler(os.Stderr))
-	} else {
-		logger.SetHandler(logfmt.New(os.Stderr))
-	}
-
-	// Use a logger instance with predeclared component field
-	log := logger.WithField("component", "cli.server")
-	// Add logger to context.Context of cli.Context, so individual
-	c.Context = logger.NewContext(c.Context, log)
 }
