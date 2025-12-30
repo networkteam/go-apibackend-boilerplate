@@ -14,6 +14,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/gorilla/websocket"
 	"github.com/ravilushqa/otelgqlgen"
+	"github.com/vektah/gqlparser/v2/ast"
 	"go.opentelemetry.io/otel/attribute"
 
 	"myvendor.mytld/myproject/backend/api"
@@ -50,6 +51,7 @@ func NewGraphqlHandler(deps api.ResolverDependencies, handlerConfig Config) http
 		},
 	}
 	exec := generated.NewExecutableSchema(config)
+
 	srv := newDefaultServer(exec, handlerConfig)
 	srv.SetErrorPresenter(ErrorPresenter)
 
@@ -60,6 +62,7 @@ func NewGraphqlHandler(deps api.ResolverDependencies, handlerConfig Config) http
 					variables := make([]attribute.KeyValue, 0, len(requestVariables))
 					for k, v := range requestVariables {
 						switch k {
+						// TODO Make list of request variable names that should be masked configurable
 						case "password":
 							v = "********"
 						}
@@ -73,12 +76,12 @@ func NewGraphqlHandler(deps api.ResolverDependencies, handlerConfig Config) http
 		))
 	}
 
+	srv.AroundFields(graphql_middleware.RequireAuthenticationFieldMiddleware)
+	srv.AroundFields(graphql_middleware.SentryGraphqlMiddleware)
+
 	if handlerConfig.EnableLogging {
 		srv.AroundFields(graphql_middleware.LoggerFieldMiddleware)
 	}
-
-	srv.AroundFields(graphql_middleware.RequireAuthenticationFieldMiddleware)
-	srv.AroundFields(graphql_middleware.SentryGraphqlMiddleware)
 
 	if handlerConfig.EnableTracing {
 		srv.Use(apollotracing.Tracer{})
@@ -116,11 +119,11 @@ func newDefaultServer(es graphql.ExecutableSchema, handlerConfig Config) *graphq
 	srv.AddTransport(transport.POST{})
 	srv.AddTransport(transport.MultipartForm{})
 
-	srv.SetQueryCache(lru.New(1000))
+	srv.SetQueryCache(lru.New[*ast.QueryDocument](1000))
 
 	srv.Use(extension.Introspection{})
 	srv.Use(extension.AutomaticPersistedQuery{
-		Cache: lru.New(100),
+		Cache: lru.New[string](100),
 	})
 
 	return srv

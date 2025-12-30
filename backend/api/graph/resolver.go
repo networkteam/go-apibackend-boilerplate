@@ -2,7 +2,7 @@ package graph
 
 import (
 	"myvendor.mytld/myproject/backend/api"
-	"myvendor.mytld/myproject/backend/finder"
+	"myvendor.mytld/myproject/backend/domain/finder"
 	"myvendor.mytld/myproject/backend/handler"
 )
 

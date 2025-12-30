@@ -5,8 +5,8 @@ import (
 
 	"github.com/gofrs/uuid"
 
+	"myvendor.mytld/myproject/backend/domain/finder"
 	"myvendor.mytld/myproject/backend/domain/types"
-	"myvendor.mytld/myproject/backend/finder"
 )
 
 const (

@@ -50,7 +50,7 @@ func TestSupportFormMsg_ToMessage(t *testing.T) {
 				"To":      "<app@example.com>",
 				"Subject": "Neue Kontaktanfrage von Max Mustermann (Acme Inc.)",
 			},
-			expectedFileAttachment: "my-screenshot.png",
+			expectedFileAttachment: "test_my-screenshot.png",
 		},
 	}
 
