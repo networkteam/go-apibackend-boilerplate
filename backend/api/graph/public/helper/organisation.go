@@ -3,7 +3,7 @@ package helper
 import (
 	"context"
 
-	"myvendor.mytld/myproject/backend/api/graph/model"
+	"myvendor.mytld/myproject/backend/api/graph/public/model"
 	model2 "myvendor.mytld/myproject/backend/domain/model"
 	"myvendor.mytld/myproject/backend/domain/query"
 )

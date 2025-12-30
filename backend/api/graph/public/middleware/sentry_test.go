@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/vektah/gqlparser/v2/ast"
 
-	"myvendor.mytld/myproject/backend/api/graph/middleware"
+	"myvendor.mytld/myproject/backend/api/graph/public/middleware"
 	test_sentry "myvendor.mytld/myproject/backend/test/sentry"
 )
 

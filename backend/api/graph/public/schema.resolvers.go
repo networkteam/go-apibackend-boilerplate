@@ -1,4 +1,4 @@
-package graph
+package public
 
 // This file will be automatically regenerated based on the schema, any resolver
 // implementations
@@ -9,7 +9,7 @@ import (
 	"context"
 	"fmt"
 
-	"myvendor.mytld/myproject/backend/api/graph/generated"
+	"myvendor.mytld/myproject/backend/api/graph/public/generated"
 )
 
 // Echo is the resolver for the echo field.

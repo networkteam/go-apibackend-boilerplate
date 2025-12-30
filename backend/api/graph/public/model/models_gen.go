@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
+
 	"myvendor.mytld/myproject/backend/domain/types"
 )
 

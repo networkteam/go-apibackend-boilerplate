@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"myvendor.mytld/myproject/backend/api/graph/model"
+	"myvendor.mytld/myproject/backend/api/graph/common/model"
 	"myvendor.mytld/myproject/backend/domain/types"
 )
 

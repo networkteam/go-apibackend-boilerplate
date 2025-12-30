@@ -1,7 +1,7 @@
 package helper
 
 import (
-	"myvendor.mytld/myproject/backend/api/graph/model"
+	"myvendor.mytld/myproject/backend/api/graph/public/model"
 )
 
 func SingleFieldsError(fieldName string, errorCode string) *model.FieldsError {

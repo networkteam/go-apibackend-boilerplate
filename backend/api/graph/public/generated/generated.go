@@ -17,7 +17,9 @@ import (
 	"github.com/gofrs/uuid"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
-	"myvendor.mytld/myproject/backend/api/graph/model"
+
+	"myvendor.mytld/myproject/backend/api/graph/common/model"
+	model2 "myvendor.mytld/myproject/backend/api/graph/public/model"
 	"myvendor.mytld/myproject/backend/domain/types"
 )
 
@@ -91,7 +93,7 @@ type ComplexityRoot struct {
 		CreateOrganisation func(childComplexity int, name string) int
 		DeleteAccount      func(childComplexity int, id uuid.UUID) int
 		DeleteOrganisation func(childComplexity int, id uuid.UUID) int
-		Login              func(childComplexity int, credentials model.LoginCredentials) int
+		Login              func(childComplexity int, credentials model2.LoginCredentials) int
 		Logout             func(childComplexity int) int
 		UpdateAccount      func(childComplexity int, id uuid.UUID, role types.Role, emailAddress string, password *string, organisationID *uuid.UUID) int
 		UpdateOrganisation func(childComplexity int, id uuid.UUID, name string) int
@@ -106,10 +108,10 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Account              func(childComplexity int, id uuid.UUID) int
-		AllAccounts          func(childComplexity int, page *int, perPage *int, sortField *string, sortOrder *string, filter *model.AccountFilter) int
-		AllAccountsMeta      func(childComplexity int, page *int, perPage *int, sortField *string, sortOrder *string, filter *model.AccountFilter) int
-		AllOrganisations     func(childComplexity int, page *int, perPage *int, sortField *string, sortOrder *string, filter *model.OrganisationFilter) int
-		AllOrganisationsMeta func(childComplexity int, page *int, perPage *int, sortField *string, sortOrder *string, filter *model.OrganisationFilter) int
+		AllAccounts          func(childComplexity int, page *int, perPage *int, sortField *string, sortOrder *string, filter *model2.AccountFilter) int
+		AllAccountsMeta      func(childComplexity int, page *int, perPage *int, sortField *string, sortOrder *string, filter *model2.AccountFilter) int
+		AllOrganisations     func(childComplexity int, page *int, perPage *int, sortField *string, sortOrder *string, filter *model2.OrganisationFilter) int
+		AllOrganisationsMeta func(childComplexity int, page *int, perPage *int, sortField *string, sortOrder *string, filter *model2.OrganisationFilter) int
 		CurrentAccount       func(childComplexity int) int
 		Echo                 func(childComplexity int, hello string) int
 		LoginStatus          func(childComplexity int) int
@@ -122,25 +124,25 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	CreateAccount(ctx context.Context, role types.Role, emailAddress string, password string, organisationID *uuid.UUID) (*model.Account, error)
-	UpdateAccount(ctx context.Context, id uuid.UUID, role types.Role, emailAddress string, password *string, organisationID *uuid.UUID) (*model.Account, error)
-	DeleteAccount(ctx context.Context, id uuid.UUID) (*model.Account, error)
-	CreateOrganisation(ctx context.Context, name string) (*model.Organisation, error)
-	UpdateOrganisation(ctx context.Context, id uuid.UUID, name string) (*model.Organisation, error)
-	DeleteOrganisation(ctx context.Context, id uuid.UUID) (*model.Organisation, error)
-	Login(ctx context.Context, credentials model.LoginCredentials) (*model.LoginResult, error)
-	Logout(ctx context.Context) (*model.Error, error)
+	CreateAccount(ctx context.Context, role types.Role, emailAddress string, password string, organisationID *uuid.UUID) (*model2.Account, error)
+	UpdateAccount(ctx context.Context, id uuid.UUID, role types.Role, emailAddress string, password *string, organisationID *uuid.UUID) (*model2.Account, error)
+	DeleteAccount(ctx context.Context, id uuid.UUID) (*model2.Account, error)
+	CreateOrganisation(ctx context.Context, name string) (*model2.Organisation, error)
+	UpdateOrganisation(ctx context.Context, id uuid.UUID, name string) (*model2.Organisation, error)
+	DeleteOrganisation(ctx context.Context, id uuid.UUID) (*model2.Organisation, error)
+	Login(ctx context.Context, credentials model2.LoginCredentials) (*model2.LoginResult, error)
+	Logout(ctx context.Context) (*model2.Error, error)
 }
 type QueryResolver interface {
 	Echo(ctx context.Context, hello string) (string, error)
-	Account(ctx context.Context, id uuid.UUID) (*model.Account, error)
-	AllAccounts(ctx context.Context, page *int, perPage *int, sortField *string, sortOrder *string, filter *model.AccountFilter) ([]*model.Account, error)
-	AllAccountsMeta(ctx context.Context, page *int, perPage *int, sortField *string, sortOrder *string, filter *model.AccountFilter) (*model.ListMetadata, error)
-	Organisation(ctx context.Context, id uuid.UUID) (*model.Organisation, error)
-	AllOrganisations(ctx context.Context, page *int, perPage *int, sortField *string, sortOrder *string, filter *model.OrganisationFilter) ([]*model.Organisation, error)
-	AllOrganisationsMeta(ctx context.Context, page *int, perPage *int, sortField *string, sortOrder *string, filter *model.OrganisationFilter) (*model.ListMetadata, error)
+	Account(ctx context.Context, id uuid.UUID) (*model2.Account, error)
+	AllAccounts(ctx context.Context, page *int, perPage *int, sortField *string, sortOrder *string, filter *model2.AccountFilter) ([]*model2.Account, error)
+	AllAccountsMeta(ctx context.Context, page *int, perPage *int, sortField *string, sortOrder *string, filter *model2.AccountFilter) (*model2.ListMetadata, error)
+	Organisation(ctx context.Context, id uuid.UUID) (*model2.Organisation, error)
+	AllOrganisations(ctx context.Context, page *int, perPage *int, sortField *string, sortOrder *string, filter *model2.OrganisationFilter) ([]*model2.Organisation, error)
+	AllOrganisationsMeta(ctx context.Context, page *int, perPage *int, sortField *string, sortOrder *string, filter *model2.OrganisationFilter) (*model2.ListMetadata, error)
 	LoginStatus(ctx context.Context) (bool, error)
-	CurrentAccount(ctx context.Context) (*model.Account, error)
+	CurrentAccount(ctx context.Context) (*model2.Account, error)
 }
 
 type executableSchema struct {
@@ -330,7 +332,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.Login(childComplexity, args["credentials"].(model.LoginCredentials)), true
+		return e.complexity.Mutation.Login(childComplexity, args["credentials"].(model2.LoginCredentials)), true
 	case "Mutation.logout":
 		if e.complexity.Mutation.Logout == nil {
 			break
@@ -406,7 +408,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.AllAccounts(childComplexity, args["page"].(*int), args["perPage"].(*int), args["sortField"].(*string), args["sortOrder"].(*string), args["filter"].(*model.AccountFilter)), true
+		return e.complexity.Query.AllAccounts(childComplexity, args["page"].(*int), args["perPage"].(*int), args["sortField"].(*string), args["sortOrder"].(*string), args["filter"].(*model2.AccountFilter)), true
 	case "Query._allAccountsMeta":
 		if e.complexity.Query.AllAccountsMeta == nil {
 			break
@@ -417,7 +419,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.AllAccountsMeta(childComplexity, args["page"].(*int), args["perPage"].(*int), args["sortField"].(*string), args["sortOrder"].(*string), args["filter"].(*model.AccountFilter)), true
+		return e.complexity.Query.AllAccountsMeta(childComplexity, args["page"].(*int), args["perPage"].(*int), args["sortField"].(*string), args["sortOrder"].(*string), args["filter"].(*model2.AccountFilter)), true
 	case "Query.allOrganisations":
 		if e.complexity.Query.AllOrganisations == nil {
 			break
@@ -428,7 +430,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.AllOrganisations(childComplexity, args["page"].(*int), args["perPage"].(*int), args["sortField"].(*string), args["sortOrder"].(*string), args["filter"].(*model.OrganisationFilter)), true
+		return e.complexity.Query.AllOrganisations(childComplexity, args["page"].(*int), args["perPage"].(*int), args["sortField"].(*string), args["sortOrder"].(*string), args["filter"].(*model2.OrganisationFilter)), true
 	case "Query._allOrganisationsMeta":
 		if e.complexity.Query.AllOrganisationsMeta == nil {
 			break
@@ -439,7 +441,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.AllOrganisationsMeta(childComplexity, args["page"].(*int), args["perPage"].(*int), args["sortField"].(*string), args["sortOrder"].(*string), args["filter"].(*model.OrganisationFilter)), true
+		return e.complexity.Query.AllOrganisationsMeta(childComplexity, args["page"].(*int), args["perPage"].(*int), args["sortField"].(*string), args["sortOrder"].(*string), args["filter"].(*model2.OrganisationFilter)), true
 	case "Query.currentAccount":
 		if e.complexity.Query.CurrentAccount == nil {
 			break
@@ -1179,7 +1181,7 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Account_id(ctx context.Context, field graphql.CollectedField, obj *model.Account) (ret graphql.Marshaler) {
+func (ec *executionContext) _Account_id(ctx context.Context, field graphql.CollectedField, obj *model2.Account) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1208,7 +1210,7 @@ func (ec *executionContext) fieldContext_Account_id(_ context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _Account_emailAddress(ctx context.Context, field graphql.CollectedField, obj *model.Account) (ret graphql.Marshaler) {
+func (ec *executionContext) _Account_emailAddress(ctx context.Context, field graphql.CollectedField, obj *model2.Account) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1237,7 +1239,7 @@ func (ec *executionContext) fieldContext_Account_emailAddress(_ context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Account_role(ctx context.Context, field graphql.CollectedField, obj *model.Account) (ret graphql.Marshaler) {
+func (ec *executionContext) _Account_role(ctx context.Context, field graphql.CollectedField, obj *model2.Account) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1266,7 +1268,7 @@ func (ec *executionContext) fieldContext_Account_role(_ context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Account_lastLogin(ctx context.Context, field graphql.CollectedField, obj *model.Account) (ret graphql.Marshaler) {
+func (ec *executionContext) _Account_lastLogin(ctx context.Context, field graphql.CollectedField, obj *model2.Account) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1295,7 +1297,7 @@ func (ec *executionContext) fieldContext_Account_lastLogin(_ context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Account_organisationId(ctx context.Context, field graphql.CollectedField, obj *model.Account) (ret graphql.Marshaler) {
+func (ec *executionContext) _Account_organisationId(ctx context.Context, field graphql.CollectedField, obj *model2.Account) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1324,7 +1326,7 @@ func (ec *executionContext) fieldContext_Account_organisationId(_ context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Account_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Account) (ret graphql.Marshaler) {
+func (ec *executionContext) _Account_createdAt(ctx context.Context, field graphql.CollectedField, obj *model2.Account) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1353,7 +1355,7 @@ func (ec *executionContext) fieldContext_Account_createdAt(_ context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Account_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.Account) (ret graphql.Marshaler) {
+func (ec *executionContext) _Account_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model2.Account) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1382,7 +1384,7 @@ func (ec *executionContext) fieldContext_Account_updatedAt(_ context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Error_code(ctx context.Context, field graphql.CollectedField, obj *model.Error) (ret graphql.Marshaler) {
+func (ec *executionContext) _Error_code(ctx context.Context, field graphql.CollectedField, obj *model2.Error) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1411,7 +1413,7 @@ func (ec *executionContext) fieldContext_Error_code(_ context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _Error_arguments(ctx context.Context, field graphql.CollectedField, obj *model.Error) (ret graphql.Marshaler) {
+func (ec *executionContext) _Error_arguments(ctx context.Context, field graphql.CollectedField, obj *model2.Error) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1440,7 +1442,7 @@ func (ec *executionContext) fieldContext_Error_arguments(_ context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _FieldError_path(ctx context.Context, field graphql.CollectedField, obj *model.FieldError) (ret graphql.Marshaler) {
+func (ec *executionContext) _FieldError_path(ctx context.Context, field graphql.CollectedField, obj *model2.FieldError) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1469,7 +1471,7 @@ func (ec *executionContext) fieldContext_FieldError_path(_ context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _FieldError_code(ctx context.Context, field graphql.CollectedField, obj *model.FieldError) (ret graphql.Marshaler) {
+func (ec *executionContext) _FieldError_code(ctx context.Context, field graphql.CollectedField, obj *model2.FieldError) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1498,7 +1500,7 @@ func (ec *executionContext) fieldContext_FieldError_code(_ context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _FieldError_arguments(ctx context.Context, field graphql.CollectedField, obj *model.FieldError) (ret graphql.Marshaler) {
+func (ec *executionContext) _FieldError_arguments(ctx context.Context, field graphql.CollectedField, obj *model2.FieldError) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1527,7 +1529,7 @@ func (ec *executionContext) fieldContext_FieldError_arguments(_ context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _FieldsError_errors(ctx context.Context, field graphql.CollectedField, obj *model.FieldsError) (ret graphql.Marshaler) {
+func (ec *executionContext) _FieldsError_errors(ctx context.Context, field graphql.CollectedField, obj *model2.FieldsError) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1564,7 +1566,7 @@ func (ec *executionContext) fieldContext_FieldsError_errors(_ context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _ListMetadata_count(ctx context.Context, field graphql.CollectedField, obj *model.ListMetadata) (ret graphql.Marshaler) {
+func (ec *executionContext) _ListMetadata_count(ctx context.Context, field graphql.CollectedField, obj *model2.ListMetadata) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1593,7 +1595,7 @@ func (ec *executionContext) fieldContext_ListMetadata_count(_ context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _LoginResult_account(ctx context.Context, field graphql.CollectedField, obj *model.LoginResult) (ret graphql.Marshaler) {
+func (ec *executionContext) _LoginResult_account(ctx context.Context, field graphql.CollectedField, obj *model2.LoginResult) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1638,7 +1640,7 @@ func (ec *executionContext) fieldContext_LoginResult_account(_ context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _LoginResult_authToken(ctx context.Context, field graphql.CollectedField, obj *model.LoginResult) (ret graphql.Marshaler) {
+func (ec *executionContext) _LoginResult_authToken(ctx context.Context, field graphql.CollectedField, obj *model2.LoginResult) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1667,7 +1669,7 @@ func (ec *executionContext) fieldContext_LoginResult_authToken(_ context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _LoginResult_csrfToken(ctx context.Context, field graphql.CollectedField, obj *model.LoginResult) (ret graphql.Marshaler) {
+func (ec *executionContext) _LoginResult_csrfToken(ctx context.Context, field graphql.CollectedField, obj *model2.LoginResult) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1696,7 +1698,7 @@ func (ec *executionContext) fieldContext_LoginResult_csrfToken(_ context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _LoginResult_error(ctx context.Context, field graphql.CollectedField, obj *model.LoginResult) (ret graphql.Marshaler) {
+func (ec *executionContext) _LoginResult_error(ctx context.Context, field graphql.CollectedField, obj *model2.LoginResult) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -2063,14 +2065,14 @@ func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.C
 		ec.fieldContext_Mutation_login,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().Login(ctx, fc.Args["credentials"].(model.LoginCredentials))
+			return ec.resolvers.Mutation().Login(ctx, fc.Args["credentials"].(model2.LoginCredentials))
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
 
 			directive1 := func(ctx context.Context) (any, error) {
 				if ec.directives.BypassAuthentication == nil {
-					var zeroVal *model.LoginResult
+					var zeroVal *model2.LoginResult
 					return zeroVal, errors.New("directive bypassAuthentication is not implemented")
 				}
 				return ec.directives.BypassAuthentication(ctx, nil, directive0)
@@ -2154,7 +2156,7 @@ func (ec *executionContext) fieldContext_Mutation_logout(_ context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Organisation_id(ctx context.Context, field graphql.CollectedField, obj *model.Organisation) (ret graphql.Marshaler) {
+func (ec *executionContext) _Organisation_id(ctx context.Context, field graphql.CollectedField, obj *model2.Organisation) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -2183,7 +2185,7 @@ func (ec *executionContext) fieldContext_Organisation_id(_ context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Organisation_name(ctx context.Context, field graphql.CollectedField, obj *model.Organisation) (ret graphql.Marshaler) {
+func (ec *executionContext) _Organisation_name(ctx context.Context, field graphql.CollectedField, obj *model2.Organisation) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -2212,7 +2214,7 @@ func (ec *executionContext) fieldContext_Organisation_name(_ context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Organisation_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Organisation) (ret graphql.Marshaler) {
+func (ec *executionContext) _Organisation_createdAt(ctx context.Context, field graphql.CollectedField, obj *model2.Organisation) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -2241,7 +2243,7 @@ func (ec *executionContext) fieldContext_Organisation_createdAt(_ context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Organisation_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.Organisation) (ret graphql.Marshaler) {
+func (ec *executionContext) _Organisation_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model2.Organisation) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -2389,7 +2391,7 @@ func (ec *executionContext) _Query_allAccounts(ctx context.Context, field graphq
 		ec.fieldContext_Query_allAccounts,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().AllAccounts(ctx, fc.Args["page"].(*int), fc.Args["perPage"].(*int), fc.Args["sortField"].(*string), fc.Args["sortOrder"].(*string), fc.Args["filter"].(*model.AccountFilter))
+			return ec.resolvers.Query().AllAccounts(ctx, fc.Args["page"].(*int), fc.Args["perPage"].(*int), fc.Args["sortField"].(*string), fc.Args["sortOrder"].(*string), fc.Args["filter"].(*model2.AccountFilter))
 		},
 		nil,
 		ec.marshalNAccount2ᚕᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐAccountᚄ,
@@ -2446,7 +2448,7 @@ func (ec *executionContext) _Query__allAccountsMeta(ctx context.Context, field g
 		ec.fieldContext_Query__allAccountsMeta,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().AllAccountsMeta(ctx, fc.Args["page"].(*int), fc.Args["perPage"].(*int), fc.Args["sortField"].(*string), fc.Args["sortOrder"].(*string), fc.Args["filter"].(*model.AccountFilter))
+			return ec.resolvers.Query().AllAccountsMeta(ctx, fc.Args["page"].(*int), fc.Args["perPage"].(*int), fc.Args["sortField"].(*string), fc.Args["sortOrder"].(*string), fc.Args["filter"].(*model2.AccountFilter))
 		},
 		nil,
 		ec.marshalOListMetadata2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐListMetadata,
@@ -2542,7 +2544,7 @@ func (ec *executionContext) _Query_allOrganisations(ctx context.Context, field g
 		ec.fieldContext_Query_allOrganisations,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().AllOrganisations(ctx, fc.Args["page"].(*int), fc.Args["perPage"].(*int), fc.Args["sortField"].(*string), fc.Args["sortOrder"].(*string), fc.Args["filter"].(*model.OrganisationFilter))
+			return ec.resolvers.Query().AllOrganisations(ctx, fc.Args["page"].(*int), fc.Args["perPage"].(*int), fc.Args["sortField"].(*string), fc.Args["sortOrder"].(*string), fc.Args["filter"].(*model2.OrganisationFilter))
 		},
 		nil,
 		ec.marshalNOrganisation2ᚕᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐOrganisationᚄ,
@@ -2593,7 +2595,7 @@ func (ec *executionContext) _Query__allOrganisationsMeta(ctx context.Context, fi
 		ec.fieldContext_Query__allOrganisationsMeta,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().AllOrganisationsMeta(ctx, fc.Args["page"].(*int), fc.Args["perPage"].(*int), fc.Args["sortField"].(*string), fc.Args["sortOrder"].(*string), fc.Args["filter"].(*model.OrganisationFilter))
+			return ec.resolvers.Query().AllOrganisationsMeta(ctx, fc.Args["page"].(*int), fc.Args["perPage"].(*int), fc.Args["sortField"].(*string), fc.Args["sortOrder"].(*string), fc.Args["filter"].(*model2.OrganisationFilter))
 		},
 		nil,
 		ec.marshalOListMetadata2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐListMetadata,
@@ -2825,7 +2827,7 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Result_error(ctx context.Context, field graphql.CollectedField, obj *model.Result) (ret graphql.Marshaler) {
+func (ec *executionContext) _Result_error(ctx context.Context, field graphql.CollectedField, obj *model2.Result) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -4304,8 +4306,8 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputAccountFilter(ctx context.Context, obj any) (model.AccountFilter, error) {
-	var it model.AccountFilter
+func (ec *executionContext) unmarshalInputAccountFilter(ctx context.Context, obj any) (model2.AccountFilter, error) {
+	var it model2.AccountFilter
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -4345,8 +4347,8 @@ func (ec *executionContext) unmarshalInputAccountFilter(ctx context.Context, obj
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputLoginCredentials(ctx context.Context, obj any) (model.LoginCredentials, error) {
-	var it model.LoginCredentials
+func (ec *executionContext) unmarshalInputLoginCredentials(ctx context.Context, obj any) (model2.LoginCredentials, error) {
+	var it model2.LoginCredentials
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -4386,8 +4388,8 @@ func (ec *executionContext) unmarshalInputLoginCredentials(ctx context.Context, 
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputOrganisationFilter(ctx context.Context, obj any) (model.OrganisationFilter, error) {
-	var it model.OrganisationFilter
+func (ec *executionContext) unmarshalInputOrganisationFilter(ctx context.Context, obj any) (model2.OrganisationFilter, error) {
+	var it model2.OrganisationFilter
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -4430,7 +4432,7 @@ func (ec *executionContext) unmarshalInputOrganisationFilter(ctx context.Context
 
 var accountImplementors = []string{"Account"}
 
-func (ec *executionContext) _Account(ctx context.Context, sel ast.SelectionSet, obj *model.Account) graphql.Marshaler {
+func (ec *executionContext) _Account(ctx context.Context, sel ast.SelectionSet, obj *model2.Account) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, accountImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -4493,7 +4495,7 @@ func (ec *executionContext) _Account(ctx context.Context, sel ast.SelectionSet, 
 
 var errorImplementors = []string{"Error"}
 
-func (ec *executionContext) _Error(ctx context.Context, sel ast.SelectionSet, obj *model.Error) graphql.Marshaler {
+func (ec *executionContext) _Error(ctx context.Context, sel ast.SelectionSet, obj *model2.Error) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errorImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -4537,7 +4539,7 @@ func (ec *executionContext) _Error(ctx context.Context, sel ast.SelectionSet, ob
 
 var fieldErrorImplementors = []string{"FieldError"}
 
-func (ec *executionContext) _FieldError(ctx context.Context, sel ast.SelectionSet, obj *model.FieldError) graphql.Marshaler {
+func (ec *executionContext) _FieldError(ctx context.Context, sel ast.SelectionSet, obj *model2.FieldError) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, fieldErrorImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -4586,7 +4588,7 @@ func (ec *executionContext) _FieldError(ctx context.Context, sel ast.SelectionSe
 
 var fieldsErrorImplementors = []string{"FieldsError"}
 
-func (ec *executionContext) _FieldsError(ctx context.Context, sel ast.SelectionSet, obj *model.FieldsError) graphql.Marshaler {
+func (ec *executionContext) _FieldsError(ctx context.Context, sel ast.SelectionSet, obj *model2.FieldsError) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, fieldsErrorImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -4625,7 +4627,7 @@ func (ec *executionContext) _FieldsError(ctx context.Context, sel ast.SelectionS
 
 var listMetadataImplementors = []string{"ListMetadata"}
 
-func (ec *executionContext) _ListMetadata(ctx context.Context, sel ast.SelectionSet, obj *model.ListMetadata) graphql.Marshaler {
+func (ec *executionContext) _ListMetadata(ctx context.Context, sel ast.SelectionSet, obj *model2.ListMetadata) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, listMetadataImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -4664,7 +4666,7 @@ func (ec *executionContext) _ListMetadata(ctx context.Context, sel ast.Selection
 
 var loginResultImplementors = []string{"LoginResult"}
 
-func (ec *executionContext) _LoginResult(ctx context.Context, sel ast.SelectionSet, obj *model.LoginResult) graphql.Marshaler {
+func (ec *executionContext) _LoginResult(ctx context.Context, sel ast.SelectionSet, obj *model2.LoginResult) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, loginResultImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -4789,7 +4791,7 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 var organisationImplementors = []string{"Organisation"}
 
-func (ec *executionContext) _Organisation(ctx context.Context, sel ast.SelectionSet, obj *model.Organisation) graphql.Marshaler {
+func (ec *executionContext) _Organisation(ctx context.Context, sel ast.SelectionSet, obj *model2.Organisation) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, organisationImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -5079,7 +5081,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 
 var resultImplementors = []string{"Result"}
 
-func (ec *executionContext) _Result(ctx context.Context, sel ast.SelectionSet, obj *model.Result) graphql.Marshaler {
+func (ec *executionContext) _Result(ctx context.Context, sel ast.SelectionSet, obj *model2.Result) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, resultImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -5448,11 +5450,11 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNAccount2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐAccount(ctx context.Context, sel ast.SelectionSet, v model.Account) graphql.Marshaler {
+func (ec *executionContext) marshalNAccount2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐAccount(ctx context.Context, sel ast.SelectionSet, v model2.Account) graphql.Marshaler {
 	return ec._Account(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNAccount2ᚕᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐAccountᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Account) graphql.Marshaler {
+func (ec *executionContext) marshalNAccount2ᚕᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐAccountᚄ(ctx context.Context, sel ast.SelectionSet, v []*model2.Account) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -5496,7 +5498,7 @@ func (ec *executionContext) marshalNAccount2ᚕᚖmyvendorᚗmytldᚋmyproject�
 	return ret
 }
 
-func (ec *executionContext) marshalNAccount2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐAccount(ctx context.Context, sel ast.SelectionSet, v *model.Account) graphql.Marshaler {
+func (ec *executionContext) marshalNAccount2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐAccount(ctx context.Context, sel ast.SelectionSet, v *model2.Account) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -5538,7 +5540,7 @@ func (ec *executionContext) marshalNDateTime2timeᚐTime(ctx context.Context, se
 	return res
 }
 
-func (ec *executionContext) marshalNFieldError2ᚕᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐFieldErrorᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.FieldError) graphql.Marshaler {
+func (ec *executionContext) marshalNFieldError2ᚕᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐFieldErrorᚄ(ctx context.Context, sel ast.SelectionSet, v []*model2.FieldError) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -5582,7 +5584,7 @@ func (ec *executionContext) marshalNFieldError2ᚕᚖmyvendorᚗmytldᚋmyprojec
 	return ret
 }
 
-func (ec *executionContext) marshalNFieldError2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐFieldError(ctx context.Context, sel ast.SelectionSet, v *model.FieldError) graphql.Marshaler {
+func (ec *executionContext) marshalNFieldError2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐFieldError(ctx context.Context, sel ast.SelectionSet, v *model2.FieldError) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -5608,16 +5610,16 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) unmarshalNLoginCredentials2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐLoginCredentials(ctx context.Context, v any) (model.LoginCredentials, error) {
+func (ec *executionContext) unmarshalNLoginCredentials2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐLoginCredentials(ctx context.Context, v any) (model2.LoginCredentials, error) {
 	res, err := ec.unmarshalInputLoginCredentials(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNLoginResult2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐLoginResult(ctx context.Context, sel ast.SelectionSet, v model.LoginResult) graphql.Marshaler {
+func (ec *executionContext) marshalNLoginResult2myvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐLoginResult(ctx context.Context, sel ast.SelectionSet, v model2.LoginResult) graphql.Marshaler {
 	return ec._LoginResult(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNLoginResult2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐLoginResult(ctx context.Context, sel ast.SelectionSet, v *model.LoginResult) graphql.Marshaler {
+func (ec *executionContext) marshalNLoginResult2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐLoginResult(ctx context.Context, sel ast.SelectionSet, v *model2.LoginResult) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -5627,7 +5629,7 @@ func (ec *executionContext) marshalNLoginResult2ᚖmyvendorᚗmytldᚋmyproject�
 	return ec._LoginResult(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNOrganisation2ᚕᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐOrganisationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Organisation) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganisation2ᚕᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐOrganisationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model2.Organisation) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -5671,7 +5673,7 @@ func (ec *executionContext) marshalNOrganisation2ᚕᚖmyvendorᚗmytldᚋmyproj
 	return ret
 }
 
-func (ec *executionContext) marshalNOrganisation2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐOrganisation(ctx context.Context, sel ast.SelectionSet, v *model.Organisation) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganisation2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐOrganisation(ctx context.Context, sel ast.SelectionSet, v *model2.Organisation) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -6006,14 +6008,14 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) marshalOAccount2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐAccount(ctx context.Context, sel ast.SelectionSet, v *model.Account) graphql.Marshaler {
+func (ec *executionContext) marshalOAccount2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐAccount(ctx context.Context, sel ast.SelectionSet, v *model2.Account) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Account(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOAccountFilter2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐAccountFilter(ctx context.Context, v any) (*model.AccountFilter, error) {
+func (ec *executionContext) unmarshalOAccountFilter2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐAccountFilter(ctx context.Context, v any) (*model2.AccountFilter, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -6069,14 +6071,14 @@ func (ec *executionContext) marshalODateTime2ᚖtimeᚐTime(ctx context.Context,
 	return res
 }
 
-func (ec *executionContext) marshalOError2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐError(ctx context.Context, sel ast.SelectionSet, v *model.Error) graphql.Marshaler {
+func (ec *executionContext) marshalOError2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐError(ctx context.Context, sel ast.SelectionSet, v *model2.Error) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Error(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOFieldsError2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐFieldsError(ctx context.Context, sel ast.SelectionSet, v *model.FieldsError) graphql.Marshaler {
+func (ec *executionContext) marshalOFieldsError2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐFieldsError(ctx context.Context, sel ast.SelectionSet, v *model2.FieldsError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -6101,21 +6103,21 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
-func (ec *executionContext) marshalOListMetadata2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐListMetadata(ctx context.Context, sel ast.SelectionSet, v *model.ListMetadata) graphql.Marshaler {
+func (ec *executionContext) marshalOListMetadata2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐListMetadata(ctx context.Context, sel ast.SelectionSet, v *model2.ListMetadata) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ListMetadata(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOOrganisation2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐOrganisation(ctx context.Context, sel ast.SelectionSet, v *model.Organisation) graphql.Marshaler {
+func (ec *executionContext) marshalOOrganisation2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐOrganisation(ctx context.Context, sel ast.SelectionSet, v *model2.Organisation) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Organisation(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOOrganisationFilter2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐOrganisationFilter(ctx context.Context, v any) (*model.OrganisationFilter, error) {
+func (ec *executionContext) unmarshalOOrganisationFilter2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋmodelᚐOrganisationFilter(ctx context.Context, v any) (*model2.OrganisationFilter, error) {
 	if v == nil {
 		return nil, nil
 	}

@@ -1,4 +1,4 @@
-package graph
+package public
 
 // This file will be automatically regenerated based on the schema, any resolver
 // implementations
@@ -12,8 +12,8 @@ import (
 	fog_errors "github.com/friendsofgo/errors"
 
 	"myvendor.mytld/myproject/backend/api"
-	"myvendor.mytld/myproject/backend/api/graph/helper"
-	"myvendor.mytld/myproject/backend/api/graph/model"
+	helper2 "myvendor.mytld/myproject/backend/api/graph/public/helper"
+	"myvendor.mytld/myproject/backend/api/graph/public/model"
 	"myvendor.mytld/myproject/backend/domain/command"
 	"myvendor.mytld/myproject/backend/domain/handler"
 	"myvendor.mytld/myproject/backend/domain/query"
@@ -24,7 +24,7 @@ import (
 
 // Login is the resolver for the login field.
 func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCredentials) (*model.LoginResult, error) {
-	defer helper.ConstantTime(r.SensitiveOperationConstantTime).Wait(ctx)
+	defer helper2.ConstantTime(r.SensitiveOperationConstantTime).Wait(ctx)
 
 	cmd := command.NewLoginCmd(credentials.EmailAddress, credentials.Password)
 	if credentials.KeepMeLoggedIn != nil && *credentials.KeepMeLoggedIn {
@@ -32,7 +32,7 @@ func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCre
 	}
 
 	account, err := r.finder.QueryAccountNotAuthorized(ctx, query.AccountQueryNotAuthorized{
-		Opts:         helper.AccountQueryOptsFromSelection(ctx, "account"),
+		Opts:         helper2.AccountQueryOptsFromSelection(ctx, "account"),
 		EmailAddress: &cmd.EmailAddress,
 	})
 	switch {
@@ -57,13 +57,13 @@ func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCre
 		return nil, err
 	}
 
-	authToken, csrfToken, err := helper.SetAuthTokenCookieForAccount(ctx, account, r.TimeSource, cmd.ExtendedExpiry)
+	authToken, csrfToken, err := helper2.SetAuthTokenCookieForAccount(ctx, account, r.TimeSource, cmd.ExtendedExpiry)
 	if err != nil {
 		return nil, err
 	}
 
 	return &model.LoginResult{
-		Account:   helper.MapToAccount(account),
+		Account:   helper2.MapToAccount(account),
 		AuthToken: authToken,
 		CsrfToken: csrfToken,
 	}, nil
@@ -96,11 +96,11 @@ func (r *queryResolver) CurrentAccount(ctx context.Context) (*model.Account, err
 	authCtx := authentication.GetAuthContext(ctx)
 	account, err := r.finder.QueryAccount(ctx, query.AccountQuery{
 		AccountID: authCtx.AccountID,
-		Opts:      helper.AccountQueryOptsFromSelection(ctx),
+		Opts:      helper2.AccountQueryOptsFromSelection(ctx),
 	})
 	if err != nil {
 		return nil, fog_errors.Wrap(err, "finding account")
 	}
 
-	return helper.MapToAccount(account), nil
+	return helper2.MapToAccount(account), nil
 }

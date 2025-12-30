@@ -1,4 +1,4 @@
-package graph
+package public
 
 // This file will be automatically regenerated based on the schema, any resolver
 // implementations
@@ -9,9 +9,10 @@ import (
 	"context"
 
 	"github.com/gofrs/uuid"
-	"myvendor.mytld/myproject/backend/api/graph/generated"
-	"myvendor.mytld/myproject/backend/api/graph/helper"
-	"myvendor.mytld/myproject/backend/api/graph/model"
+
+	"myvendor.mytld/myproject/backend/api/graph/public/generated"
+	helper2 "myvendor.mytld/myproject/backend/api/graph/public/helper"
+	"myvendor.mytld/myproject/backend/api/graph/public/model"
 	"myvendor.mytld/myproject/backend/domain/command"
 	"myvendor.mytld/myproject/backend/domain/query"
 	domain_model "myvendor.mytld/myproject/backend/domain/types"
@@ -27,7 +28,7 @@ func (r *mutationResolver) CreateAccount(ctx context.Context, role domain_model.
 
 	// Only set OrganisationID if the role fits (work around an issue with selecting an organisation and then changing the role in the admin UI)
 	if role != domain_model.RoleSystemAdministrator {
-		cmd.OrganisationID = helper.ToNullUUID(organisationID)
+		cmd.OrganisationID = helper2.ToNullUUID(organisationID)
 	}
 	err = r.handler.AccountCreate(ctx, cmd)
 	if err != nil {
@@ -40,7 +41,7 @@ func (r *mutationResolver) CreateAccount(ctx context.Context, role domain_model.
 	if err != nil {
 		return nil, err
 	}
-	return helper.MapToAccount(record), nil
+	return helper2.MapToAccount(record), nil
 }
 
 // UpdateAccount is the resolver for the updateAccount field.
@@ -53,13 +54,13 @@ func (r *mutationResolver) UpdateAccount(ctx context.Context, id uuid.UUID, role
 		return nil, err
 	}
 
-	cmd, err := command.NewAccountUpdateCmd(r.Config, prevRecord.OrganisationID, id, emailAddress, role, helper.ToVal(password))
+	cmd, err := command.NewAccountUpdateCmd(r.Config, prevRecord.OrganisationID, id, emailAddress, role, helper2.ToVal(password))
 	if err != nil {
 		return nil, err
 	}
 	// Only set NewOrganisationID if the role fits (work around an issue with selecting an organisation and then changing the role in the admin UI)
 	if role != domain_model.RoleSystemAdministrator {
-		cmd.NewOrganisationID = helper.ToNullUUID(organisationID)
+		cmd.NewOrganisationID = helper2.ToNullUUID(organisationID)
 	}
 	err = r.handler.AccountUpdate(ctx, cmd)
 	if err != nil {
@@ -72,7 +73,7 @@ func (r *mutationResolver) UpdateAccount(ctx context.Context, id uuid.UUID, role
 	if err != nil {
 		return nil, err
 	}
-	return helper.MapToAccount(record), nil
+	return helper2.MapToAccount(record), nil
 }
 
 // DeleteAccount is the resolver for the deleteAccount field.
@@ -89,7 +90,7 @@ func (r *mutationResolver) DeleteAccount(ctx context.Context, id uuid.UUID) (*mo
 	if err != nil {
 		return nil, err
 	}
-	return helper.MapToAccount(record), nil
+	return helper2.MapToAccount(record), nil
 }
 
 // CreateOrganisation is the resolver for the createOrganisation field.
@@ -109,7 +110,7 @@ func (r *mutationResolver) CreateOrganisation(ctx context.Context, name string) 
 	if err != nil {
 		return nil, err
 	}
-	return helper.MapToOrganisation(record), nil
+	return helper2.MapToOrganisation(record), nil
 }
 
 // UpdateOrganisation is the resolver for the updateOrganisation field.
@@ -128,7 +129,7 @@ func (r *mutationResolver) UpdateOrganisation(ctx context.Context, id uuid.UUID,
 	if err != nil {
 		return nil, err
 	}
-	return helper.MapToOrganisation(record), nil
+	return helper2.MapToOrganisation(record), nil
 }
 
 // DeleteOrganisation is the resolver for the deleteOrganisation field.
@@ -145,7 +146,7 @@ func (r *mutationResolver) DeleteOrganisation(ctx context.Context, id uuid.UUID)
 	if err != nil {
 		return nil, err
 	}
-	return helper.MapToOrganisation(record), nil
+	return helper2.MapToOrganisation(record), nil
 }
 
 // Account is the resolver for the Account field.
@@ -158,14 +159,14 @@ func (r *queryResolver) Account(ctx context.Context, id uuid.UUID) (*model.Accou
 	} else if err != nil {
 		return nil, err
 	}
-	return helper.MapToAccount(record), nil
+	return helper2.MapToAccount(record), nil
 }
 
 // AllAccounts is the resolver for the allAccounts field.
 func (r *queryResolver) AllAccounts(ctx context.Context, page *int, perPage *int, sortField *string, sortOrder *string, filter *model.AccountFilter) ([]*model.Account, error) {
-	query := helper.MapFromAccountFilter(filter)
+	query := helper2.MapFromAccountFilter(filter)
 
-	paging, err := helper.MapToPaging(page, perPage, sortField, sortOrder)
+	paging, err := helper2.MapToPaging(page, perPage, sortField, sortOrder)
 	if err != nil {
 		return nil, err
 	}
@@ -173,12 +174,12 @@ func (r *queryResolver) AllAccounts(ctx context.Context, page *int, perPage *int
 	if err != nil {
 		return nil, err
 	}
-	return helper.MapToAccounts(records), nil
+	return helper2.MapToAccounts(records), nil
 }
 
 // AllAccountsMeta is the resolver for the _allAccountsMeta field.
 func (r *queryResolver) AllAccountsMeta(ctx context.Context, page *int, perPage *int, sortField *string, sortOrder *string, filter *model.AccountFilter) (*model.ListMetadata, error) {
-	query := helper.MapFromAccountFilter(filter)
+	query := helper2.MapFromAccountFilter(filter)
 	count, err := r.finder.CountAccounts(ctx, query)
 	if err != nil {
 		return nil, err
@@ -198,14 +199,14 @@ func (r *queryResolver) Organisation(ctx context.Context, id uuid.UUID) (*model.
 	} else if err != nil {
 		return nil, err
 	}
-	return helper.MapToOrganisation(record), nil
+	return helper2.MapToOrganisation(record), nil
 }
 
 // AllOrganisations is the resolver for the allOrganisations field.
 func (r *queryResolver) AllOrganisations(ctx context.Context, page *int, perPage *int, sortField *string, sortOrder *string, filter *model.OrganisationFilter) ([]*model.Organisation, error) {
-	query := helper.MapToOrganisationsQuery(filter)
+	query := helper2.MapToOrganisationsQuery(filter)
 
-	paging, err := helper.MapToPaging(page, perPage, sortField, sortOrder)
+	paging, err := helper2.MapToPaging(page, perPage, sortField, sortOrder)
 	if err != nil {
 		return nil, err
 	}
@@ -213,12 +214,12 @@ func (r *queryResolver) AllOrganisations(ctx context.Context, page *int, perPage
 	if err != nil {
 		return nil, err
 	}
-	return helper.MapToOrganisations(records), nil
+	return helper2.MapToOrganisations(records), nil
 }
 
 // AllOrganisationsMeta is the resolver for the _allOrganisationsMeta field.
 func (r *queryResolver) AllOrganisationsMeta(ctx context.Context, page *int, perPage *int, sortField *string, sortOrder *string, filter *model.OrganisationFilter) (*model.ListMetadata, error) {
-	query := helper.MapToOrganisationsQuery(filter)
+	query := helper2.MapToOrganisationsQuery(filter)
 
 	count, err := r.finder.CountOrganisations(ctx, query)
 	if err != nil {

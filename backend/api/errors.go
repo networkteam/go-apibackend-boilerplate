@@ -3,7 +3,7 @@ package api
 import (
 	"errors"
 
-	"myvendor.mytld/myproject/backend/api/graph/model"
+	"myvendor.mytld/myproject/backend/api/graph/public/model"
 	"myvendor.mytld/myproject/backend/domain/types"
 )
 

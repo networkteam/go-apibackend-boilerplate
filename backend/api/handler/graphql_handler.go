@@ -18,9 +18,9 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	"myvendor.mytld/myproject/backend/api"
-	"myvendor.mytld/myproject/backend/api/graph"
-	"myvendor.mytld/myproject/backend/api/graph/generated"
-	graphql_middleware "myvendor.mytld/myproject/backend/api/graph/middleware"
+	"myvendor.mytld/myproject/backend/api/graph/public"
+	"myvendor.mytld/myproject/backend/api/graph/public/generated"
+	"myvendor.mytld/myproject/backend/api/graph/public/middleware"
 	http_middleware "myvendor.mytld/myproject/backend/api/http/middleware"
 )
 
@@ -40,7 +40,7 @@ const (
 
 func NewGraphqlHandler(deps api.ResolverDependencies, handlerConfig Config) http.Handler {
 	config := generated.Config{
-		Resolvers: graph.NewResolver(deps, api.ResolverConfig{
+		Resolvers: public.NewResolver(deps, api.ResolverConfig{
 			SensitiveOperationConstantTime: handlerConfig.SensitiveOperationConstantTime,
 		}),
 		Directives: generated.DirectiveRoot{
@@ -76,11 +76,11 @@ func NewGraphqlHandler(deps api.ResolverDependencies, handlerConfig Config) http
 		))
 	}
 
-	srv.AroundFields(graphql_middleware.RequireAuthenticationFieldMiddleware)
-	srv.AroundFields(graphql_middleware.SentryGraphqlMiddleware)
+	srv.AroundFields(middleware.RequireAuthenticationFieldMiddleware)
+	srv.AroundFields(middleware.SentryGraphqlMiddleware)
 
 	if handlerConfig.EnableLogging {
-		srv.AroundFields(graphql_middleware.LoggerFieldMiddleware)
+		srv.AroundFields(middleware.LoggerFieldMiddleware)
 	}
 
 	if handlerConfig.EnableTracing {

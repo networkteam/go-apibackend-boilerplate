@@ -1,4 +1,4 @@
-package graph
+package public
 
 import (
 	"myvendor.mytld/myproject/backend/api"
