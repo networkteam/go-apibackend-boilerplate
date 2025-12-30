@@ -28,10 +28,10 @@ const loginGQL = `
 				role
 				organisationId
 			}
-			authToken
-			csrfToken
 			error {
-				code
+				errors {
+					code
+				}
 			}
 		}
 	}
@@ -46,11 +46,8 @@ type loginResult struct {
 				Role           string
 				OrganisationID *uuid.UUID
 			}
-			AuthToken string
 			CsrfToken string
-			Error     *struct {
-				Code string
-			}
+			Error     *test_graphql.FieldsError
 		}
 	}
 	test_graphql.GraphqlErrors
@@ -135,7 +132,7 @@ func TestMutationResolver_Login_WithSystemAdministrator_InvalidPassword(t *testi
 	test_graphql.RequireNoErrors(t, result.GraphqlErrors)
 
 	require.NotNil(t, result.Data.Result.Error, "result.error")
-	assert.Equal(t, "invalidCredentials", result.Data.Result.Error.Code, "result.error.code")
+	test_graphql.AssertFieldError(t, result.Data.Result.Error, "invalidCredentials", []string{"username"})
 
 	test_telemetry.AssertMeterCounter(t, metricsReader, "myvendor.mytld/myproject/backend/handler", "login.failed.counter", 1)
 }

@@ -58,8 +58,7 @@ func (h *Handler) AccountUpdate(ctx context.Context, cmd command.AccountUpdateCm
 			EmailAddress:   &cmd.EmailAddress,
 			Role:           &cmd.Role,
 			OrganisationID: &cmd.NewOrganisationID,
-			// These will be nil if PasswordHash was not changed, so no update will occur
-			Secret:       cmd.Secret,
+			// This will be nil if PasswordHash was not changed, so no update will occur
 			PasswordHash: cmd.PasswordHash,
 		}
 

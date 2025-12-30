@@ -58,10 +58,6 @@ input LoginCredentials {
 type LoginResult {
   "The authenticated account (if error is null)"
   account: Account
-  "Auth token for using header based authentication (if error is null)"
-  authToken: String!
-  "CSRF token to be sent in subsequent requests (if error is null)"
-  csrfToken: String!
   "An error if authentication failed"
-  error: Error
+  error: FieldsError
 }

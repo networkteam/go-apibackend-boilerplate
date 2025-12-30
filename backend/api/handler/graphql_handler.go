@@ -44,14 +44,14 @@ func NewGraphqlHandler(deps api.ResolverDependencies, handlerConfig Config, exec
 			otelgqlgen.WithRequestVariablesAttributesBuilder(
 				func(requestVariables map[string]any) []attribute.KeyValue {
 					variables := make([]attribute.KeyValue, 0, len(requestVariables))
-					for k, v := range requestVariables {
-						switch k {
-						// TODO Make list of request variable names that should be masked configurable
+					for key, value := range requestVariables {
+						switch key {
+						// TODO Make the list of request variable names that should be masked configurable
 						case "password":
-							v = "********"
+							value = "********"
 						}
 						variables = append(variables,
-							attribute.String(fmt.Sprintf("%s.%s", requestVariablesPrefix, k), fmt.Sprintf("%+v", v)),
+							attribute.String(fmt.Sprintf("%s.%s", requestVariablesPrefix, key), fmt.Sprintf("%+v", value)),
 						)
 					}
 					return variables

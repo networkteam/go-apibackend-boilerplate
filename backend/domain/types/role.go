@@ -18,6 +18,12 @@ var OrganisationRoles = []Role{
 	RoleOrganisationAdministrator,
 }
 
+//nolint:gochecknoglobals
+var UserRoles = []Role{
+	RoleSystemAdministrator,
+	RoleOrganisationAdministrator,
+}
+
 var ErrUnknownRole = errors.New("unknown role")
 
 func RoleByIdentifier(roleIdentifier string) (Role, error) {

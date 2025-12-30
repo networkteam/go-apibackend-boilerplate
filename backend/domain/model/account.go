@@ -17,7 +17,6 @@ type Account struct {
 
 	ID             uuid.UUID     `read_col:"accounts.account_id" write_col:"account_id"`
 	EmailAddress   string        `read_col:"accounts.email_address,sortable" write_col:"email_address"`
-	Secret         []byte        `read_col:"accounts.secret" write_col:"secret"`
 	PasswordHash   []byte        `read_col:"accounts.password_hash" write_col:"password_hash"`
 	Role           types.Role    `read_col:"accounts.role_identifier,sortable" write_col:"role_identifier"`
 	LastLogin      *time.Time    `read_col:"accounts.last_login,sortable" write_col:"last_login"`
@@ -32,11 +31,6 @@ type Account struct {
 
 // Methods to implement authentication.AuthTokenDataProvider:
 
-// GetTokenSecret implements authentication.TokenSecretProvider
-func (a Account) GetTokenSecret() []byte {
-	return a.Secret
-}
-
 // GetAccountID implements authentication.AccountIDProvider
 func (a Account) GetAccountID() uuid.UUID {
 	return a.ID
@@ -47,9 +41,9 @@ func (a Account) GetOrganisationID() uuid.NullUUID {
 	return a.OrganisationID
 }
 
-// GetRoleIdentifier implements authentication.RoleIdentifierProvider
-func (a Account) GetRoleIdentifier() string {
-	return string(a.Role)
+// GetRole implements authentication.RoleProvider
+func (a Account) GetRole() types.Role {
+	return a.Role
 }
 
 // GetPasswordHash implements LoginDataProvider

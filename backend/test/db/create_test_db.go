@@ -1,11 +1,15 @@
 package db
 
 import (
+	"context"
 	"database/sql"
+	std_errors "errors"
 	"fmt"
 	"log/slog"
+	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -13,7 +17,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/jackc/pgx/v5/tracelog"
-	"github.com/networkteam/slogutils"
 	slogutils_tracelog "github.com/networkteam/slogutils/adapter/pgx/v5/tracelog"
 	"github.com/pressly/goose/v3"
 
@@ -31,28 +34,32 @@ const (
 //
 // This might be needed to be done outside of migrations because of concurrency issues when running package tests
 // in parallel.
-func PrepareTestDatabase() error {
+func PrepareTestDatabase(ctx context.Context) error {
 	postgresDSN := fmt.Sprintf("host=localhost port=%d dbname=%s sslmode=disable", dbPort, dbName)
+	postgresUser := os.Getenv("POSTGRES_USER")
+	if postgresUser != "" {
+		postgresDSN += fmt.Sprintf(" user=%s", postgresUser)
+	}
 
 	connConfig, err := pgx.ParseConfig(postgresDSN)
 	if err != nil {
 		return errors.Wrap(err, "parsing PostgreSQL connection string")
 	}
 	connConfig.Tracer = &tracelog.TraceLog{
-		Logger: slogutils_tracelog.NewLogger(
-			slog.Default().With("component", "db.driver"),
-			slogutils_tracelog.WithRemapLevel(tracelog.LogLevelInfo, slogutils.LevelTrace),
-		),
-		// Increase to LogLevelTrace to see all queries
-		LogLevel: tracelog.LogLevelDebug,
+		Logger:   slogutils_tracelog.NewLogger(slog.Default().With("component", "db.driver")),
+		LogLevel: tracelog.LogLevelWarn,
 	}
 	connStr := stdlib.RegisterConnConfig(connConfig)
 	db, err := sql.Open("pgx", connStr)
 	if err != nil {
 		return errors.Wrap(err, "open database")
 	}
+	defer func() {
+		closeErr := db.Close()
+		err = std_errors.Join(err, closeErr)
+	}()
 
-	_, err = db.Exec("CREATE EXTENSION IF NOT EXISTS btree_gist")
+	_, err = db.ExecContext(ctx, "CREATE EXTENSION IF NOT EXISTS btree_gist")
 	if err != nil {
 		return errors.Wrap(err, "creating extensions")
 	}
@@ -63,13 +70,43 @@ func PrepareTestDatabase() error {
 func CreateTestDatabase(t *testing.T) *sql.DB {
 	t.Helper()
 
+	schemaName := generateTestDatabaseSchemaName(t)
+
+	db := openTestDatabase(t, schemaName, nil)
+	createTestDatabaseSchema(t, db, schemaName)
+	executeTestDatabaseMigrations(t, db)
+
+	return db
+}
+
+func generateTestDatabaseSchemaName(t *testing.T) string {
+	t.Helper()
+
 	randomSuffix, err := helper.GenerateRandomString(12)
 	if err != nil {
 		t.Fatalf("Failed to generate random string: %v", err)
 	}
 	schemaName := "test-" + strings.ToLower(randomSuffix)
+	return schemaName
+}
 
-	postgresDSN := fmt.Sprintf("host=localhost port=%d dbname=%s sslmode=disable search_path=%s", dbPort, dbName, schemaName)
+func openTestDatabase(t *testing.T, schemaName string, overrideRuntimeParams map[string]string) *sql.DB {
+	t.Helper()
+
+	postgresDSN := fmt.Sprintf("host=localhost port=%d dbname=%s sslmode=disable search_path=%s,public", dbPort, dbName, schemaName)
+	postgresUser := os.Getenv("POSTGRES_USER")
+	if postgresUser != "" {
+		postgresDSN += fmt.Sprintf(" user=%s", postgresUser)
+	}
+
+	// Increase to LogLevelInfo to log all queries
+	logVerbosity := tracelog.LogLevelWarn
+	if verbosityStr := os.Getenv("BACKEND_VERBOSITY"); verbosityStr != "" {
+		verbosityInt, err := strconv.Atoi(verbosityStr)
+		if err == nil {
+			logVerbosity = tracelog.LogLevel(verbosityInt)
+		}
+	}
 
 	connConfig, err := pgx.ParseConfig(postgresDSN)
 	if err != nil {
@@ -77,52 +114,61 @@ func CreateTestDatabase(t *testing.T) *sql.DB {
 	}
 	connConfig.Tracer = &tracelog.TraceLog{
 		Logger: slogutils_tracelog.NewLogger(
-			slog.Default().With("component", "db.driver"),
-			slogutils_tracelog.WithRemapLevel(tracelog.LogLevelInfo, slogutils.LevelTrace),
-			slogutils_tracelog.WithRemapErrorLevel(func(_ tracelog.LogLevel, err error) slog.Level {
-				// Ignore the goose_db_version table not found error
-				if err.Error() == "ERROR: relation \"goose_db_version\" does not exist (SQLSTATE 42P01)" {
-					return slogutils.LevelTrace
-				}
-				return slog.LevelError
+			slog.Default(),
+			slogutils_tracelog.WithIgnoreErrors(func(err error) bool {
+				return err.Error() == "ERROR: relation \"goose_db_version\" does not exist (SQLSTATE 42P01)"
 			}),
 		),
-		// Increase to LogLevelTrace to see all queries
-		LogLevel: tracelog.LogLevelDebug,
+		LogLevel: logVerbosity,
+	}
+	for k, v := range overrideRuntimeParams {
+		connConfig.RuntimeParams[k] = v
 	}
 	connStr := stdlib.RegisterConnConfig(connConfig)
+	t.Cleanup(func() {
+		stdlib.UnregisterConnConfig(connStr)
+	})
 	db, err := sql.Open("pgx", connStr)
 	if err != nil {
 		t.Fatalf("Failed to open database connection: %v", err)
 	}
+	t.Cleanup(func() {
+		err = db.Close()
+		if err != nil {
+			t.Logf("Error closing test DB: %v", err)
+		}
+	})
+	return db
+}
 
-	_, err = db.Exec("CREATE SCHEMA \"" + schemaName + "\"")
+func createTestDatabaseSchema(t *testing.T, db *sql.DB, schemaName string) {
+	t.Helper()
+
+	_, err := db.ExecContext(t.Context(), "CREATE SCHEMA \""+schemaName+"\"")
 	if err != nil {
 		t.Fatalf("Failed to create schema: %v", err)
 	}
 
 	t.Cleanup(func() {
-		_, err := db.Exec("DROP SCHEMA \"" + schemaName + "\" CASCADE")
+		ctx := context.Background() //
+		_, err := db.ExecContext(ctx, "DROP SCHEMA \""+schemaName+"\" CASCADE")
 		if err != nil {
 			t.Fatalf("Failed to drop schema: %v", err)
 		}
-		err = db.Close()
-		if err != nil {
-			t.Logf("Error closing test DB: %v", err)
-		}
-		stdlib.UnregisterConnConfig(connStr)
 	})
+}
+
+func executeTestDatabaseMigrations(t *testing.T, db *sql.DB) {
+	t.Helper()
 
 	_, filename, _, _ := runtime.Caller(0)
 	migrationSource := filepath.Dir(filename + "/../../../persistence/migrations/")
 
 	goose.SetLogger(testGooseLogger{t})
-	err = goose.Up(db, migrationSource)
+	err := goose.Up(db, migrationSource)
 	if err != nil {
 		t.Fatalf("Failed to execute migrations: %v", err)
 	}
-
-	return db
 }
 
 type testGooseLogger struct {

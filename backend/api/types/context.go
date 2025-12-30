@@ -1,4 +1,4 @@
-package api
+package types
 
 import (
 	"context"
@@ -10,7 +10,7 @@ type ctxKey string
 const (
 	httpRequestKey   ctxKey = "httpRequest"
 	httpResponseKey  ctxKey = "httpResponse"
-	authTokenKey     ctxKey = "authToken"
+	accessTokenKey   ctxKey = "accessToken"
 	csrfTokenKey     ctxKey = "csrfToken"
 	skipCsrfCheckKey ctxKey = "skipCsrfCheck"
 )
@@ -33,13 +33,13 @@ func GetHTTPRequest(ctx context.Context) *http.Request {
 	return ctx.Value(httpRequestKey).(*http.Request) //nolint:forcetypeassert,errcheck
 }
 
-func WithAuthToken(ctx context.Context, authToken string) context.Context {
-	return context.WithValue(ctx, authTokenKey, authToken)
+func WithAccessToken(ctx context.Context, accessToken string) context.Context {
+	return context.WithValue(ctx, accessTokenKey, accessToken)
 }
 
-// GetAuthToken gets the auth token (e.g. from an underlying http request) from context
-func GetAuthToken(ctx context.Context) string {
-	return ctx.Value(authTokenKey).(string) //nolint:forcetypeassert,errcheck
+// GetAccessToken gets the auth token (e.g. from an underlying http request) from context
+func GetAccessToken(ctx context.Context) string {
+	return ctx.Value(accessTokenKey).(string) //nolint:forcetypeassert,errcheck
 }
 
 func WithCsrfToken(ctx context.Context, csrfToken string) context.Context {
@@ -55,7 +55,7 @@ func WithSkipCsrfCheck(ctx context.Context, skipCsrfCheck bool) context.Context 
 	return context.WithValue(ctx, skipCsrfCheckKey, skipCsrfCheck)
 }
 
-// GetSkipCsrfCheck tells if the csrf check should be skipped
+// GetSkipCsrfCheck tells if the CSRF check should be skipped
 func GetSkipCsrfCheck(ctx context.Context) bool {
 	return ctx.Value(skipCsrfCheckKey).(bool) //nolint:forcetypeassert,errcheck
 }

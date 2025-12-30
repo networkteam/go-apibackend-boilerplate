@@ -25,7 +25,7 @@ func ServerAndSubscribe[T any](t *testing.T, deps api.ResolverDependencies, subs
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/query", nil)
 	require.NoError(t, err)
-	test_auth.ApplyFixedAuthValuesOrganisationAdministrator(t, deps.TimeSource, req)
+	test_auth.ApplyAuthValuesFuncOrganisationAdministrator("admin+acmeinc@example.com")(t, deps, req)
 
 	apiHandlerConfig := api_handler.Config{
 		DisableRecover: true,

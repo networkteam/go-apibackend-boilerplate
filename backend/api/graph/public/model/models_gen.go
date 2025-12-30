@@ -58,12 +58,8 @@ type LoginCredentials struct {
 type LoginResult struct {
 	// The authenticated account (if error is null)
 	Account *Account `json:"account,omitempty"`
-	// Auth token for using header based authentication (if error is null)
-	AuthToken string `json:"authToken"`
-	// CSRF token to be sent in subsequent requests (if error is null)
-	CsrfToken string `json:"csrfToken"`
 	// An error if authentication failed
-	Error *Error `json:"error,omitempty"`
+	Error *FieldsError `json:"error,omitempty"`
 }
 
 type Mutation struct {

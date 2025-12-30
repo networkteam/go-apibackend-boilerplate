@@ -5,65 +5,86 @@ import (
 )
 
 const (
-	authTokenCookieName = "authToken"
+	accessTokenCookieName = "access_token"
+	accessTokenHeaderName = "Authorization"
 	//#nosec G101 -- This constant is only the header name
-	refreshAuthTokenHeaderName = "X-Refresh-Auth-Token"
+	csrfTokenCookieName = "csrf_token"
 	//#nosec G101 -- This constant is only the header name
-	refreshCsrfTokenHeaderName = "X-Refresh-CSRF-Token"
-	authTokenHeaderName        = "Authorization"
+	csrfTokenHeaderName = "X-CSRF-Token"
 )
 
-func SetRefreshAuthTokenHeader(w http.ResponseWriter, authToken string) {
-	w.Header().Set(refreshAuthTokenHeaderName, authToken)
-}
-
-func SetRefreshCsrfTokenHeader(w http.ResponseWriter, csrfToken string) {
-	w.Header().Set(refreshCsrfTokenHeaderName, csrfToken)
-}
-
-func SetAuthTokenCookie(w http.ResponseWriter, r *http.Request, authToken string) {
-	// nosemgrep: go.lang.security.audit.net.cookie-missing-secure.cookie-missing-secure
+func SetAccessTokenCookie(w http.ResponseWriter, r *http.Request, accessToken string) {
+	// nosemgrep: go.lang.security.audit.net.cookie-missing-secure.cookie-falsessing-secure
 	http.SetCookie(w, &http.Cookie{
-		Name:     authTokenCookieName,
-		Value:    authToken,
+		Name:     accessTokenCookieName,
+		Value:    accessToken,
 		HttpOnly: true,
+		Path:     "/",
 		Secure:   r.URL.Scheme == "https",
 		SameSite: http.SameSiteLaxMode,
 	})
 }
 
-func DeleteAuthTokenCookie(w http.ResponseWriter, r *http.Request) {
-	SetAuthTokenCookie(w, r, "")
+func SetCsrfTokenCookie(w http.ResponseWriter, r *http.Request, csrfToken string) {
+	// nosemgrep: go.lang.security.audit.net.cookie-missing-secure.cookie-missing-secure
+	http.SetCookie(w, &http.Cookie{
+		Name:     csrfTokenCookieName,
+		Value:    csrfToken,
+		HttpOnly: false,
+		Path:     "/",
+		Secure:   r.URL.Scheme == "https",
+		SameSite: http.SameSiteLaxMode,
+	})
 }
 
-func GetAuthTokenAndSkipCsrfCheckFromRequest(r *http.Request) (authToken string, skipCsrfCheck bool) {
-	// Require no CSRF check for safe methods
-	if isMethodSafe(r.Method) {
-		skipCsrfCheck = true
+func getAccessTokenFromCookie(r *http.Request) string {
+	cookie, err := r.Cookie(accessTokenCookieName)
+	if err != nil {
+		return ""
 	}
 
-	// First check if auth token is sent as header
-	authToken = getAuthTokenFromHeader(r)
-	if authToken != "" {
-		// Also skip CSRF check if Authorization header is present, since it cannot be "faked"
-		return authToken, true
-	}
-
-	// Otherwise, use auth token from cookie
-	authToken = getAuthTokenFromCookie(r)
-	return authToken, skipCsrfCheck
+	return cookie.Value
 }
 
-func getAuthTokenFromCookie(r *http.Request) string {
-	if cookie, err := r.Cookie(authTokenCookieName); err == nil {
-		return cookie.Value
+func GetCsrfTokenFromHeader(r *http.Request) string {
+	return r.Header.Get(csrfTokenHeaderName)
+}
+
+func getAccessTokenFromHeader(r *http.Request) string {
+	headerValue := r.Header.Get(accessTokenHeaderName)
+
+	if len(headerValue) > 7 && headerValue[:7] == "Bearer " {
+		return headerValue[7:]
 	}
 
 	return ""
 }
 
-func getAuthTokenFromHeader(r *http.Request) string {
-	return r.Header.Get(authTokenHeaderName)
+func GetAccessTokenAndSkipCsrfCheckFromRequest(r *http.Request) (accessToken string, skipCsrfCheck bool) {
+	// Require no CSRF check for safe methods
+	if isMethodSafe(r.Method) {
+		skipCsrfCheck = true
+	}
+
+	// First check if access token is sent as header
+	accessToken = getAccessTokenFromHeader(r)
+	if accessToken != "" {
+		// Also skip CSRF check if Authorization header is present, since it cannot be "faked"
+		return accessToken, true
+	}
+
+	// Otherwise, use access token from cookie
+	accessToken = getAccessTokenFromCookie(r)
+
+	return accessToken, skipCsrfCheck
+}
+
+func DeleteAccessTokenCookie(w http.ResponseWriter, r *http.Request) {
+	SetAccessTokenCookie(w, r, "")
+}
+
+func DeleteCsrfTokenCookie(w http.ResponseWriter, r *http.Request) {
+	SetCsrfTokenCookie(w, r, "")
 }
 
 func isMethodSafe(method string) bool {

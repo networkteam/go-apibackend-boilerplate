@@ -9,18 +9,16 @@ import (
 	"context"
 
 	fog_errors "github.com/friendsofgo/errors"
-	"github.com/networkteam/slogutils"
+	"github.com/gofrs/uuid"
 
 	"myvendor.mytld/myproject/backend/api"
 	common_helper "myvendor.mytld/myproject/backend/api/graph/common/helper"
 	"myvendor.mytld/myproject/backend/api/graph/public/generated"
-	public_helper "myvendor.mytld/myproject/backend/api/graph/public/helper"
+	"myvendor.mytld/myproject/backend/api/graph/public/helper"
 	"myvendor.mytld/myproject/backend/api/graph/public/model"
 	"myvendor.mytld/myproject/backend/domain/command"
-	"myvendor.mytld/myproject/backend/domain/handler"
 	"myvendor.mytld/myproject/backend/domain/query"
 	"myvendor.mytld/myproject/backend/domain/types"
-	"myvendor.mytld/myproject/backend/persistence/repository"
 	"myvendor.mytld/myproject/backend/security/authentication"
 )
 
@@ -28,59 +26,54 @@ import (
 func (r *mutationResolver) Login(ctx context.Context, credentials model.LoginCredentials) (*model.LoginResult, error) {
 	defer common_helper.ConstantTime(r.SensitiveOperationConstantTime).Wait(ctx)
 
-	cmd := command.NewLoginCmd(credentials.EmailAddress, credentials.Password)
-	if credentials.KeepMeLoggedIn != nil && *credentials.KeepMeLoggedIn {
-		cmd.ExtendedExpiry = true
+	cmd := command.NewLoginCmd(credentials.EmailAddress, credentials.Password, credentials.KeepMeLoggedIn)
+	var (
+		authenticatedAccountID uuid.UUID
+		authenticatedRole      types.Role
+	)
+	cmd.OnAuthenticated = func(accountID uuid.UUID, role types.Role) {
+		authenticatedAccountID = accountID
+		authenticatedRole = role
 	}
 
-	account, err := r.finder.QueryAccountNotAuthorized(ctx, query.AccountQueryNotAuthorized{
-		Opts:         public_helper.AccountQueryOptsFromSelection(ctx, "account"),
-		EmailAddress: &cmd.EmailAddress,
-	})
-	switch {
-	case fog_errors.Is(err, repository.ErrNotFound):
-		// No op
-	case err != nil:
-		return nil, fog_errors.Wrap(err, "finding account")
-	default:
-		cmd.Account = account
-	}
-
-	err = r.handler.Login(ctx, cmd)
+	err := r.Handler().Login(ctx, cmd)
 	if err != nil {
-		if fog_errors.Is(err, handler.ErrLoginInvalidCredentials) {
+		if fieldsError := api.FieldsErrorFromErr(err); fieldsError != nil {
 			return &model.LoginResult{
-				Error: &model.Error{
-					Code: types.ErrorCodeInvalidCredentials,
-				},
+				Error: fieldsError,
 			}, nil
 		}
 
 		return nil, err
 	}
 
-	authToken, csrfToken, err := public_helper.SetAuthTokenCookieForAccount(ctx, account, r.TimeSource, cmd.ExtendedExpiry)
+	// Build authenticated context to allow fetching account
+	ctx = authentication.WithAuthContext(ctx, authentication.AuthContext{
+		Authenticated: true,
+		Role:          authenticatedRole,
+		AccountID:     authenticatedAccountID,
+	})
+	account, err := r.Finder().QueryAccount(ctx, query.AccountQuery{
+		Opts:      helper.AccountQueryOptsFromSelection(ctx, "account"),
+		AccountID: authenticatedAccountID,
+	})
 	if err != nil {
-		return nil, err
+		return nil, fog_errors.Wrap(err, "finding account")
 	}
 
 	return &model.LoginResult{
-		Account:   public_helper.MapToAccount(account),
-		AuthToken: authToken,
-		CsrfToken: csrfToken,
+		Account: helper.MapToAccount(account),
 	}, nil
 }
 
 // Logout is the resolver for the logout field.
 func (r *mutationResolver) Logout(ctx context.Context) (*model.Error, error) {
-	logger := slogutils.FromContext(ctx).
-		With("handler", "logout")
+	cmd := command.NewAuthSessionLogoutCmd()
 
-	logger.DebugContext(ctx, "Handling logout")
-
-	w := api.GetHTTPResponse(ctx)
-	req := api.GetHTTPRequest(ctx)
-	authentication.DeleteAuthTokenCookie(w, req)
+	err := r.Handler().AuthSessionLogout(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
 
 	return nil, nil
 }
@@ -96,13 +89,13 @@ func (r *queryResolver) CurrentAccount(ctx context.Context) (*model.Account, err
 	authCtx := authentication.GetAuthContext(ctx)
 	account, err := r.finder.QueryAccount(ctx, query.AccountQuery{
 		AccountID: authCtx.AccountID,
-		Opts:      public_helper.AccountQueryOptsFromSelection(ctx),
+		Opts:      helper.AccountQueryOptsFromSelection(ctx),
 	})
 	if err != nil {
 		return nil, fog_errors.Wrap(err, "finding account")
 	}
 
-	return public_helper.MapToAccount(account), nil
+	return helper.MapToAccount(account), nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

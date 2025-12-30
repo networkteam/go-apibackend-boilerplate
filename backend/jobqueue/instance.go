@@ -6,7 +6,6 @@ import (
 	"myvendor.mytld/myproject/backend/domain/command"
 )
 
-//nolint:interfacebloat
 type Queue interface {
 	Close() error
 

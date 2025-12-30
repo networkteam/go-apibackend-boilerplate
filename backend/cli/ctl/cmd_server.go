@@ -340,7 +340,7 @@ func setupCancelOnSignal(c *cli.Context) {
 	}()
 }
 
-func startCronJobs(c *cli.Context, handler *domain_handler.Handler) (func(), error) {
+func startCronJobs(c *cli.Context, _ *domain_handler.Handler) (func(), error) {
 	logger := slogutils.FromContext(c.Context)
 
 	cronJobs := cron.New()

@@ -7,7 +7,9 @@ import (
 )
 
 func SentryMiddleware(next http.Handler) http.Handler {
-	sentryHandler := sentryhttp.New(sentryhttp.Options{})
+	sentryHandler := sentryhttp.New(sentryhttp.Options{
+		Repanic: true,
+	})
 
 	return sentryHandler.Handle(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		next.ServeHTTP(w, r)

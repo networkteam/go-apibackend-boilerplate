@@ -17,7 +17,7 @@ func ExecFixtures(t *testing.T, db *sql.DB, fixtureFilenames ...string) {
 		if err != nil {
 			t.Fatalf("could not read fixture %s: %v", file, err)
 		}
-		_, err = db.Exec(string(data))
+		_, err = db.ExecContext(t.Context(), string(data))
 		if err != nil {
 			t.Fatalf("could not execute fixture %q: %v", file, err)
 		}

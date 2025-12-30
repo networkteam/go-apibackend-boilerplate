@@ -78,10 +78,8 @@ type ComplexityRoot struct {
 	}
 
 	LoginResult struct {
-		Account   func(childComplexity int) int
-		AuthToken func(childComplexity int) int
-		CsrfToken func(childComplexity int) int
-		Error     func(childComplexity int) int
+		Account func(childComplexity int) int
+		Error   func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -217,18 +215,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.LoginResult.Account(childComplexity), true
-	case "LoginResult.authToken":
-		if e.complexity.LoginResult.AuthToken == nil {
-			break
-		}
-
-		return e.complexity.LoginResult.AuthToken(childComplexity), true
-	case "LoginResult.csrfToken":
-		if e.complexity.LoginResult.CsrfToken == nil {
-			break
-		}
-
-		return e.complexity.LoginResult.CsrfToken(childComplexity), true
 	case "LoginResult.error":
 		if e.complexity.LoginResult.Error == nil {
 			break
@@ -451,12 +437,8 @@ input LoginCredentials {
 type LoginResult {
   "The authenticated account (if error is null)"
   account: Account
-  "Auth token for using header based authentication (if error is null)"
-  authToken: String!
-  "CSRF token to be sent in subsequent requests (if error is null)"
-  csrfToken: String!
   "An error if authentication failed"
-  error: Error
+  error: FieldsError
 }
 `, BuiltIn: false},
 	{Name: "../schema.graphqls", Input: `#
@@ -1053,64 +1035,6 @@ func (ec *executionContext) fieldContext_LoginResult_account(_ context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _LoginResult_authToken(ctx context.Context, field graphql.CollectedField, obj *model.LoginResult) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_LoginResult_authToken,
-		func(ctx context.Context) (any, error) {
-			return obj.AuthToken, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_LoginResult_authToken(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "LoginResult",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _LoginResult_csrfToken(ctx context.Context, field graphql.CollectedField, obj *model.LoginResult) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_LoginResult_csrfToken,
-		func(ctx context.Context) (any, error) {
-			return obj.CsrfToken, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_LoginResult_csrfToken(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "LoginResult",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _LoginResult_error(ctx context.Context, field graphql.CollectedField, obj *model.LoginResult) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1121,7 +1045,7 @@ func (ec *executionContext) _LoginResult_error(ctx context.Context, field graphq
 			return obj.Error, nil
 		},
 		nil,
-		ec.marshalOError2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋpublicᚋmodelᚐError,
+		ec.marshalOFieldsError2ᚖmyvendorᚗmytldᚋmyprojectᚋbackendᚋapiᚋgraphᚋpublicᚋmodelᚐFieldsError,
 		true,
 		false,
 	)
@@ -1135,12 +1059,10 @@ func (ec *executionContext) fieldContext_LoginResult_error(_ context.Context, fi
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "code":
-				return ec.fieldContext_Error_code(ctx, field)
-			case "arguments":
-				return ec.fieldContext_Error_arguments(ctx, field)
+			case "errors":
+				return ec.fieldContext_FieldsError_errors(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Error", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type FieldsError", field.Name)
 		},
 	}
 	return fc, nil
@@ -1186,10 +1108,6 @@ func (ec *executionContext) fieldContext_Mutation_login(ctx context.Context, fie
 			switch field.Name {
 			case "account":
 				return ec.fieldContext_LoginResult_account(ctx, field)
-			case "authToken":
-				return ec.fieldContext_LoginResult_authToken(ctx, field)
-			case "csrfToken":
-				return ec.fieldContext_LoginResult_csrfToken(ctx, field)
 			case "error":
 				return ec.fieldContext_LoginResult_error(ctx, field)
 			}
@@ -3230,16 +3148,6 @@ func (ec *executionContext) _LoginResult(ctx context.Context, sel ast.SelectionS
 			out.Values[i] = graphql.MarshalString("LoginResult")
 		case "account":
 			out.Values[i] = ec._LoginResult_account(ctx, field, obj)
-		case "authToken":
-			out.Values[i] = ec._LoginResult_authToken(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "csrfToken":
-			out.Values[i] = ec._LoginResult_csrfToken(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "error":
 			out.Values[i] = ec._LoginResult_error(ctx, field, obj)
 		default:

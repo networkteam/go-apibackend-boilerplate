@@ -41,27 +41,27 @@ func TestMutationResolver_DeleteAccount(t *testing.T) {
 		applyAuthFunc test_auth.ApplyAuthValuesFunc
 		fixtures      []string
 		variables     map[string]interface{}
-		expects       func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result)
+		expects       func(t *testing.T, db *sql.DB, res result)
 	}{
 		{
 			name:          "with SystemAdministrator and own account",
-			applyAuthFunc: test_auth.ApplyFixedAuthValuesSystemAdministrator,
+			applyAuthFunc: test_auth.ApplyAuthValuesFuncSystemAdministrator("admin@example.com"),
 			fixtures:      []string{"base"},
 			variables: map[string]interface{}{
 				"id": "d7037ad0-d4bb-4dcc-8759-d82fbb3354e8",
 			},
-			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
+			expects: func(t *testing.T, db *sql.DB, res result) {
 				test_graphql.RequireNotAuthorizedError(t, res.GraphqlErrors)
 			},
 		},
 		{
 			name:          "with SystemAdministrator and other account",
-			applyAuthFunc: test_auth.ApplyFixedAuthValuesSystemAdministrator,
+			applyAuthFunc: test_auth.ApplyAuthValuesFuncSystemAdministrator("admin@example.com"),
 			fixtures:      []string{"base"},
 			variables: map[string]interface{}{
 				"id": "3ad082c7-cbda-49e1-a707-c53e1962be65",
 			},
-			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
+			expects: func(t *testing.T, db *sql.DB, res result) {
 				test_graphql.RequireNoErrors(t, res.GraphqlErrors)
 
 				_, err := repository.FindAccountByID(context.Background(), db, uuid.Must(uuid.FromString("3ad082c7-cbda-49e1-a707-c53e1962be65")), nil)
@@ -70,23 +70,23 @@ func TestMutationResolver_DeleteAccount(t *testing.T) {
 		},
 		{
 			name:          "with OrganisationAdministrator and own account",
-			applyAuthFunc: test_auth.ApplyFixedAuthValuesOrganisationAdministrator,
+			applyAuthFunc: test_auth.ApplyAuthValuesFuncOrganisationAdministrator("admin+acmeinc@example.com"),
 			fixtures:      []string{"base"},
 			variables: map[string]interface{}{
 				"id": "d7037ad0-d4bb-4dcc-8759-d82fbb3354e8",
 			},
-			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
+			expects: func(t *testing.T, db *sql.DB, res result) {
 				test_graphql.RequireNotAuthorizedError(t, res.GraphqlErrors)
 			},
 		},
 		{
 			name:          "with OrganisationAdministrator and other account",
-			applyAuthFunc: test_auth.ApplyFixedAuthValuesOrganisationAdministrator,
+			applyAuthFunc: test_auth.ApplyAuthValuesFuncOrganisationAdministrator("admin+acmeinc@example.com"),
 			fixtures:      []string{"base"},
 			variables: map[string]interface{}{
 				"id": "f045e5d1-cdad-4964-a7e2-139c8a87346c",
 			},
-			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
+			expects: func(t *testing.T, db *sql.DB, res result) {
 				test_graphql.RequireNoErrors(t, res.GraphqlErrors)
 
 				_, err := repository.FindAccountByID(context.Background(), db, uuid.Must(uuid.FromString("f045e5d1-cdad-4964-a7e2-139c8a87346c")), nil)
@@ -95,12 +95,12 @@ func TestMutationResolver_DeleteAccount(t *testing.T) {
 		},
 		{
 			name:          "with OrganisationAdministrator and account in other organisation",
-			applyAuthFunc: test_auth.ApplyFixedAuthValuesOrganisationAdministrator,
+			applyAuthFunc: test_auth.ApplyAuthValuesFuncOrganisationAdministrator("admin+acmeinc@example.com"),
 			fixtures:      []string{"base"},
 			variables: map[string]interface{}{
 				"id": "2035f4da-f385-42c4-a609-02d9aa7290e5",
 			},
-			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
+			expects: func(t *testing.T, db *sql.DB, res result) {
 				test_graphql.RequireNotAuthorizedError(t, res.GraphqlErrors)
 			},
 		},
@@ -120,10 +120,11 @@ func TestMutationResolver_DeleteAccount(t *testing.T) {
 
 			var res result
 
+			deps := api.ResolverDependencies{DB: db, TimeSource: timeSource}
 			req := test_graphql.NewRequest(t, query)
-			auth := tc.applyAuthFunc(t, timeSource, req)
-			test_graphql.HandleAdmin(t, api.ResolverDependencies{DB: db, TimeSource: timeSource}, req, &res)
-			tc.expects(t, db, auth, res)
+			tc.applyAuthFunc(t, deps, req)
+			test_graphql.HandleAdmin(t, deps, req, &res)
+			tc.expects(t, db, res)
 		})
 	}
 }

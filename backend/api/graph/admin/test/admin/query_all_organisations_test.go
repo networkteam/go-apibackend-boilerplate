@@ -46,14 +46,14 @@ func TestQueryResolver_AllOrganisations(t *testing.T) {
 		applyAuthFunc test_auth.ApplyAuthValuesFunc
 		fixtures      []string
 		variables     map[string]interface{}
-		expects       func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result)
+		expects       func(t *testing.T, db *sql.DB, auth test_auth.FixedAccessTokenData, res result)
 	}{
 		{
 			name:          "with SystemAdministrator and no filter",
-			applyAuthFunc: test_auth.ApplyFixedAuthValuesSystemAdministrator,
+			applyAuthFunc: test_auth.ApplyAuthValuesFuncSystemAdministrator("admin@example.com"),
 			fixtures:      []string{"base"},
 			variables:     map[string]interface{}{},
-			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
+			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAccessTokenData, res result) {
 				test_graphql.RequireNoErrors(t, res.GraphqlErrors)
 
 				require.Len(t, res.Data.Result, 2, "result")
@@ -62,14 +62,14 @@ func TestQueryResolver_AllOrganisations(t *testing.T) {
 		},
 		{
 			name:          "with OrganisationAdministrator",
-			applyAuthFunc: test_auth.ApplyFixedAuthValuesOrganisationAdministrator,
+			applyAuthFunc: test_auth.ApplyAuthValuesFuncOrganisationAdministrator("admin+acmeinc@example.com"),
 			fixtures:      []string{"base"},
 			variables:     map[string]interface{}{},
-			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
+			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAccessTokenData, res result) {
 				test_graphql.RequireNoErrors(t, res.GraphqlErrors)
 
 				require.Len(t, res.Data.Result, 1, "result")
-				assert.Equalf(t, auth.OrganisationID.UUID, res.Data.Result[0].ID, "result.0.id")
+				assert.Equalf(t, *auth.OrganisationID, res.Data.Result[0].ID, "result.0.id")
 
 				assert.Equal(t, 1, res.Data.Meta.Count, "meta.count")
 			},
@@ -90,9 +90,10 @@ func TestQueryResolver_AllOrganisations(t *testing.T) {
 
 			var res result
 
+			deps := api.ResolverDependencies{DB: db, TimeSource: timeSource}
 			req := test_graphql.NewRequest(t, query)
-			auth := tc.applyAuthFunc(t, timeSource, req)
-			test_graphql.HandleAdmin(t, api.ResolverDependencies{DB: db, TimeSource: timeSource}, req, &res)
+			auth := tc.applyAuthFunc(t, deps, req)
+			test_graphql.HandleAdmin(t, deps, req, &res)
 			tc.expects(t, db, auth, res)
 		})
 	}

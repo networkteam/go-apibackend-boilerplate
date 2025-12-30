@@ -293,6 +293,7 @@ func getConfig(c *cli.Context) (domain.Config, error) {
 	config := domain.DefaultConfig()
 	config.AppBaseURL = c.String("app-base-url")
 	config.HashCost = c.Int("hash-cost")
+	config.JWTSecret = c.String("jwt-secret")
 	// Add more config options here
 	return config, nil
 }

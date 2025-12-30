@@ -12,10 +12,10 @@ import (
 // MiddlewareStackWithAuth combines all necessary middlewares for request processing, logging and authentication
 func MiddlewareStackWithAuth(deps api.ResolverDependencies, h http.Handler) http.Handler {
 	return MiddlewareStackBasic(
-		http_middleware.AuthTokenMiddleware(
+		http_middleware.AccessTokenMiddleware(
 			http_middleware.CsrfTokenMiddleware(
-				http_middleware.AuthContextMiddleware(deps.DB, deps.TimeSource,
-					http_middleware.RefreshTokensMiddleware(deps.DB, deps.TimeSource, h),
+				http_middleware.AuthContextMiddleware(deps,
+					http_middleware.RefreshTokensMiddleware(deps, h),
 				),
 			),
 		),

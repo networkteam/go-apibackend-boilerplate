@@ -72,3 +72,37 @@ func (a *Authorizer) AllowsOrganisationDeleteCmd(command.OrganisationDeleteCmd) 
 		requireRole(types.RoleSystemAdministrator),
 	)
 }
+
+func (a *Authorizer) AllowsAuthSessionCreateCmd(cmd command.AuthSessionCreateCmd) error {
+	return a.check(
+		satisfyAny(
+			// CLI commands should be able to create an auth session for any account
+			requireRole(types.RoleSystemAdministrator),
+			// A user-based account should be able to create an auth session for itself after authentication
+			requireAll(
+				requireRole(types.UserRoles...),
+				func(authCtx authentication.AuthContext) error {
+					if cmd.AccountID != authCtx.AccountID {
+						return authorizationError{cause: "cannot create foreign auth session"}
+					}
+					return nil
+				},
+			),
+		),
+	)
+}
+
+func (a *Authorizer) AllowsAuthSessionRefreshCmd(cmd command.AuthSessionRefreshCmd) error {
+	return a.check(
+		// A user-based account should be able to refresh an auth session for itself if authenticated
+		requireAll(
+			requireRole(types.UserRoles...),
+			func(authCtx authentication.AuthContext) error {
+				if cmd.AuthSessionID != authCtx.AuthSessionID {
+					return authorizationError{cause: "cannot refresh foreign auth session"}
+				}
+				return nil
+			},
+		),
+	)
+}

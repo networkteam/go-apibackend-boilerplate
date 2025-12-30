@@ -40,16 +40,16 @@ func TestQueryResolver_Organisation(t *testing.T) {
 		applyAuthFunc test_auth.ApplyAuthValuesFunc
 		fixtures      []string
 		variables     map[string]interface{}
-		expects       func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result)
+		expects       func(t *testing.T, db *sql.DB, auth test_auth.FixedAccessTokenData, res result)
 	}{
 		{
 			name:          "with SystemAdministrator",
-			applyAuthFunc: test_auth.ApplyFixedAuthValuesSystemAdministrator,
+			applyAuthFunc: test_auth.ApplyAuthValuesFuncSystemAdministrator("admin@example.com"),
 			fixtures:      []string{"base"},
 			variables: map[string]interface{}{
 				"id": "6330de58-2761-411e-a243-bec6d0c53876",
 			},
-			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
+			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAccessTokenData, res result) {
 				test_graphql.RequireNoErrors(t, res.GraphqlErrors)
 
 				require.NotNil(t, res.Data.Result, "result")
@@ -58,12 +58,12 @@ func TestQueryResolver_Organisation(t *testing.T) {
 		},
 		{
 			name:          "with OrganisationAdministrator and own organisation",
-			applyAuthFunc: test_auth.ApplyFixedAuthValuesOrganisationAdministrator,
+			applyAuthFunc: test_auth.ApplyAuthValuesFuncOrganisationAdministrator("admin+acmeinc@example.com"),
 			fixtures:      []string{"base"},
 			variables: map[string]interface{}{
 				"id": "6330de58-2761-411e-a243-bec6d0c53876",
 			},
-			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
+			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAccessTokenData, res result) {
 				test_graphql.RequireNoErrors(t, res.GraphqlErrors)
 
 				require.NotNil(t, res.Data.Result, "result")
@@ -72,12 +72,12 @@ func TestQueryResolver_Organisation(t *testing.T) {
 		},
 		{
 			name:          "with OrganisationAdministrator and other organisation",
-			applyAuthFunc: test_auth.ApplyFixedAuthValuesOrganisationAdministrator,
+			applyAuthFunc: test_auth.ApplyAuthValuesFuncOrganisationAdministrator("admin+acmeinc@example.com"),
 			fixtures:      []string{"base"},
 			variables: map[string]interface{}{
 				"id": "dba20d09-a3df-4975-9406-2fb6fd8f0940",
 			},
-			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAuthTokenData, res result) {
+			expects: func(t *testing.T, db *sql.DB, auth test_auth.FixedAccessTokenData, res result) {
 				test_graphql.RequireNotAuthorizedError(t, res.GraphqlErrors)
 			},
 		},
@@ -97,9 +97,10 @@ func TestQueryResolver_Organisation(t *testing.T) {
 
 			var res result
 
+			deps := api.ResolverDependencies{DB: db, TimeSource: timeSource}
 			req := test_graphql.NewRequest(t, query)
-			auth := tc.applyAuthFunc(t, timeSource, req)
-			test_graphql.HandleAdmin(t, api.ResolverDependencies{DB: db, TimeSource: timeSource}, req, &res)
+			auth := tc.applyAuthFunc(t, deps, req)
+			test_graphql.HandleAdmin(t, deps, req, &res)
 			tc.expects(t, db, auth, res)
 		})
 	}

@@ -6,6 +6,7 @@ import (
 	"go.opentelemetry.io/otel/metric"
 
 	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/finder"
 	"myvendor.mytld/myproject/backend/domain/handler"
 	"myvendor.mytld/myproject/backend/domain/types"
 	"myvendor.mytld/myproject/backend/jobqueue"
@@ -29,4 +30,11 @@ func (r ResolverDependencies) Handler() *handler.Handler {
 		Queue:         r.Queue,
 		MeterProvider: r.MeterProvider,
 	})
+}
+
+func (r ResolverDependencies) Finder() *finder.Finder {
+	return finder.NewFinder(
+		r.DB,
+		r.TimeSource,
+	)
 }
