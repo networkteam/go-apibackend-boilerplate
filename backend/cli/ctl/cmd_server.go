@@ -13,7 +13,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/friendsofgo/errors"
 	"github.com/hashicorp/go-multierror"
 	"github.com/networkteam/devlog"
@@ -204,7 +203,7 @@ func serverAction(c *cli.Context) (err error) {
 
 	playgroundEnabled := c.Bool("playground")
 	if playgroundEnabled {
-		mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
+		mux.Handle("/", api_handler.NewPlaygroundHandler("GraphQL playground", "/query"))
 	}
 
 	if c.Bool("open-telemetry-enabled") {
