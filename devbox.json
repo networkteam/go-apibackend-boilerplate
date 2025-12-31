@@ -13,7 +13,7 @@
   "include": ["github:networkteam/devbox-plugins?dir=postgresql"],
   "shell": {
     "scripts": {
-      "backend:setup": ["devbox run backend:migrate"],
+      "backend:setup": ["devbox run backend:migrate", "devbox run backend:fixtures"],
       "backend:lint": [
         "cd backend",
         "golangci-lint run --output.tab.path stdout --output.text.path='' --show-stats=false --path-prefix backend"
