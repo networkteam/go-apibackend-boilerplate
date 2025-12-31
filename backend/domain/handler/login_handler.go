@@ -59,7 +59,7 @@ func (h *Handler) Login(ctx context.Context, cmd command.LoginCmd) (err error) {
 		h.instrumentation.loginFailedCounter.Add(ctx, 1)
 
 		return types.FieldError{
-			Field: "username",
+			Field: "emailAddress",
 			Code:  types.ErrorCodeInvalidCredentials,
 		}
 	}

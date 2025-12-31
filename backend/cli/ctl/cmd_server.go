@@ -33,6 +33,7 @@ import (
 	"myvendor.mytld/myproject/backend/api/handler/testapi"
 	http_api "myvendor.mytld/myproject/backend/api/http"
 	http_middleware "myvendor.mytld/myproject/backend/api/http/middleware"
+	"myvendor.mytld/myproject/backend/domain/command"
 	domain_handler "myvendor.mytld/myproject/backend/domain/handler"
 )
 
@@ -264,7 +265,7 @@ func serverAction(c *cli.Context) (err error) {
 		logger.Info("Running devlog dashboard", "url", fmt.Sprintf("http://%s/_devlog/", address))
 	}
 
-	err = serve(c, rootHandler, func(_ *cli.Context) error {
+	err = serve(c, outerMux, func(_ *cli.Context) error {
 		shutdownCronJobs()
 		return nil
 	})
@@ -340,20 +341,18 @@ func setupCancelOnSignal(c *cli.Context) {
 	}()
 }
 
-func startCronJobs(c *cli.Context, _ *domain_handler.Handler) (func(), error) {
+func startCronJobs(c *cli.Context, handler *domain_handler.Handler) (func(), error) {
 	logger := slogutils.FromContext(c.Context)
 
 	cronJobs := cron.New()
 
-	/*
-		err := cronJobs.AddJob(
-			c.String("delete-expired-access-tokens-cron"),
-			domain_handler.CommandHandlerJob(c.Context, handler.AuthSessionDeleteExpired, command.AuthSessionDeleteExpiredCmd{}),
-		)
-		if err != nil {
-			return nil, err
-		}
-	*/
+	err := cronJobs.AddJob(
+		c.String("delete-expired-access-tokens-cron"),
+		domain_handler.CommandHandlerJob(c.Context, handler.AuthSessionDeleteExpired, command.AuthSessionDeleteExpiredCmd{}),
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	cronJobs.Start()
 

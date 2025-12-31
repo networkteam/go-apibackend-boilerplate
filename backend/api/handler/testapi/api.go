@@ -35,12 +35,14 @@ func (t *API) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	t.mux.ServeHTTP(w, r)
 }
 
+//nolint:unused // Prepared for future use
 func (t *API) handleInternalError(logger *slog.Logger, w http.ResponseWriter, message string, err error) {
 	w.WriteHeader(http.StatusInternalServerError)
 	_, _ = fmt.Fprintf(w, "ERROR: %s\n", html.EscapeString(err.Error()))
 	logger.Error(message, slogutils.Err(err))
 }
 
+//nolint:unused // Prepared for future use
 func (t *API) sendJSONResponse(logger *slog.Logger, w http.ResponseWriter, response any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

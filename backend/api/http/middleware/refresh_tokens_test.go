@@ -42,9 +42,11 @@ func TestRefreshTokensMiddleware(t *testing.T) {
 		),
 	)
 
+	authValuesFunc := auth.ApplyAuthValuesFuncSystemAdministrator("admin@example.com")
+
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "http://localhost/query", nil)
-	auth.ApplyFixedAuthValuesSystemAdministrator(t, fixedDeps.TimeSource, req)
+	authValuesFunc(t, fixedDeps, req)
 
 	// Test initial request is allowed
 	srv.ServeHTTP(rec, req)
@@ -58,7 +60,7 @@ func TestRefreshTokensMiddleware(t *testing.T) {
 	req = httptest.NewRequest(http.MethodPost, "http://localhost/query", nil)
 
 	fixedDeps.TimeSource = test.FixedTime().Add(-2 * http_middleware.AccessTokenRefreshThreshold) // Use a time source that is before the token refresh threshold
-	auth.ApplyFixedAuthValuesSystemAdministrator(t, fixedDeps.TimeSource, req)
+	authValuesFunc(t, fixedDeps, req)
 
 	// Test that we now get refreshed tokens
 	srv.ServeHTTP(rec, req)

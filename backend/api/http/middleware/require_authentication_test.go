@@ -24,37 +24,37 @@ func TestRequireAuthenticationMiddleware(t *testing.T) {
 	tests := []struct {
 		name               string
 		authContext        authentication.AuthContext
-		requireRoles       []types.GlobalRole
+		requireRoles       []types.Role
 		expectedStatusCode int
 		expectedBody       string
 	}{
 		{
-			name: "Authenticated user with matching role",
+			name: "Authenticated system administrator with matching role",
 			authContext: authentication.AuthContext{
 				Authenticated: true,
-				GlobalRole:    types.GlobalRoleSystemAdministrator,
+				Role:          types.RoleSystemAdministrator,
 			},
-			requireRoles:       []types.GlobalRole{types.GlobalRoleSystemAdministrator},
+			requireRoles:       []types.Role{types.RoleSystemAdministrator},
 			expectedStatusCode: http.StatusOK,
 			expectedBody:       "success",
 		},
 		{
-			name: "Authenticated user with different role",
+			name: "Authenticated organisation administrator with different role",
 			authContext: authentication.AuthContext{
 				Authenticated: true,
-				GlobalRole:    types.GlobalRoleUser,
+				Role:          types.RoleOrganisationAdministrator,
 			},
-			requireRoles:       []types.GlobalRole{types.GlobalRoleSystemAdministrator},
+			requireRoles:       []types.Role{types.RoleSystemAdministrator},
 			expectedStatusCode: http.StatusUnauthorized,
 			expectedBody:       "Authentication failure: insufficient role",
 		},
 		{
-			name: "Authenticated user with no required role",
+			name: "Authenticated organisation administrator with no required role",
 			authContext: authentication.AuthContext{
 				Authenticated: true,
-				GlobalRole:    types.GlobalRoleUser,
+				Role:          types.RoleOrganisationAdministrator,
 			},
-			requireRoles:       []types.GlobalRole{},
+			requireRoles:       []types.Role{},
 			expectedStatusCode: http.StatusOK,
 			expectedBody:       "success",
 		},
@@ -63,9 +63,9 @@ func TestRequireAuthenticationMiddleware(t *testing.T) {
 			authContext: authentication.AuthContext{
 				Authenticated:             false,
 				IgnoreAuthenticationState: true,
-				GlobalRole:                types.GlobalRoleUser,
+				Role:                      types.RoleOrganisationAdministrator,
 			},
-			requireRoles:       []types.GlobalRole{types.GlobalRoleSystemAdministrator},
+			requireRoles:       []types.Role{types.RoleSystemAdministrator},
 			expectedStatusCode: http.StatusUnauthorized,
 			expectedBody:       "Authentication failure: insufficient role",
 		},
@@ -75,7 +75,7 @@ func TestRequireAuthenticationMiddleware(t *testing.T) {
 				Authenticated:             false,
 				IgnoreAuthenticationState: true,
 			},
-			requireRoles:       []types.GlobalRole{types.GlobalRoleSystemAdministrator},
+			requireRoles:       []types.Role{types.RoleSystemAdministrator},
 			expectedStatusCode: http.StatusUnauthorized,
 			expectedBody:       "Authentication failure: insufficient role",
 		},
@@ -85,7 +85,7 @@ func TestRequireAuthenticationMiddleware(t *testing.T) {
 				Authenticated:             true,
 				IgnoreAuthenticationState: true,
 			},
-			requireRoles:       []types.GlobalRole{types.GlobalRoleSystemAdministrator},
+			requireRoles:       []types.Role{types.RoleSystemAdministrator},
 			expectedStatusCode: http.StatusUnauthorized,
 			expectedBody:       "Authentication failure: insufficient role",
 		},
@@ -94,9 +94,9 @@ func TestRequireAuthenticationMiddleware(t *testing.T) {
 			authContext: authentication.AuthContext{
 				Authenticated:             true,
 				IgnoreAuthenticationState: true,
-				GlobalRole:                types.GlobalRoleUser,
+				Role:                      types.RoleOrganisationAdministrator,
 			},
-			requireRoles:       []types.GlobalRole{types.GlobalRoleSystemAdministrator},
+			requireRoles:       []types.Role{types.RoleSystemAdministrator},
 			expectedStatusCode: http.StatusUnauthorized,
 			expectedBody:       "Authentication failure: insufficient role",
 		},
@@ -105,7 +105,7 @@ func TestRequireAuthenticationMiddleware(t *testing.T) {
 			authContext: authentication.AuthContext{
 				Authenticated: false,
 			},
-			requireRoles:       []types.GlobalRole{types.GlobalRoleSystemAdministrator},
+			requireRoles:       []types.Role{types.RoleSystemAdministrator},
 			expectedStatusCode: http.StatusUnauthorized,
 			expectedBody:       "Authentication required",
 		},
@@ -115,17 +115,17 @@ func TestRequireAuthenticationMiddleware(t *testing.T) {
 				Authenticated: false,
 				Error:         errors.New("token expired"),
 			},
-			requireRoles:       []types.GlobalRole{types.GlobalRoleSystemAdministrator},
+			requireRoles:       []types.Role{types.RoleSystemAdministrator},
 			expectedStatusCode: http.StatusUnauthorized,
 			expectedBody:       "Authentication failure: token expired",
 		},
 		{
-			name: "User with one of multiple required roles",
+			name: "Authenticated with one of multiple required roles",
 			authContext: authentication.AuthContext{
 				Authenticated: true,
-				GlobalRole:    types.GlobalRoleSystemAdministrator,
+				Role:          types.RoleSystemAdministrator,
 			},
-			requireRoles:       []types.GlobalRole{types.GlobalRoleSystemAdministrator, types.GlobalRoleAPI},
+			requireRoles:       []types.Role{types.RoleSystemAdministrator, types.RoleOrganisationAdministrator},
 			expectedStatusCode: http.StatusOK,
 			expectedBody:       "success",
 		},

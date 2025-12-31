@@ -106,3 +106,9 @@ func (a *Authorizer) AllowsAuthSessionRefreshCmd(cmd command.AuthSessionRefreshC
 		),
 	)
 }
+
+func (a *Authorizer) AllowsAuthSessionDeleteExpiredCmd() error {
+	return a.check(
+		requireRole(types.RoleJobqueue, types.RoleSystemAdministrator),
+	)
+}

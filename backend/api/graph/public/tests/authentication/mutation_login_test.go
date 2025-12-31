@@ -31,6 +31,7 @@ const loginGQL = `
 			error {
 				errors {
 					code
+					path
 				}
 			}
 		}
@@ -46,8 +47,7 @@ type loginResult struct {
 				Role           string
 				OrganisationID *uuid.UUID
 			}
-			CsrfToken string
-			Error     *test_graphql.FieldsError
+			Error *test_graphql.FieldsError
 		}
 	}
 	test_graphql.GraphqlErrors
@@ -79,11 +79,23 @@ func TestMutationResolver_Login_WithSystemAdministrator_Valid(t *testing.T) {
 
 	require.NotNil(t, result.Data.Result.Account, "result.account")
 	assert.Equal(t, "admin@example.com", result.Data.Result.Account.EmailAddress, "result.account.emailAddress")
-	csrfToken := result.Data.Result.CsrfToken
-	assert.NotEmpty(t, csrfToken, "result.csrfToken")
 
 	setCookieHeader := resp.Header().Get("Set-Cookie")
 	assert.NotEmpty(t, setCookieHeader, "Set-Cookie header is set")
+
+	var accessToken string
+	var csrfToken string
+
+	for _, cookie := range resp.Result().Cookies() {
+		switch cookie.Name {
+		case "access_token":
+			accessToken = cookie.Value
+		case "csrf_token":
+			csrfToken = cookie.Value
+		}
+	}
+	assert.NotEmpty(t, accessToken, "access_token cookie is set")
+	assert.NotEmpty(t, csrfToken, "csrf_token cookie is set")
 
 	test_telemetry.AssertMeterCounter(t, metricsReader, "myvendor.mytld/myproject/backend/handler", "login.success.counter", 1)
 
@@ -132,7 +144,7 @@ func TestMutationResolver_Login_WithSystemAdministrator_InvalidPassword(t *testi
 	test_graphql.RequireNoErrors(t, result.GraphqlErrors)
 
 	require.NotNil(t, result.Data.Result.Error, "result.error")
-	test_graphql.AssertFieldError(t, result.Data.Result.Error, "invalidCredentials", []string{"username"})
+	test_graphql.AssertFieldError(t, result.Data.Result.Error, "invalidCredentials", []string{"emailAddress"})
 
 	test_telemetry.AssertMeterCounter(t, metricsReader, "myvendor.mytld/myproject/backend/handler", "login.failed.counter", 1)
 }
