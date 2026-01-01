@@ -1,6 +1,4 @@
 {{- /*gotype: myvendor.mytld/myproject/backend/mail.WelcomeEmailMsg*/ -}}
-Welcome to myproject
-
 Hello,
 
 Welcome to myproject! Your account has been created successfully.

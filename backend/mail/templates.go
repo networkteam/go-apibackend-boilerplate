@@ -12,15 +12,33 @@ import (
 )
 
 //go:embed templates/*.txt
+//go:embed templates/*.html
 var templatesFS embed.FS
 
-func executeTemplate(name string, data any) (subject, body string, err error) {
+// ExecuteTemplates executes both text and HTML templates with the given name and data.
+// Returns both text and HTML bodies for multipart emails.
+func ExecuteTemplates(name string, data any) (textBody, htmlBody string, err error) {
+	textBody, err = ExecuteTextTemplate(name, data)
+	if err != nil {
+		return "", "", errors.Wrap(err, "executing text template")
+	}
+
+	htmlBody, err = ExecuteHTMLTemplate(name, data)
+	if err != nil {
+		return "", "", errors.Wrap(err, "executing html template")
+	}
+
+	return textBody, htmlBody, nil
+}
+
+// ExecuteTextTemplate executes a text template and returns the body.
+func ExecuteTextTemplate(name string, data any) (body string, err error) {
 	templates, err := template.
 		New("").
 		Funcs(sprig.TxtFuncMap()).
 		ParseFS(templatesFS, "templates/*.txt")
 	if err != nil {
-		return "", "", errors.Wrap(err, "parsing templates")
+		return "", errors.Wrap(err, "parsing text templates")
 	}
 
 	templateName := fmt.Sprintf("%s.txt", name)
@@ -28,11 +46,33 @@ func executeTemplate(name string, data any) (subject, body string, err error) {
 	var buffer bytes.Buffer
 	err = templates.ExecuteTemplate(&buffer, templateName, data)
 	if err != nil {
-		return "", "", errors.Wrap(err, "executing template")
+		return "", errors.Wrap(err, "executing text template")
 	}
 	messageText := buffer.String()
 
-	messageParts := strings.SplitN(messageText, "\n\n", 2)
+	// Convert CRLF to LF for consistent line endings
+	messageText = strings.ReplaceAll(messageText, "\r\n", "\n")
 
-	return messageParts[0], messageParts[1], nil
+	return messageText, nil
+}
+
+// ExecuteHTMLTemplate executes an HTML template and returns the body.
+func ExecuteHTMLTemplate(name string, data any) (body string, err error) {
+	tmpl, err := template.
+		New("").
+		Funcs(sprig.HtmlFuncMap()).
+		ParseFS(templatesFS, "templates/*.html")
+	if err != nil {
+		return "", errors.Wrap(err, "parsing html templates")
+	}
+
+	templateName := fmt.Sprintf("%s.html", name)
+
+	var buffer bytes.Buffer
+	err = tmpl.ExecuteTemplate(&buffer, templateName, data)
+	if err != nil {
+		return "", errors.Wrap(err, "executing html template")
+	}
+
+	return buffer.String(), nil
 }

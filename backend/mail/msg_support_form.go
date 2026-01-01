@@ -1,10 +1,10 @@
 package mail
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/friendsofgo/errors"
-	gomail "github.com/wneessen/go-mail"
 )
 
 type SupportFormMsg struct {
@@ -17,16 +17,16 @@ type SupportFormMsg struct {
 	AttachedFile       io.Reader
 }
 
-func (m SupportFormMsg) ToMessage(config Config) (*gomail.Msg, error) {
+func (m SupportFormMsg) ToMessage(config Config) (*Message, error) {
 	sender := m.SenderEmailAddress
 	recipient := config.DefaultFrom
 
-	subject, body, err := executeTemplate("support_form", m)
+	body, err := ExecuteTextTemplate("support_form", m)
 	if err != nil {
 		return nil, errors.Wrap(err, "executing template")
 	}
 
-	msg := gomail.NewMsg()
+	msg := NewMessage(config)
 	err = msg.To(recipient)
 	if err != nil {
 		return nil, errors.Wrap(err, "setting to")
@@ -35,7 +35,7 @@ func (m SupportFormMsg) ToMessage(config Config) (*gomail.Msg, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "setting from")
 	}
-	msg.Subject(subject)
+	msg.Subject(fmt.Sprintf("Neue Kontaktanfrage von %s (%s)", m.SenderName, m.OrganisationName))
 	msg.SetBodyString("text/plain", body)
 
 	if m.AttachedFile != nil {

@@ -59,7 +59,7 @@ func TestSupportFormMsg_ToMessage(t *testing.T) {
 			mailMsg, err := tc.msg.ToMessage(tc.config)
 			require.NoError(t, err)
 
-			parsedMsg := requireParseGomailMessage(t, mailMsg)
+			parsedMsg := requireParseMessage(t, mailMsg)
 
 			for headerName, headerValue := range tc.expectedHeaders {
 				test_mail.AssertMailMessageHeaderEquals(t, parsedMsg, headerName, headerValue)

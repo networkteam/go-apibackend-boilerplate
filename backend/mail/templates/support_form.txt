@@ -1,6 +1,4 @@
-{{- /*gotype: myvendor.mytld/myproject/backend/mail.NewSupportFormMsg*/ -}}
-Neue Kontaktanfrage von {{ .SenderName }} ({{ .OrganisationName }})
-
+{{- /*gotype: myvendor.mytld/myproject/backend/mail.SupportFormMsg*/ -}}
 Name: {{ .SenderName }}
 Organisation: {{ .OrganisationName }}
 Betreff: {{ .Subject }}

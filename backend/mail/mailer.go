@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/friendsofgo/errors"
-	gomail "github.com/wneessen/go-mail"
 )
 
 type Mailer struct {
@@ -19,17 +18,25 @@ func NewMailer(sender Sender, config Config) *Mailer {
 	}
 }
 
+// MessageProvider creates a Message from configuration.
 type MessageProvider interface {
-	ToMessage(Config) (*gomail.Msg, error)
+	ToMessage(Config) (*Message, error)
 }
 
 func (m *Mailer) Send(ctx context.Context, msg MessageProvider) error {
+	if m == nil {
+		return errors.New("nil mailer cannot send")
+	}
+	if msg == nil {
+		return errors.New("nil message provider given")
+	}
+
 	message, err := msg.ToMessage(m.config)
 	if err != nil {
 		return errors.Wrap(err, "building message")
 	}
 
-	err = m.sender.Send(ctx, message)
+	err = m.sender.Send(ctx, message.Msg)
 	if err != nil {
 		return errors.Wrap(err, "sending message")
 	}

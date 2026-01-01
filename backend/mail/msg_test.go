@@ -6,15 +6,16 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	gomail "github.com/wneessen/go-mail"
+
+	pkg_mail "myvendor.mytld/myproject/backend/mail"
 )
 
-func requireParseGomailMessage(t *testing.T, msg *gomail.Msg) *mail.Message {
+func requireParseMessage(t *testing.T, msg *pkg_mail.Message) *mail.Message {
 	t.Helper()
 
 	var buf bytes.Buffer
 	_, err := msg.WriteTo(&buf)
-	require.NoError(t, err, "Writing gomail message to buffer")
+	require.NoError(t, err, "Writing mail message to buffer")
 
 	parsedMsg, err := mail.ReadMessage(&buf)
 	require.NoError(t, err, "Reading mail message from buffer")

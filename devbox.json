@@ -27,7 +27,7 @@
         "cd backend",
         "go run ./cli/ctl fixtures import"
       ],
-      "backend:gqlgen": ["cd backend", "go generate gqlgen.go"],
+      "backend:gqlgen": ["cd backend", "go generate ./api/graph/..."],
       "docs:setup": [
         "cd docs",
         ". $VENV_DIR/bin/activate",
