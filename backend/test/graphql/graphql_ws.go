@@ -3,16 +3,17 @@ package graphql
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/apex/log"
 	graphql_ws "github.com/korylprince/go-graphql-ws"
 	"github.com/stretchr/testify/require"
 
 	"myvendor.mytld/myproject/backend/api"
+	"myvendor.mytld/myproject/backend/api/graph/public"
 	api_handler "myvendor.mytld/myproject/backend/api/handler"
 	http_api "myvendor.mytld/myproject/backend/api/http"
 	test_auth "myvendor.mytld/myproject/backend/test/auth"
@@ -24,11 +25,13 @@ func ServerAndSubscribe[T any](t *testing.T, deps api.ResolverDependencies, subs
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/query", nil)
 	require.NoError(t, err)
-	test_auth.ApplyFixedAuthValuesOrganisationAdministrator(t, deps.TimeSource, req)
+	test_auth.ApplyAuthValuesFuncOrganisationAdministrator("admin+acmeinc@example.com")(t, deps, req)
 
-	graphqlHandler := api_handler.NewGraphqlHandler(deps, api_handler.Config{
+	apiHandlerConfig := api_handler.Config{
 		DisableRecover: true,
-	})
+	}
+	publicExecutableSchema := public.BuildExecutableSchema(deps, apiHandlerConfig)
+	graphqlHandler := api_handler.NewGraphqlHandler(deps, apiHandlerConfig, publicExecutableSchema)
 	srv := http_api.MiddlewareStackWithAuth(deps, graphqlHandler)
 
 	s := httptest.NewServer(srv)
@@ -36,7 +39,7 @@ func ServerAndSubscribe[T any](t *testing.T, deps api.ResolverDependencies, subs
 
 	wsURL := httpToWs(t, s.URL) + "/query"
 
-	log.Debugf("connecting to: %s", wsURL)
+	slog.Debug("connecting to WS", "url", wsURL)
 
 	conn, resp, err := graphql_ws.DefaultDialer.Dial(wsURL, req.Header, nil)
 	require.NoError(t, err)
@@ -45,7 +48,7 @@ func ServerAndSubscribe[T any](t *testing.T, deps api.ResolverDependencies, subs
 		err := resp.Body.Close()
 		require.NoError(t, err)
 		_ = conn.Close()
-		log.Debug("WS client: closed connection")
+		slog.Debug("WS client: closed connection")
 	})
 
 	notifications := make(chan T, 1)

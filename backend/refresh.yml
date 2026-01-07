@@ -9,12 +9,13 @@ ignored_folders:
   - templates
 included_extensions:
   - .go
+  - .json
 build_target_path: "./cli/ctl"
 build_path: ./tmp/
 build_flags: [ ]
 build_delay: 100ms
 binary_name: refresh-build
-command_flags: [ "-v=4","server","--playground" ]
+command_flags: [ "--force-ansi","server","--playground"]
 command_env: [ ]
 enable_colors: true
 log_name: ""

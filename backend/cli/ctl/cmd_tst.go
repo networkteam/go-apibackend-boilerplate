@@ -14,8 +14,8 @@ func newTestCmd() *cli.Command {
 			{
 				Name:  "preparedb",
 				Usage: "Prepare test database (e.g. install extensions)",
-				Action: func(_ *cli.Context) error {
-					return test_db.PrepareTestDatabase()
+				Action: func(c *cli.Context) error {
+					return test_db.PrepareTestDatabase(c.Context)
 				},
 			},
 		},

@@ -9,10 +9,34 @@ processes:
         condition: process_completed_successfully
     availability:
       restart: "always"
+    is_tty: true
+
+  backend:worker:
+    command: go run github.com/networkteam/refresh -c refresh.worker.yml
+    working_dir: backend
+    depends_on:
+      backend:setup:
+        condition: process_completed_successfully
+    availability:
+      restart: "always"
+    is_tty: true
 
   backend:setup:
-    working_dir: backend
     command: devbox run backend:setup
+    working_dir: backend
     depends_on:
       postgresql:createdb:
         condition: process_completed_successfully
+
+  mailpit:
+    command: mailpit
+
+  asynqmon:
+    command: go run github.com/hibiken/asynqmon/cmd/asynqmon -port 8090
+    environment:
+      - "REDIS_DB=1"
+    working_dir: backend
+
+  docs:dev:
+    command: devbox run docs:dev
+    disabled: true

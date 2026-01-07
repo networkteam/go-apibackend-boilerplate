@@ -11,8 +11,8 @@ import (
 	"golang.org/x/term"
 
 	"myvendor.mytld/myproject/backend/domain/command"
+	"myvendor.mytld/myproject/backend/domain/handler"
 	"myvendor.mytld/myproject/backend/domain/types"
-	"myvendor.mytld/myproject/backend/handler"
 )
 
 func newAccountCmd() *cli.Command {
@@ -59,7 +59,7 @@ func newAccountCmd() *cli.Command {
 						cmd.OrganisationID = uuid.NullUUID{Valid: true, UUID: organisationID}
 					}
 
-					db, err := connectDatabase(c)
+					db, err := connectDatabase(c, nil)
 					if err != nil {
 						return err
 					}

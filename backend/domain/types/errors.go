@@ -101,8 +101,14 @@ func (n nestedFieldError) ErrorCode() string {
 	return n.err.ErrorCode()
 }
 
+// Is implements the errors.Is interface.
 func (n nestedFieldError) Is(err error) bool {
 	return fieldResolvableErrorIs(n, err)
+}
+
+// Unwrap implements error unwrapping.
+func (n nestedFieldError) Unwrap() error {
+	return n.err
 }
 
 var _ FieldResolvableError = &nestedFieldError{}
@@ -111,6 +117,49 @@ func WrapFieldError(err FieldResolvableError, fieldName string) FieldResolvableE
 	return &nestedFieldError{
 		field: fieldName,
 		err:   err,
+	}
+}
+
+func WrapAsFieldError(err error, fieldName string) error {
+	var fieldErr FieldResolvableError
+	if errors.As(err, &fieldErr) {
+		return WrapFieldError(fieldErr, fieldName)
+	}
+	return err
+}
+
+type NotExistsError string
+
+func (e NotExistsError) FieldPath() []string {
+	return []string{string(e)}
+}
+
+func (e NotExistsError) ErrorArguments() []string {
+	return nil
+}
+
+func (e NotExistsError) ErrorCode() string {
+	return ErrorCodeNotExists
+}
+
+func (e NotExistsError) Is(err error) bool {
+	if e2, ok := err.(NotExistsError); ok {
+		return e == e2
+	}
+	return false
+}
+
+var _ FieldResolvableError = NotExistsError("") //nolint:errcheck
+
+func (e NotExistsError) Error() string {
+	return fmt.Sprintf("field %s: %s", string(e), ErrorCodeNotExists)
+}
+
+func (e NotExistsError) Extensions() map[string]any {
+	return map[string]any{
+		"type":  "validationFailed",
+		"code":  ErrorCodeNotExists,
+		"field": e,
 	}
 }
 
@@ -124,4 +173,10 @@ func stringsEqual(s1 []string, s2 []string) bool {
 		}
 	}
 	return true
+}
+
+// ErrorReportSkipper can be implemented by errors that should be skipped in error reporting systems like Sentry.
+// This is useful for expected errors (field resolvable error or sentinel errors) that do not require developer attention.
+type ErrorReportSkipper interface {
+	ErrorReportSkip()
 }

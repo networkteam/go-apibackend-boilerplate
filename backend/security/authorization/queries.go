@@ -30,8 +30,15 @@ func (a *Authorizer) AllowsAndFilterAllOrganisationsQuery(query *query.Organisat
 func (a *Authorizer) AllowsAccountView(record model.Account) error {
 	return a.check(
 		satisfyAny(
+			// System administrators can view any account
 			requireRole(types.RoleSystemAdministrator),
-			requireSameOrganisation(uuidOrNil(record.OrganisationID)),
+			// Accounts can view their own account
+			requireSameAccount(&record.ID),
+			// Organisation administrators can view accounts in their organisation
+			requireAll(
+				requireRole(types.RoleOrganisationAdministrator),
+				requireSameOrganisation(uuidOrNil(record.OrganisationID)),
+			),
 		),
 	)
 }

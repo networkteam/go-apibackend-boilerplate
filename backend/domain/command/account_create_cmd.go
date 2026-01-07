@@ -70,10 +70,6 @@ func (c AccountCreateCmd) Validate(_ domain.Config) error {
 }
 
 func (c AccountCreateCmd) NewAccount(config domain.Config) (model.Account, error) {
-	accountSecret, err := model.NewAccountSecret()
-	if err != nil {
-		return model.Account{}, errors.Wrap(err, "generating account secret")
-	}
 	passwordHash, err := helper.GenerateHashFromPassword([]byte(c.password), config.HashCost)
 	if err != nil {
 		return model.Account{}, errors.Wrap(err, "hashing password")
@@ -81,7 +77,6 @@ func (c AccountCreateCmd) NewAccount(config domain.Config) (model.Account, error
 	account := model.Account{
 		ID:             c.AccountID,
 		EmailAddress:   c.EmailAddress,
-		Secret:         accountSecret,
 		PasswordHash:   passwordHash,
 		Role:           c.Role,
 		OrganisationID: c.OrganisationID,

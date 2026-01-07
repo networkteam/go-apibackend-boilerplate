@@ -1,37 +1,35 @@
 package middleware
 
 import (
-	"database/sql"
+	"context"
 	"net/http"
 	"time"
 
-	logger "github.com/apex/log"
 	"github.com/friendsofgo/errors"
+	"github.com/networkteam/slogutils"
 
-	"myvendor.mytld/myproject/backend/domain/types"
-	"myvendor.mytld/myproject/backend/persistence/repository"
+	"myvendor.mytld/myproject/backend/api"
+	api_types "myvendor.mytld/myproject/backend/api/types"
+	"myvendor.mytld/myproject/backend/domain/command"
 	"myvendor.mytld/myproject/backend/security/authentication"
 )
 
 const (
-	AuthTokenRefreshThreshold = 15 * time.Minute
+	AccessTokenRefreshThreshold = 15 * time.Minute
 )
 
-func RefreshTokensMiddleware(db *sql.DB, timeSource types.TimeSource, next http.Handler) http.Handler {
+func RefreshTokensMiddleware(deps api.ResolverDependencies, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		log := logger.FromContext(ctx)
+		logger := slogutils.FromContext(ctx)
 
 		authCtx := authentication.GetAuthContext(ctx)
 		if authCtx.Authenticated {
-			delta := timeSource.Now().Sub(authCtx.IssuedAt)
-			if delta > AuthTokenRefreshThreshold {
-				err := refreshTokens(w, r, authCtx, db, timeSource)
+			delta := deps.TimeSource.Now().Sub(authCtx.IssuedAt)
+			if delta > AccessTokenRefreshThreshold {
+				err := refreshTokens(ctx, w, r, deps, authCtx)
 				if err != nil {
-					log.
-						// err already has stacktrace
-						WithError(err).
-						Error("could not refresh tokens")
+					logger.ErrorContext(ctx, "Could not refresh tokens", slogutils.Err(err))
 				}
 			}
 		}
@@ -40,26 +38,23 @@ func RefreshTokensMiddleware(db *sql.DB, timeSource types.TimeSource, next http.
 	})
 }
 
-func refreshTokens(w http.ResponseWriter, r *http.Request, authCtx authentication.AuthContext, db *sql.DB, timeSource types.TimeSource) error {
-	account, err := repository.FindAccountByID(r.Context(), db, authCtx.AccountID, nil)
+func refreshTokens(ctx context.Context, w http.ResponseWriter, r *http.Request, deps api.ResolverDependencies, authCtx authentication.AuthContext) error {
+	// Make sure we have request and response in context (do not depend on RequestAndResponseWriterMiddleware to be present)
+	ctx = api_types.WithHTTPRequest(ctx, r)
+	ctx = api_types.WithHTTPResponse(ctx, w)
+
+	tokenExpiryType := authCtx.GetTokenExpiryType()
+	expiresAt := tokenExpiryType.GetExpiresAt(deps.TimeSource)
+
+	cmd, err := command.NewAuthSessionRefreshCmd(authCtx.AuthSessionID, expiresAt)
 	if err != nil {
-		return errors.Wrap(err, "could not find account")
+		return errors.Wrap(err, "creating auth access token create command")
 	}
 
-	tokenOpts := authentication.TokenOptsForAccount(account, authCtx.HasExtendedExpiry())
-	authToken, err := authentication.GenerateAuthToken(account, timeSource, tokenOpts)
+	err = deps.Handler().AuthSessionRefresh(ctx, cmd)
 	if err != nil {
-		return errors.Wrap(err, "could not generate auth token")
+		return errors.Wrap(err, "refreshing auth session")
 	}
-
-	csrfToken, err := authentication.GenerateCsrfToken(account, timeSource, tokenOpts)
-	if err != nil {
-		return errors.Wrap(err, "could not generate CSRF token")
-	}
-
-	authentication.SetRefreshCsrfTokenHeader(w, csrfToken)
-	authentication.SetRefreshAuthTokenHeader(w, authToken)
-	authentication.SetAuthTokenCookie(w, r, authToken)
 
 	return nil
 }

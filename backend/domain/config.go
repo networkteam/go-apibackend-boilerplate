@@ -15,6 +15,8 @@ type Config struct {
 	AppBaseURL string
 	// Bcrypt hash cost for passwords
 	HashCost int
+	// JWTSecret is the secret for JWT signing
+	JWTSecret string
 	// Location for date / time calculations, defaults to Europe/Berlin
 	Location *time.Location
 }

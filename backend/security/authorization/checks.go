@@ -20,17 +20,17 @@ func requireRole(roles ...types.Role) authorizationCheck {
 				return nil
 			}
 		}
-		return authorizationError{fmt.Sprintf("requires role %v", roles)}
+		return authorizationError{cause: fmt.Sprintf("requires role %v", roles)}
 	}
 }
 
 func requireSameAccount(accountID *uuid.UUID) authorizationCheck {
 	return func(authCtx authentication.AuthContext) error {
 		if authCtx.AccountID == uuid.Nil || accountID == nil {
-			return authorizationError{"requires same account"}
+			return authorizationError{cause: "requires same account"}
 		}
 		if authCtx.AccountID != *accountID {
-			return authorizationError{"requires same account"}
+			return authorizationError{cause: "requires same account"}
 		}
 		return nil
 	}
@@ -39,10 +39,10 @@ func requireSameAccount(accountID *uuid.UUID) authorizationCheck {
 func requireOrganisationID(organisationID *uuid.UUID) authorizationCheck {
 	return func(authCtx authentication.AuthContext) error {
 		if authCtx.OrganisationID == nil || organisationID == nil {
-			return authorizationError{"requires same organisation"}
+			return authorizationError{cause: "requires same organisation"}
 		}
 		if *authCtx.OrganisationID != *organisationID {
-			return authorizationError{"requires same organisation"}
+			return authorizationError{cause: "requires same organisation"}
 		}
 		return nil
 	}
@@ -54,7 +54,7 @@ func requireNotSameAccount(accountID *uuid.UUID) authorizationCheck {
 			return nil
 		}
 		if authCtx.AccountID == *accountID {
-			return authorizationError{"cannot perform action on own account"}
+			return authorizationError{cause: "cannot perform action on own account"}
 		}
 		return nil
 	}
@@ -81,7 +81,7 @@ func satisfyAny(checks ...authorizationCheck) authorizationCheck {
 			}
 			errors = append(errors, err.Error())
 		}
-		return authorizationError{fmt.Sprintf("any of the following required: %v", strings.Join(errors, "; "))}
+		return authorizationError{cause: fmt.Sprintf("any of the following required: %v", strings.Join(errors, "; "))}
 	}
 }
 
@@ -102,7 +102,7 @@ func requireSameOrganisation(organisationID *uuid.UUID) authorizationCheck {
 func requireNotAuthenticated() authorizationCheck {
 	return func(authCtx authentication.AuthContext) error {
 		if authCtx.Authenticated {
-			return authorizationError{"must not be authenticated"}
+			return authorizationError{cause: "must not be authenticated"}
 		}
 		return nil
 	}
@@ -111,7 +111,7 @@ func requireNotAuthenticated() authorizationCheck {
 func setOrganisationID(query OrganisationIDSetter) authorizationCheck {
 	return func(authCtx authentication.AuthContext) error {
 		if authCtx.OrganisationID == nil {
-			return authorizationError{"organisation ID is required"}
+			return authorizationError{cause: "organisation ID is required"}
 		}
 		query.SetOrganisationID(authCtx.OrganisationID)
 		return nil

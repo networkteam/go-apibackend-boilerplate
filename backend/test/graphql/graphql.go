@@ -9,19 +9,23 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 
-	"go.opentelemetry.io/otel/metric/noop"
+	"github.com/99designs/gqlgen/graphql"
 	"golang.org/x/crypto/bcrypt"
 
 	"myvendor.mytld/myproject/backend/api"
+	"myvendor.mytld/myproject/backend/api/graph/admin"
+	"myvendor.mytld/myproject/backend/api/graph/public"
 	api_handler "myvendor.mytld/myproject/backend/api/handler"
 	http_api "myvendor.mytld/myproject/backend/api/http"
 	"myvendor.mytld/myproject/backend/domain"
 	"myvendor.mytld/myproject/backend/mail"
 	"myvendor.mytld/myproject/backend/mail/fixture"
 	"myvendor.mytld/myproject/backend/test"
+	"myvendor.mytld/myproject/backend/test/auth"
 )
 
 func NewRequest(t *testing.T, query GraphqlQuery) *http.Request {
@@ -45,11 +49,12 @@ func SetTestDependencies(t *testing.T, deps *api.ResolverDependencies) {
 	t.Helper()
 
 	// Use default config if config is zero value
-	if deps.Config == (domain.Config{}) {
+	if reflect.DeepEqual(deps.Config, domain.Config{}) {
 		deps.Config = domain.DefaultConfig()
 	}
 	// Always use a reduced hash cost for tests
 	deps.Config.HashCost = bcrypt.MinCost
+	deps.Config.JWTSecret = auth.FixedJWTSecret
 
 	if deps.TimeSource == nil {
 		deps.TimeSource = test.FixedTime()
@@ -57,28 +62,48 @@ func SetTestDependencies(t *testing.T, deps *api.ResolverDependencies) {
 
 	if deps.Mailer == nil {
 		sender := fixture.NewSender()
-		deps.Mailer = mail.NewMailer(sender, mail.DefaultConfig(domain.DefaultConfig()))
-	}
-
-	if deps.MeterProvider == nil {
-		deps.MeterProvider = noop.NewMeterProvider()
+		deps.Mailer = mail.NewMailer(sender, mail.DefaultConfig(deps.Config))
 	}
 }
 
-func Handle(t *testing.T, deps api.ResolverDependencies, req *http.Request, dst interface{}) *httptest.ResponseRecorder {
+func HandlePublic(t *testing.T, deps api.ResolverDependencies, req *http.Request, dst interface{}) *httptest.ResponseRecorder {
 	t.Helper()
 
 	SetTestDependencies(t, &deps)
 
-	graphqlHandler := api_handler.NewGraphqlHandler(deps, api_handler.Config{
+	apiHandlerConfig := api_handler.Config{
 		DisableRecover: true,
-	})
+	}
+	publicExecutableSchema := public.BuildExecutableSchema(deps, apiHandlerConfig)
+	return handleSchema(t, deps, publicExecutableSchema, req, dst)
+}
+
+func HandleAdmin(t *testing.T, deps api.ResolverDependencies, req *http.Request, dst interface{}) *httptest.ResponseRecorder {
+	t.Helper()
+
+	SetTestDependencies(t, &deps)
+
+	apiHandlerConfig := api_handler.Config{
+		DisableRecover: true,
+	}
+	publicExecutableSchema := admin.BuildExecutableSchema(deps, apiHandlerConfig)
+	return handleSchema(t, deps, publicExecutableSchema, req, dst)
+}
+
+func handleSchema(t *testing.T, deps api.ResolverDependencies, executableSchema graphql.ExecutableSchema, req *http.Request, dst interface{}) *httptest.ResponseRecorder {
+	t.Helper()
+
+	apiHandlerConfig := api_handler.Config{
+		DisableRecover: true,
+	}
+	graphqlHandler := api_handler.NewGraphqlHandler(deps, apiHandlerConfig, executableSchema)
 	srv := http_api.MiddlewareStackWithAuth(deps, graphqlHandler)
 
 	rec := httptest.NewRecorder()
 	srv.ServeHTTP(rec, req)
 
-	err := json.Unmarshal(rec.Body.Bytes(), dst)
+	body := rec.Body.Bytes()
+	err := json.Unmarshal(body, dst)
 	if err != nil {
 		t.Fatalf("could not decode response JSON: %v", err)
 	}
@@ -166,13 +191,11 @@ type MultipartFileInfo struct {
 	Filename  string
 }
 
-//nolint:revive // Better readability if we repeat Graphql
 type GraphqlQuery struct {
 	Query     string         `json:"query"`
 	Variables map[string]any `json:"variables"`
 }
 
-//nolint:revive // Better readability if we repeat Graphql
 type GraphqlErrors struct {
 	Errors []GraphqlError `json:"errors"`
 }
@@ -188,7 +211,6 @@ func (e GraphqlErrors) String() string {
 	return sb.String()
 }
 
-//nolint:revive // Better readability if we repeat Graphql
 type GraphqlError struct {
 	Message    string                 `json:"message"`
 	Path       []any                  `json:"path"`
@@ -225,7 +247,6 @@ func (e GraphqlError) writeTo(w io.Writer) {
 	}
 }
 
-//nolint:revive // Better readability if we repeat Graphql
 type GraphqlErrorExtensions struct {
 	Field string `json:"field"`
 	Type  string `json:"type"`

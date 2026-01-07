@@ -158,7 +158,7 @@ func (d *Date) Scan(src interface{}) error {
 	case time.Time:
 		*d = DateOf(value)
 	default:
-		//nolint:goerr113
+		//nolint:err113
 		return fmt.Errorf("unhandled type: %T", src)
 	}
 

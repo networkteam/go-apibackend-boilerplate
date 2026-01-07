@@ -1,8 +1,11 @@
 package main
 
 import (
+	"text/template"
+
 	"github.com/friendsofgo/errors"
 	"github.com/pressly/goose/v3"
+	"github.com/pressly/goose/v3/database"
 	"github.com/urfave/cli/v2"
 
 	"myvendor.mytld/myproject/backend/persistence/migrations"
@@ -30,7 +33,7 @@ func newMigrateCmd() *cli.Command {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					db, err := connectDatabase(c)
+					db, err := connectDatabase(c, nil)
 					if err != nil {
 						return err
 					}
@@ -64,7 +67,7 @@ func newMigrateCmd() *cli.Command {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					db, err := connectDatabase(c)
+					db, err := connectDatabase(c, nil)
 					if err != nil {
 						return err
 					}
@@ -95,14 +98,67 @@ func newMigrateCmd() *cli.Command {
 					return nil
 				},
 				Action: func(c *cli.Context) error {
-					db, err := connectDatabase(c)
+					db, err := connectDatabase(c, nil)
 					if err != nil {
 						return err
 					}
 
-					err = goose.Create(db, "persistence/migrations", c.Args().First(), "go")
+					err = goose.CreateWithTemplate(db, "persistence/migrations", goSQLMigrationTemplate, c.Args().First(), "go")
 					if err != nil {
 						return errors.Wrap(err, "creating migration")
+					}
+
+					return nil
+				},
+			},
+			{
+				Name:        "status",
+				Description: "Show detailed status of database migrations, if --ensure-applied is set, will return an error if there are pending migrations",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:  "ensure-applied",
+						Usage: "Return an error if there are pending migrations",
+					},
+				},
+				Action: func(c *cli.Context) error {
+					db, err := connectDatabase(c, nil)
+					if err != nil {
+						return err
+					}
+
+					if c.Bool("ensure-applied") {
+						expectedMigrations, err := goose.CollectMigrations(".", 0, goose.MaxVersion)
+						if err != nil {
+							return errors.Wrap(err, "collecting migrations")
+						}
+
+						store, err := database.NewStore(goose.DialectPostgres, goose.DefaultTablename)
+						if err != nil {
+							return errors.Wrap(err, "creating migration store")
+						}
+
+						existingMigrations, err := store.ListMigrations(c.Context, db)
+						if err != nil {
+							return errors.Wrap(err, "listing existing migrations")
+						}
+
+						existingMigrationsByVersion := make(map[int64]*database.ListMigrationsResult, len(existingMigrations))
+						for _, m := range existingMigrations {
+							existingMigrationsByVersion[m.Version] = m
+						}
+
+						for _, m := range expectedMigrations {
+							if existingMigration, ok := existingMigrationsByVersion[m.Version]; !ok || !existingMigration.IsApplied {
+								return errors.Errorf("pending migration found: %d", m.Version)
+							}
+						}
+
+						return nil
+					}
+
+					err = goose.Status(db, ".")
+					if err != nil {
+						return errors.Wrap(err, "getting migration status")
 					}
 
 					return nil
@@ -111,3 +167,31 @@ func newMigrateCmd() *cli.Command {
 		},
 	}
 }
+
+//nolint:gochecknoglobals
+var goSQLMigrationTemplate = template.Must(template.New("goose.go-migration").Parse(`package migrations
+
+import (
+	"context"
+	"database/sql"
+	"github.com/pressly/goose/v3"
+)
+
+func init() {
+	goose.AddMigrationContext(up{{.CamelName}}, down{{.CamelName}})
+}
+
+func up{{.CamelName}}(ctx context.Context, tx *sql.Tx) error {
+	_, err := tx.ExecContext(ctx, ` + "`" + `
+		-- CREATE TABLE ...
+	` + "`" + `)
+	return err
+}
+
+func down{{.CamelName}}(ctx context.Context, tx *sql.Tx) error {
+	_, err := tx.ExecContext(ctx, ` + "`" + `
+		-- DROP TABLE ...
+	` + "`" + `)
+	return err
+}
+`))

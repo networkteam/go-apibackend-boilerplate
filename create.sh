@@ -17,7 +17,7 @@ myproject=$4
 echo "Copy $DIR to $target"
 
 mkdir -p $target
-rsync -av $DIR/ $target/ --exclude backend/api/graph/generated --exclude .idea --exclude .git --exclude .devbox --exclude .github --exclude docs/site --exclude backend/tmp/refresh-build
+rsync -av $DIR/ $target/ --exclude create.sh --exclude backend/api/graph/generated --exclude .idea --exclude .git --exclude .devbox --exclude .github --exclude docs/site --exclude backend/tmp/refresh-build --exclude .venv --exclude .DS_Store --exclude docs/TODO.md
 
 cd $target
 
@@ -32,7 +32,7 @@ echo "Formatting Go code"
 go fmt ./...
 
 echo "Generating GraphQL API"
-go run github.com/99designs/gqlgen
+go generate ./api/graph/...
 
 popd
 
@@ -59,11 +59,17 @@ echo "Creating Git repository"
 git init -q
 git add .
 git add -f backend/tmp/.gitkeep
-git commit -q -m "Initial commit"
+git commit -q -m "wip: created from boilerplate"
 
 echo "Done."
 echo
 
-echo "Run project via Devbox:"
+echo "Next steps:"
+echo
+echo "1. Adapt CLAUDE.md files with your project details:"
+echo "   - CLAUDE.md (project overview, domain concepts, authentication)"
+echo "   - backend/CLAUDE.md (module paths already replaced)"
+echo
+echo "2. Run project via Devbox:"
 echo
 echo "    devbox services up"

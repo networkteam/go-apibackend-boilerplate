@@ -8,6 +8,7 @@ import (
 
 	"github.com/friendsofgo/errors"
 	"github.com/hashicorp/go-multierror"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/networkteam/qrb/builder"
 )
 
@@ -123,4 +124,16 @@ func applyPagingOptions(query builder.SelectBuilder, opts []PagingOption, sortFi
 		}
 	}
 	return query, nil
+}
+
+func IsConstraintViolationError(err error) bool {
+	var pgErr *pgconn.PgError
+	if std_errors.As(err, &pgErr) {
+		switch pgErr.Code {
+		case pgErrCode_unique_violation,
+			pgErrCode_foreign_key_violation:
+			return true
+		}
+	}
+	return false
 }

@@ -6,7 +6,10 @@ import (
 	"go.opentelemetry.io/otel/metric"
 
 	"myvendor.mytld/myproject/backend/domain"
+	"myvendor.mytld/myproject/backend/domain/finder"
+	"myvendor.mytld/myproject/backend/domain/handler"
 	"myvendor.mytld/myproject/backend/domain/types"
+	"myvendor.mytld/myproject/backend/jobqueue"
 	"myvendor.mytld/myproject/backend/mail"
 )
 
@@ -15,6 +18,23 @@ type ResolverDependencies struct {
 	Config        domain.Config
 	DB            *sql.DB
 	TimeSource    types.TimeSource
-	MeterProvider metric.MeterProvider
 	Mailer        *mail.Mailer
+	Queue         jobqueue.Queue
+	MeterProvider metric.MeterProvider
+}
+
+func (r ResolverDependencies) Handler() *handler.Handler {
+	return handler.NewHandler(r.DB, r.Config, handler.Deps{
+		TimeSource:    r.TimeSource,
+		Mailer:        r.Mailer,
+		Queue:         r.Queue,
+		MeterProvider: r.MeterProvider,
+	})
+}
+
+func (r ResolverDependencies) Finder() *finder.Finder {
+	return finder.NewFinder(
+		r.DB,
+		r.TimeSource,
+	)
 }

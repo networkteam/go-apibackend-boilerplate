@@ -5,7 +5,7 @@
     # Adjust GOPATH to enable caching of downloaded modules
     GOPATH: "$CI_PROJECT_DIR/.cache/go"
     # The Go image to use
-    GOLANG_IMAGE: golang:1.22
+    GOLANG_IMAGE: golang:1.25.5
   before_script:
     - !reference [.docker-build-default, before_script]
     - cd backend
@@ -13,6 +13,7 @@
     key: "golang"
     paths:
       - .cache/go
+    when: "always"
 
 backend:build:
   extends: .backend-job
@@ -33,8 +34,10 @@ backend:test:
   dependencies: []
   image: $GOLANG_IMAGE
   services:
-    - postgres:13.6
+    - name: postgres:17.4-bookworm
+      command: ["postgres", "-c", "max_locks_per_transaction=256"]
   variables:
+    SKIP_FOR_RELEASE: "true"
     TZ: Europe/Berlin
     POSTGRES_DB: myproject-test
     POSTGRES_USER: root
@@ -44,12 +47,16 @@ backend:test:
     - go mod download
     - go run ./cli/ctl test preparedb
     - go run gotest.tools/gotestsum --junitfile junit-backend.xml
-    - go test ./... -coverprofile=coverage.out -covermode atomic -coverpkg $(go list ./... | tr "\n" ",")
+    - go test -cover ./... -coverpkg=myvendor.mytld/myproject/backend/... -coverprofile=coverage.out
+    - go run github.com/boumenot/gocover-cobertura < coverage.out > coverage.xml
   artifacts:
     paths:
       - backend/coverage.out
     reports:
       junit: backend/junit-*.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: backend/coverage.xml
     when: always
 
 backend:lint:
@@ -57,11 +64,13 @@ backend:lint:
   stage: test
   needs: []
   dependencies: []
-  image: registry.networkteam.com/networkteam/docker/golangci-lint:1.57.2
+  image: registry.networkteam.com/networkteam/docker/golangci-lint:2.7.1
+  variables:
+    SKIP_FOR_RELEASE: "true"
   script:
     # Write the code coverage report to gl-code-quality-report.json
     # and print linting issues to stdout in the format: path/to/file:line description.
-    - golangci-lint run --out-format code-climate | tee gl-code-quality-report.json | jq -r '.[] | "\(.severity)\t\(.location.path):\(.location.lines.begin) \(.description)"'
+    - golangci-lint run --output.code-climate.path stdout --output.text.path '' --show-stats=false | tee gl-code-quality-report.json | jq -r '.[] | "\(.severity)\t\(.location.path):\(.location.lines.begin) \(.description)"'
     # Fail if any issue with severity "blocker" is found
     - test -z "$(jq -r '.[] | select(.severity == "blocker") | .description' gl-code-quality-report.json)"
   artifacts:
@@ -69,7 +78,23 @@ backend:lint:
       codequality: backend/gl-code-quality-report.json
     paths:
       - backend/gl-code-quality-report.json
-  interruptible: true
+
+backend:codegen-check:
+  extends: .backend-job
+  stage: test
+  needs: []
+  dependencies: []
+  image: $GOLANG_IMAGE
+  variables:
+    SKIP_FOR_RELEASE: "true"
+  script:
+    - go generate ./...
+    - |
+      if ! git diff --exit-code; then
+        echo "ERROR: Generated code is not up-to-date. Please run 'go generate ./...' and commit the changes."
+        exit 1
+      fi
+      echo "SUCCESS: Generated code is up-to-date."
 
 backend:semgrep-sast:
   extends: .backend-job
@@ -77,6 +102,7 @@ backend:semgrep-sast:
   needs: []
   dependencies: []
   variables:
+    SKIP_FOR_RELEASE: "true"
     ANALYZER_TARGET_DIR: $CI_PROJECT_DIR/backend
     SAST_EXCLUDED_PATHS: test
     SEARCH_MAX_DEPTH: 20

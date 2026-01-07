@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -14,12 +13,11 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/gorilla/websocket"
 	"github.com/ravilushqa/otelgqlgen"
+	"github.com/vektah/gqlparser/v2/ast"
 	"go.opentelemetry.io/otel/attribute"
 
 	"myvendor.mytld/myproject/backend/api"
-	"myvendor.mytld/myproject/backend/api/graph"
-	"myvendor.mytld/myproject/backend/api/graph/generated"
-	graphql_middleware "myvendor.mytld/myproject/backend/api/graph/middleware"
+	middleware2 "myvendor.mytld/myproject/backend/api/graph/common/middleware"
 	http_middleware "myvendor.mytld/myproject/backend/api/http/middleware"
 )
 
@@ -37,20 +35,8 @@ const (
 	requestVariablesPrefix = "gql.request.variables"
 )
 
-func NewGraphqlHandler(deps api.ResolverDependencies, handlerConfig Config) http.Handler {
-	config := generated.Config{
-		Resolvers: graph.NewResolver(deps, api.ResolverConfig{
-			SensitiveOperationConstantTime: handlerConfig.SensitiveOperationConstantTime,
-		}),
-		Directives: generated.DirectiveRoot{
-			// No op implementation, will be checked in middleware
-			BypassAuthentication: func(ctx context.Context, _ any, next graphql.Resolver) (res any, err error) {
-				return next(ctx)
-			},
-		},
-	}
-	exec := generated.NewExecutableSchema(config)
-	srv := newDefaultServer(exec, handlerConfig)
+func NewGraphqlHandler(deps api.ResolverDependencies, handlerConfig Config, executableSchema graphql.ExecutableSchema) http.Handler {
+	srv := newDefaultServer(executableSchema, handlerConfig)
 	srv.SetErrorPresenter(ErrorPresenter)
 
 	if handlerConfig.EnableOpenTelemetry {
@@ -58,13 +44,14 @@ func NewGraphqlHandler(deps api.ResolverDependencies, handlerConfig Config) http
 			otelgqlgen.WithRequestVariablesAttributesBuilder(
 				func(requestVariables map[string]any) []attribute.KeyValue {
 					variables := make([]attribute.KeyValue, 0, len(requestVariables))
-					for k, v := range requestVariables {
-						switch k {
+					for key, value := range requestVariables {
+						switch key {
+						// TODO Make the list of request variable names that should be masked configurable
 						case "password":
-							v = "********"
+							value = "********"
 						}
 						variables = append(variables,
-							attribute.String(fmt.Sprintf("%s.%s", requestVariablesPrefix, k), fmt.Sprintf("%+v", v)),
+							attribute.String(fmt.Sprintf("%s.%s", requestVariablesPrefix, key), fmt.Sprintf("%+v", value)),
 						)
 					}
 					return variables
@@ -73,12 +60,12 @@ func NewGraphqlHandler(deps api.ResolverDependencies, handlerConfig Config) http
 		))
 	}
 
-	if handlerConfig.EnableLogging {
-		srv.AroundFields(graphql_middleware.LoggerFieldMiddleware)
-	}
+	srv.AroundFields(middleware2.RequireAuthenticationFieldMiddleware)
+	srv.AroundFields(middleware2.SentryGraphqlMiddleware)
 
-	srv.AroundFields(graphql_middleware.RequireAuthenticationFieldMiddleware)
-	srv.AroundFields(graphql_middleware.SentryGraphqlMiddleware)
+	if handlerConfig.EnableLogging {
+		srv.AroundFields(middleware2.LoggerFieldMiddleware)
+	}
 
 	if handlerConfig.EnableTracing {
 		srv.Use(apollotracing.Tracer{})
@@ -116,11 +103,11 @@ func newDefaultServer(es graphql.ExecutableSchema, handlerConfig Config) *graphq
 	srv.AddTransport(transport.POST{})
 	srv.AddTransport(transport.MultipartForm{})
 
-	srv.SetQueryCache(lru.New(1000))
+	srv.SetQueryCache(lru.New[*ast.QueryDocument](1000))
 
 	srv.Use(extension.Introspection{})
 	srv.Use(extension.AutomaticPersistedQuery{
-		Cache: lru.New(100),
+		Cache: lru.New[string](100),
 	})
 
 	return srv

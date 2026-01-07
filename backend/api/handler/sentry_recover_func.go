@@ -3,9 +3,9 @@ package handler
 import (
 	"context"
 
-	"github.com/apex/log"
 	"github.com/friendsofgo/errors"
 	"github.com/getsentry/sentry-go"
+	"github.com/networkteam/slogutils"
 )
 
 func sentryRecoverFunc(ctx context.Context, err any) error {
@@ -23,19 +23,18 @@ func sentryRecoverFunc(ctx context.Context, err any) error {
 		hub = sentry.CurrentHub()
 	}
 
+	logger := slogutils.FromContext(ctx)
+
 	eID := hub.RecoverWithContext(ctx, err)
 	if eID != nil {
-		log.
-			WithError(newErr).
-			WithField("sentryEventId", *eID).
-			Errorf("Recovered panic and captured with Sentry")
+		logger.ErrorContext(ctx, "Recovered panic and captured with Sentry",
+			"sentryEventId", *eID,
+			slogutils.Err(newErr))
 	} else {
 		// Let's assume no event ID means no Sentry configured (e.g. in development)
 		newErr = errors.WithStack(newErr)
 
-		log.
-			WithError(newErr).
-			Errorf("Recovered panic: %+v", newErr)
+		logger.ErrorContext(ctx, "Recovered panic", slogutils.Err(newErr))
 	}
 
 	return newErr

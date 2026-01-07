@@ -1,0 +1,64 @@
+# Template for component specific jobs
+#
+# We split the jobs into components and use template jobs for each component.
+# With merge request pipelines and `changes` rules, we can control which jobs run
+# depending on the actual changes in the merge request.
+.component-job:
+  # Needs a COMPONENT variable
+  # variables: COMPONENT: "backend"
+  rules:
+    - !reference [.component-rule-merge-request-component-changes, rules]
+    - !reference [.component-rule-main-branch, rules]
+    - !reference [.component-rule-tag, rules]
+
+
+# Copy (tag) docker image if _no_ changes for this component occurred, and we are in a merge request
+.component-dockercopy-job:
+  stage: docker-build
+  image: registry.networkteam.com/networkteam/docker/oci-tools:latest
+  # Needs a COMPONENT variable
+  # variables: COMPONENT: "frontend"
+  rules:
+    # Do not run the job on merge requests if changes in the component or CI definitions for component occurred
+    - !reference [.component-rule-merge-request-component-no-changes, rules]
+    # Otherwise, run the job for merge request pipelines
+    - if: $CI_MERGE_REQUEST_ID
+  needs: []
+  dependencies: []
+  script:
+    - skopeo login
+      --username $CI_REGISTRY_USER
+      --password $CI_REGISTRY_PASSWORD
+      $CI_REGISTRY
+    - skopeo copy docker://$CI_REGISTRY_IMAGE/$COMPONENT:latest docker://$CI_REGISTRY_IMAGE/$COMPONENT:$CI_REGISTRY_TAG
+
+### Template jobs for rules:
+
+.component-rule-merge-request-component-changes:
+  rules:
+    # Only run the job on merge requests if changes in the component or CI definitions for component occurred
+    - if: $CI_MERGE_REQUEST_ID
+      changes:
+        - .gitlab-ci.yml
+        - ci/gitlab/$COMPONENT.yml
+        - $COMPONENT/**/*
+
+.component-rule-merge-request-component-no-changes:
+  rules:
+    # Only run the job on merge requests if changes in the component or CI definitions for component occurred
+    - if: $CI_MERGE_REQUEST_ID
+      changes:
+        - .gitlab-ci.yml
+        - ci/gitlab/$COMPONENT.yml
+        - $COMPONENT/**/*
+      when: never
+
+.component-rule-main-branch:
+  rules:
+    # Always run the job on the main branch
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+.component-rule-tag:
+  rules:
+    # Always run the job for a tag, unless skipped for a release
+    - if: $CI_COMMIT_TAG && $SKIP_FOR_RELEASE != "true"

@@ -30,7 +30,7 @@ func newAccountListCmd() *cli.Command {
 			},
 		},
 		Action: func(c *cli.Context) error {
-			db, err := connectDatabase(c)
+			db, err := connectDatabase(c, nil)
 			if err != nil {
 				return err
 			}

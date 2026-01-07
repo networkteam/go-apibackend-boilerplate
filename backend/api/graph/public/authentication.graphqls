@@ -1,0 +1,63 @@
+#
+# Domain
+#
+
+type Account {
+  id: UUID!
+  emailAddress: String!
+  role: Role!
+  lastLogin: DateTime
+  organisationId: UUID
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+#
+# Queries
+#
+
+extend type Query {
+  "Get the current login status"
+  loginStatus: Boolean! @bypassAuthentication
+
+  "Get the current account"
+  currentAccount: Account!
+}
+
+#
+# Mutations
+#
+
+extend type Mutation {
+  "Perform a login with credentials of a user account"
+  login(credentials: LoginCredentials!): LoginResult! @bypassAuthentication
+
+  "Perform a logout of the current user account"
+  logout: Error
+}
+
+#
+# Inputs
+#
+
+"Login credentials for accounts"
+input LoginCredentials {
+  "Email address of the account"
+  emailAddress: String!
+  "Password of the account"
+  password: String!
+  "Enable longer session"
+  keepMeLoggedIn: Boolean
+}
+
+#
+# Results
+#
+
+"Login result"
+type LoginResult {
+  "The authenticated account (if error is null)"
+  account: Account
+  "An error if authentication failed"
+  error: FieldsError
+}

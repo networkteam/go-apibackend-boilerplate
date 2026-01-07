@@ -11,9 +11,16 @@ type Role string
 
 const RoleSystemAdministrator = Role("SystemAdministrator")
 const RoleOrganisationAdministrator = Role("OrganisationAdministrator")
+const RoleJobqueue = Role("Jobqueue")
 
 //nolint:gochecknoglobals
 var OrganisationRoles = []Role{
+	RoleOrganisationAdministrator,
+}
+
+//nolint:gochecknoglobals
+var UserRoles = []Role{
+	RoleSystemAdministrator,
 	RoleOrganisationAdministrator,
 }
 
@@ -31,6 +38,7 @@ func (r Role) IsValid() bool {
 	switch r {
 	case RoleSystemAdministrator:
 	case RoleOrganisationAdministrator:
+	case RoleJobqueue:
 	default:
 		return false
 	}
