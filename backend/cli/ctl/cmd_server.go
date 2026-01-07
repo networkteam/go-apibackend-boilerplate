@@ -27,6 +27,7 @@ import (
 	"go.opentelemetry.io/otel"
 
 	"myvendor.mytld/myproject/backend/api"
+	"myvendor.mytld/myproject/backend/api/graph/admin"
 	"myvendor.mytld/myproject/backend/api/graph/public"
 	api_handler "myvendor.mytld/myproject/backend/api/handler"
 	"myvendor.mytld/myproject/backend/api/handler/testapi"
@@ -201,6 +202,8 @@ func serverAction(c *cli.Context) (err error) {
 	publicExecutableSchema := public.BuildExecutableSchema(deps, apiHandlerConfig)
 	publicGraphqlHandler := api_handler.NewGraphqlHandler(deps, apiHandlerConfig, publicExecutableSchema)
 
+	// Public GraphQL handler and playground
+
 	playgroundEnabled := c.Bool("playground")
 	if playgroundEnabled {
 		mux.Handle("/", api_handler.NewPlaygroundHandler("GraphQL playground", "/query"))
@@ -211,8 +214,17 @@ func serverAction(c *cli.Context) (err error) {
 	}
 
 	mux.Handle("/query", http_api.MiddlewareStackWithAuth(deps, publicGraphqlHandler))
-	mux.HandleFunc("/healthz", api_handler.NewHealthzHandler(db))
-	mux.Handle("/metrics", promhttp.Handler())
+
+	// Admin GraphQL handler
+
+	adminExecutableSchema := admin.BuildExecutableSchema(deps, apiHandlerConfig)
+	adminGraphqlHandler := api_handler.NewGraphqlHandler(deps, apiHandlerConfig, adminExecutableSchema)
+
+	if c.Bool("open-telemetry-enabled") {
+		adminGraphqlHandler = otelhttp.NewHandler(adminGraphqlHandler, "/admin/query")
+	}
+
+	mux.Handle("/admin/query", http_api.MiddlewareStackWithAuth(deps, adminGraphqlHandler))
 
 	rootHandler := http_middleware.RequestID(
 		sloghttp.NewWithConfig(logger.WithGroup("http"), sloghttp.Config{
@@ -226,6 +238,8 @@ func serverAction(c *cli.Context) (err error) {
 			),
 		),
 	)
+
+	// An outer mux to add additional handlers like healthz, metrics, pprof, devlog dashboard
 
 	outerMux := http.NewServeMux()
 
@@ -250,6 +264,7 @@ func serverAction(c *cli.Context) (err error) {
 	}
 
 	outerMux.HandleFunc("/healthz", api_handler.NewHealthzHandler(db))
+	outerMux.Handle("/metrics", promhttp.Handler())
 	if c.Bool("enable-test-api") {
 		logger.Warn("Test API enabled, don't do this in production!")
 		outerMux.Handle("/test-api/", http.StripPrefix("/test-api", testapi.NewAPI(db)))

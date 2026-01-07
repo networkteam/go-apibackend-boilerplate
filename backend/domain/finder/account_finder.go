@@ -3,8 +3,6 @@ package finder
 import (
 	"context"
 
-	"github.com/friendsofgo/errors"
-
 	"myvendor.mytld/myproject/backend/domain/model"
 	domain_query "myvendor.mytld/myproject/backend/domain/query"
 	"myvendor.mytld/myproject/backend/persistence/repository"
@@ -22,18 +20,6 @@ func (f *Finder) QueryAccount(ctx context.Context, query domain_query.AccountQue
 		return record, err
 	}
 	return record, nil
-}
-
-func (f *Finder) QueryAccountNotAuthorized(ctx context.Context, query domain_query.AccountQueryNotAuthorized) (model.Account, error) {
-	if query.AccountID != nil {
-		return repository.FindAccountByID(ctx, f.executor, *query.AccountID, query.Opts)
-	}
-
-	if query.EmailAddress != nil {
-		return repository.FindAccountByEmailAddress(ctx, f.executor, *query.EmailAddress, query.Opts)
-	}
-
-	return model.Account{}, errors.Wrap(ErrInvalidQuery, "AccountID or EmailAddress must be set")
 }
 
 func (f *Finder) QueryAccounts(ctx context.Context, query domain_query.AccountsQuery, paging Paging) ([]model.Account, error) {
