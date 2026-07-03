@@ -13,15 +13,17 @@ import (
 type TokenOpts struct {
 	Expiry        time.Duration
 	AccessTokenID uuid.UUID
+	AuthSessionID uuid.UUID
 }
 
 // TokenOptsForAccount will return the token options (expiry) based on the role of an account
-func TokenOptsForAccount(accessTokenID uuid.UUID, tokenExpiryType TokenExpiryType) TokenOpts {
+func TokenOptsForAccount(accessTokenID uuid.UUID, authSessionID uuid.UUID, tokenExpiryType TokenExpiryType) TokenOpts {
 	expiry := tokenExpiryType.GetExpiry()
 
 	return TokenOpts{
 		Expiry:        expiry,
 		AccessTokenID: accessTokenID,
+		AuthSessionID: authSessionID,
 	}
 }
 

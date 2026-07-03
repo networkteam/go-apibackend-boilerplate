@@ -38,8 +38,8 @@ func (h *Handler) generateAccessToken(authSessionID uuid.UUID, expiresAt time.Ti
 	}, nil
 }
 
-func (h *Handler) setAccessTokenCookieForAccount(ctx context.Context, account authentication.AccessTokenDataProvider, accessTokenID uuid.UUID, tokenExpiryType authentication.TokenExpiryType) error {
-	tokenOpts := authentication.TokenOptsForAccount(accessTokenID, tokenExpiryType)
+func (h *Handler) setAccessTokenCookieForAccount(ctx context.Context, account authentication.AccessTokenDataProvider, accessTokenID uuid.UUID, authSessionID uuid.UUID, tokenExpiryType authentication.TokenExpiryType) error {
+	tokenOpts := authentication.TokenOptsForAccount(accessTokenID, authSessionID, tokenExpiryType)
 
 	accessToken, err := authentication.GenerateAccessToken(h.config, account, h.timeSource, tokenOpts)
 	if err != nil {

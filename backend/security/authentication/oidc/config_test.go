@@ -53,9 +53,9 @@ func TestConfig_Validate(t *testing.T) {
 	}
 
 	tests := []struct {
-		name        string
+		name         string
 		modifyConfig func(*oidc.Config)
-		expectedErr error
+		expectedErr  error
 	}{
 		{
 			name:         "valid config",

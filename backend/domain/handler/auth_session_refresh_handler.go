@@ -76,7 +76,7 @@ func (h *Handler) AuthSessionRefresh(ctx context.Context, cmd command.AuthSessio
 	err = h.setAccessTokenCookieForAccount(ctx, model.Account{
 		ID:   accountID,
 		Role: role,
-	}, newAccessTokenID, tokenExpiryType)
+	}, newAccessTokenID, cmd.AuthSessionID, tokenExpiryType)
 	if err != nil {
 		return errors.Wrap(err, "setting access token cookie")
 	}

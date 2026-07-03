@@ -17,7 +17,7 @@ func GenerateCsrfToken(config domain.Config, timeSource types.TimeSource, opts T
 	now := timeSource.Now()
 
 	cl := jwt.Claims{
-		ID:       opts.AccessTokenID.String(),
+		ID:       opts.AuthSessionID.String(),
 		IssuedAt: jwt.NewNumericDate(now),
 		Expiry:   jwt.NewNumericDate(now.Add(opts.Expiry)),
 	}

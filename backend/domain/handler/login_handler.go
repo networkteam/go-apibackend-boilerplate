@@ -97,7 +97,7 @@ func (h *Handler) Login(ctx context.Context, cmd command.LoginCmd) (err error) {
 		return err
 	}
 
-	err = h.setAccessTokenCookieForAccount(ctx, account, accessToken.ID, cmd.TokenExpiryType)
+	err = h.setAccessTokenCookieForAccount(ctx, account, accessToken.ID, authSession.ID, cmd.TokenExpiryType)
 	if err != nil {
 		return errors.Wrap(err, "setting access token cookie")
 	}

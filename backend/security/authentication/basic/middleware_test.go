@@ -24,66 +24,66 @@ func TestSimpleAuth(t *testing.T) {
 	})
 
 	tests := []struct {
-		name               string
-		requestUsername    string
-		requestPassword    string
-		setBasicAuth       bool
-		expectedStatus     int
-		expectWWWAuth      bool
+		name                    string
+		requestUsername         string
+		requestPassword         string
+		setBasicAuth            bool
+		expectedStatus          int
+		expectWWWAuth           bool
 		expectNextHandlerCalled bool
 	}{
 		{
-			name:               "valid credentials",
-			requestUsername:    "admin",
-			requestPassword:    "secret",
-			setBasicAuth:       true,
-			expectedStatus:     http.StatusOK,
-			expectWWWAuth:      false,
+			name:                    "valid credentials",
+			requestUsername:         "admin",
+			requestPassword:         "secret",
+			setBasicAuth:            true,
+			expectedStatus:          http.StatusOK,
+			expectWWWAuth:           false,
 			expectNextHandlerCalled: true,
 		},
 		{
-			name:               "invalid username",
-			requestUsername:    "wrong",
-			requestPassword:    "secret",
-			setBasicAuth:       true,
-			expectedStatus:     http.StatusUnauthorized,
-			expectWWWAuth:      true,
+			name:                    "invalid username",
+			requestUsername:         "wrong",
+			requestPassword:         "secret",
+			setBasicAuth:            true,
+			expectedStatus:          http.StatusUnauthorized,
+			expectWWWAuth:           true,
 			expectNextHandlerCalled: false,
 		},
 		{
-			name:               "invalid password",
-			requestUsername:    "admin",
-			requestPassword:    "wrong",
-			setBasicAuth:       true,
-			expectedStatus:     http.StatusUnauthorized,
-			expectWWWAuth:      true,
+			name:                    "invalid password",
+			requestUsername:         "admin",
+			requestPassword:         "wrong",
+			setBasicAuth:            true,
+			expectedStatus:          http.StatusUnauthorized,
+			expectWWWAuth:           true,
 			expectNextHandlerCalled: false,
 		},
 		{
-			name:               "both invalid",
-			requestUsername:    "wrong",
-			requestPassword:    "wrong",
-			setBasicAuth:       true,
-			expectedStatus:     http.StatusUnauthorized,
-			expectWWWAuth:      true,
+			name:                    "both invalid",
+			requestUsername:         "wrong",
+			requestPassword:         "wrong",
+			setBasicAuth:            true,
+			expectedStatus:          http.StatusUnauthorized,
+			expectWWWAuth:           true,
 			expectNextHandlerCalled: false,
 		},
 		{
-			name:               "missing auth header",
-			requestUsername:    "",
-			requestPassword:    "",
-			setBasicAuth:       false,
-			expectedStatus:     http.StatusUnauthorized,
-			expectWWWAuth:      true,
+			name:                    "missing auth header",
+			requestUsername:         "",
+			requestPassword:         "",
+			setBasicAuth:            false,
+			expectedStatus:          http.StatusUnauthorized,
+			expectWWWAuth:           true,
 			expectNextHandlerCalled: false,
 		},
 		{
-			name:               "empty credentials",
-			requestUsername:    "",
-			requestPassword:    "",
-			setBasicAuth:       true,
-			expectedStatus:     http.StatusUnauthorized,
-			expectWWWAuth:      true,
+			name:                    "empty credentials",
+			requestUsername:         "",
+			requestPassword:         "",
+			setBasicAuth:            true,
+			expectedStatus:          http.StatusUnauthorized,
+			expectWWWAuth:           true,
 			expectNextHandlerCalled: false,
 		},
 	}

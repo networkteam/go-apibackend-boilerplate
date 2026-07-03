@@ -104,8 +104,8 @@ func createAuthSessionAndAddToRequest(t *testing.T, deps api.ResolverDependencie
 		t.Fatalf("failed to create auth session: %v", err)
 	}
 
-	addAccessTokenToRequest(t, deps.TimeSource, req, accessTokenData, cmd.AuthAccessTokenID)
-	addCsrfTokenToRequest(t, deps.TimeSource, req, cmd.AuthAccessTokenID)
+	addAccessTokenToRequest(t, deps.TimeSource, req, accessTokenData, cmd.AuthAccessTokenID, cmd.AuthSessionID)
+	addCsrfTokenToRequest(t, deps.TimeSource, req, cmd.AuthSessionID)
 
 	accessTokenData.AuthSessionID = cmd.AuthSessionID
 
@@ -121,10 +121,10 @@ func GetContextWithSystemAdministrator() context.Context {
 	})
 }
 
-func addAccessTokenToRequest(t *testing.T, timeSource types.TimeSource, req *http.Request, accessTokenData FixedAccessTokenData, accessTokenID uuid.UUID) {
+func addAccessTokenToRequest(t *testing.T, timeSource types.TimeSource, req *http.Request, accessTokenData FixedAccessTokenData, accessTokenID uuid.UUID, authSessionID uuid.UUID) {
 	t.Helper()
 
-	accessTokenOpts := authentication.TokenOptsForAccount(accessTokenID, authentication.TokenExpiryTypeDefault)
+	accessTokenOpts := authentication.TokenOptsForAccount(accessTokenID, authSessionID, authentication.TokenExpiryTypeDefault)
 	accessToken, err := authentication.GenerateAccessToken(FixedConfig, accessTokenData, timeSource, accessTokenOpts)
 	if err != nil {
 		t.Fatalf("failed to generate auth token: %v", err)
@@ -137,10 +137,10 @@ func addAccessTokenToRequest(t *testing.T, timeSource types.TimeSource, req *htt
 	req.AddCookie(&accessTokenCookie)
 }
 
-func addCsrfTokenToRequest(t *testing.T, timeSource types.TimeSource, req *http.Request, accessTokenID uuid.UUID) {
+func addCsrfTokenToRequest(t *testing.T, timeSource types.TimeSource, req *http.Request, authSessionID uuid.UUID) {
 	t.Helper()
 
-	csrfTokenOpts := authentication.TokenOptsForAccount(accessTokenID, authentication.TokenExpiryTypeDefault)
+	csrfTokenOpts := authentication.TokenOptsForAccount(uuid.Nil, authSessionID, authentication.TokenExpiryTypeDefault)
 	csrfToken, err := authentication.GenerateCsrfToken(FixedConfig, timeSource, csrfTokenOpts)
 	if err != nil {
 		t.Fatalf("failed to generate csrf token: %v", err)

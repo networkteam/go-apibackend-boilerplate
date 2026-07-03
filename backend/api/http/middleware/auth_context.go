@@ -153,7 +153,7 @@ func checkCsrfToken(ctx context.Context, deps api.ResolverDependencies, authCtx 
 	}
 
 	err = verifiedClaims.Validate(jwt.Expected{
-		ID: authCtx.AccessTokenID.String(),
+		ID: authCtx.AuthSessionID.String(),
 	}.WithTime(deps.TimeSource.Now()))
 	if err != nil {
 		logger.WarnContext(ctx, "Could not validate claims in CSRF token", slog.Group("auth", "accountID", authCtx.AccountID), slogutils.Err(errors.WithStack(err)))
